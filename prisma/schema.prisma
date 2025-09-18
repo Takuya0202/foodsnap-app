@@ -14,22 +14,153 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+// enum定義
+enum Role {
+  user
+  admin
+}
+
 model profile {
   id Int @id @default(autoincrement())
 
-  userId String  @unique @db.Uuid // Supabase Authのユーザーuuidを挿入
-  name   String
-  role   String
-  icon   String? // nullを許可
+  // Supabase Authのユーザーuuidを挿入
+  userId String  @unique @map("user_id") @db.Uuid
+  name   String  @db.VarChar(64)
+  role   Role // admin or user
+  icon   String? @db.VarChar(255)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("profiles")
 }
 
 model Store {
   id String @id @default(cuid())
 
-  userId  String @unique @db.Uuid // Supabase Authのユーザーuuidを挿入
-  name    String // 店舗名
-  address String // 住所
+  userId    String  @unique @map("user_id") @db.Uuid
+  name      String  @db.VarChar(64)
+  address   String  @db.VarChar(128)
+  latitude  Float
+  longitude Float
+  photo     String? @db.VarChar(255)
+  startAt   String? @map("start_at") @db.VarChar(32)
+  endAt     String? @map("end_at") @db.VarChar(32)
+  link      String? @db.VarChar(255)
+
+  // リレーション
+  prefectureId String?     @map("prefecture_id")
+  prefecture   Prefecture? @relation(fields: [prefectureId], references: [id], onDelete: Cascade)
+  genreId      String?     @map("genre_id")
+  genre        Genre?      @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  posts     Post[]
+  comments  Comment[]
+  likes     Like[]
+  storeTags StoreTag[]
+
+  @@map("stores")
+}
+
+model Prefecture {
+  id   String @id @default(cuid())
+  name String @db.VarChar(64)
+  area String @db.VarChar(64)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  stores Store[]
+
+  @@map("prefectures")
+}
+
+model Genre {
+  id   String @id @default(cuid())
+  name String @db.VarChar(64)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  stores Store[]
+
+  @@map("genres")
+}
+
+model Post {
+  id String @id @default(cuid())
+
+  name        String  @db.VarChar(64)
+  price       Int
+  photo       String  @db.VarChar(255)
+  description String? @db.Text
+
+  // リレーション
+  storeId String @map("store_id")
+  store   Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("posts")
+}
+
+model Tag {
+  id String @id @default(cuid())
+
+  name String @db.VarChar(64)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  storeTags StoreTag[]
+
+  @@map("tags")
+}
+
+model Comment {
+  id String @id @default(cuid())
+
+  userId  String @map("user_id") @db.Uuid
+  content String @db.Text
+
+  // リレーション
+  storeId String @map("store_id")
+  store   Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("comments")
+}
+
+// 中間テーブル(複合主キー)
+model Like {
+  userId  String @map("user_id") @db.Uuid
+  storeId String @map("store_id")
+  store   Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@id([userId, storeId])
+  @@unique([userId, storeId])
+  @@map("likes")
+}
+
+model StoreTag {
+  storeId String @map("store_id")
+  tagId   String @map("tag_id")
+  store   Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  tag     Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@id([storeId, tagId])
+  @@unique([storeId, tagId])
+  @@map("store_tags")
 }
