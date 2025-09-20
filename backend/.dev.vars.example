@@ -1,0 +1,6 @@
+#supabaseプロジェクトのキー
+SUPABASE_URL=
+SUPABASE_PUBLISHABLE_KEY=
+#フロントエンドのパス
+FRONT_APP_URL=
+FRONT_DEV_URL=http://localhost:3000

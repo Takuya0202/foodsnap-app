@@ -1,0 +1,1810 @@
+openapi: 3.0.0
+info:
+  title: foodsnap
+  description: "料理メニューを中心にアプローチし、料理の魅力を直感的に伝えるアプリ"
+  version: 1.0.0
+tags:
+  - name: "users"
+    description: "ユーザーに関わるAPI"
+  - name: "auth"
+    description: "認証に関わるAPI"
+  - name: "stores"
+    description: "店舗に関わるAPI"
+  - name: "admin"
+    description: "店舗管理者に関わるAPI"
+  - name: "middleware"
+    description: "ミドルウェアに関わるAPI"
+  - name: "posts"
+    description: "投稿に関わるAPI"
+
+servers:
+  - url: http://localhost:8787/api
+    description: "ローカル用"
+  
+paths:
+  # ミドルウェア関連
+  /user/check:
+    get:
+      summary: "ユーザー情報の確認(middleware)"
+      description: "Cookieのtokenを使ってログインしているユーザーの情報を確認する。フロントのページ表示で使う。"
+      tags:
+        - middleware
+      security:
+        - cookieAuth: []
+      responses:
+        200:
+          description: "ユーザー情報を返す"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  role:
+                    type: string
+                    description: "ユーザーの権限"
+                    example: "user"
+                    enum:
+                      - "admin"
+                      - "user"
+        401:
+          $ref: "#/components/responses/authError"
+        500:
+          $ref: "#/components/responses/serverError"
+
+
+  # ユーザー関連
+  /user/register:
+    post:
+      summary: "user登録(eamil & password)"
+      description: "メールアドレスでのユーザー登録"
+      tags:
+        - users
+      requestBody:
+        $ref: "#/components/requestBodies/registerValidation"
+      responses:
+        200:
+          $ref: "#/components/responses/sendEmail"
+        400:
+          description: "バリデーションエラー"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateUserValidationError"
+        500:
+          $ref: "#/components/responses/serverError"
+
+
+  /user/login:
+    post:
+      summary: "ユーザーログイン(email & password)"
+      description: "email & passwordを受け取って、ユーザーをログイン状態にする"
+      tags:
+        - users
+      requestBody:
+        $ref: "#/components/requestBodies/loginValidation"
+      responses:
+        200:
+          $ref: "#/components/responses/success"
+        400:
+          description: "バリデーションエラー"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginValidationError"
+        500:
+          $ref: "#/components/responses/serverError"
+  
+  
+  /user/reset-password:
+    post:
+      summary: "ユーザーのパスワードをリセット"
+      description: "ユーザーのパスワードをリセット。"
+      tags:
+        - users
+      requestBody:
+        $ref: "#/components/requestBodies/resetPassword"
+      responses:
+        200:
+          $ref: "#/components/responses/sendEmail"
+        400:
+          description: "バリデーションエラー"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResetPasswordValidationError"
+        500:
+          $ref: "#/components/responses/serverError"
+
+  /user/reset-password/callback:
+    post:
+      summary: "パスワードのリセットでcallbackされるAPI"
+      description: "パスワードのリセットでcallbackされるAPI"
+      tags:
+        - users
+      requestBody:
+        $ref: "#/components/requestBodies/resetPasswordCallback"
+      responses:
+        200:
+          $ref: "#/components/responses/success"
+        400:
+          description: "バリデーションエラーまたはトークンエラー"
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/CreateNewPasswordValidationError"
+                  - $ref: "#/components/schemas/AccessTokenErrorSchema"
+        500:
+          $ref: "#/components/responses/serverError"
+  
+  /user/update:
+    put:
+      summary: "ユーザー情報の編集"
+      description: "ユーザー情報の編集。name , iconを編集"
+      tags:
+        - users
+      security:
+        - cookieAuth: []
+      requestBody:
+        $ref: "#/components/requestBodies/editValidation"
+      responses:
+        200:
+          $ref: "#/components/responses/success"
+        400:
+          description: "バリデーションエラー"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateUserValidationError"
+        401:
+          $ref: "#/components/responses/authError"
+        500:
+          $ref: "#/components/responses/serverError"
+
+
+  /user/delete:
+    delete:
+      summary: "ユーザーの削除"
+      description: "ユーザーを削除する。"
+      tags:
+        - users
+      security:
+        - cookieAuth: []
+      responses:
+        200:
+          $ref: "#/components/responses/success"
+        401:
+          $ref: "#/components/responses/authError"
+        500:
+          $ref: "#/components/responses/serverError"
+
+  /user/detail:
+    get:
+      summary: "ユーザーの詳細情報を取得"
+      description: "ユーザーの詳細情報を取得"
+      tags:
+        - users
+      security:
+        - cookieAuth: []
+      responses:
+        200:
+          description: "ユーザーの詳細情報を取得"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseUserSchema"
+        401:
+          $ref: "#/components/responses/authError"
+        500:
+          $ref: "#/components/responses/serverError"
+
+  # 認証関連
+  /auth/google:
+    get:
+      summary: "user登録&ログイン(Google認証)"
+      description: "GoogleプロバイダーでのOAuth認証を開始し、Google認証画面にリダイレクトします"
+      tags:
+        - auth
+      responses:
+        #ステータスコード302はリダイレクトを意味する。
+        302:
+          description: "Google認証画面へのリダイレクト"
+          headers:
+            Location:
+              description: "Google OAuth認証URL"
+              schema:
+                type: string
+                example: "https://accounts.google.com/oauth/authorize?client_id=..."
+                format: url
+                description: "Google OAuth認証のURL"
+        400:
+          $ref: "#/components/responses/badRequest"
+        500:
+          $ref: "#/components/responses/serverError"
+  
+  /auth/user/callback:
+    post:
+      summary: "ユーザー登録でcallbackされるAPI"
+      description: "accessTokenを受け取って、ユーザー登録を確立させる"
+      tags:
+        - auth
+      requestBody:
+        $ref: "#/components/requestBodies/accessToken"
+      responses:
+        200:
+          $ref: "#/components/responses/success"
+        400:
+          $ref: "#/components/responses/tokenError"
+        500:
+          $ref: "#/components/responses/serverError"
+
+  /auth/admin/callback:
+    post:
+      summary: "店舗管理者のログインでcallbackされるAPI"
+      description: "店舗管理者のログインでcallbackされるAPI"
+      tags:
+        - auth
+      requestBody:
+        $ref: "#/components/requestBodies/accessToken"
+      responses:
+        200:
+          description: "店舗管理者の登録成功。ログイン情報を返却"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseAdminSchema"
+        400:
+          $ref: "#/components/responses/tokenError"
+        500:
+          $ref: "#/components/responses/serverError"
+
+  /auth/logout:
+    post:
+      summary: "ユーザー・管理者のログアウト。"
+      description: "ユーザーをログアウト状態にする。cookieを削除"
+      tags:
+        - auth
+      security:
+        - cookieAuth: []
+      responses:
+        200:
+          $ref: "#/components/responses/success"
+        401:
+          $ref: "#/components/responses/authError"
+        500:
+          $ref: "#/components/responses/serverError"
+  
+
+  # 店舗関連
+  /stores/top:
+    get:
+      summary: "店舗のトップページ"
+      description: "店舗のトップページを表示する。"
+      tags:
+        - stores
+      parameters:
+        - $ref: "#/components/parameters/latitude"
+        - $ref: "#/components/parameters/longitude"
+      responses:
+        200:
+          description: "半径3km以内の店舗情報を優先的に取得"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseStoreSchema"
+        500:
+          $ref: "#/components/responses/serverError"
+  
+  /stores/index:
+    get:
+      summary: "店舗を一覧で取得"
+      description: "店舗を一覧で取得。モーダルで表示するため、topと情報量は変わらない"
+      tags:
+        - stores
+      parameters:
+        - $ref: "#/components/parameters/genreId"
+        - $ref: "#/components/parameters/prefectureId"
+        - $ref: "#/components/parameters/tagId"
+        - $ref: "#/components/parameters/keyword"
+        - $ref: "#/components/parameters/area"
+      responses:
+        200:
+          description: "店舗を一覧で取得"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseStoreSchema" 
+        500:
+          $ref: "#/components/responses/serverError"
+
+  /stores/{storeId}:
+    get:
+      summary: "店舗の詳細情報を取得"
+      description: "店舗の詳細情報を取得"
+      tags:
+        - stores
+      parameters:
+        - $ref: "#/components/parameters/storeId"
+      responses:
+        200:
+          description: "店舗の詳細情報を取得"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseStoreDetailSchema"
+        404:
+          $ref: "#/components/responses/notFound"
+        500:
+          $ref: "#/components/responses/serverError"
+
+  /stores/{storeId}/like:
+    post:
+      summary: "店舗のいいね"
+      description: "店舗のいいねをする。既にいいねしている場合はいいねを解除する。"
+      tags:
+        - stores
+      parameters:
+        - $ref: "#/components/parameters/storeId"
+      security:
+        - cookieAuth: []
+      responses:
+        200:
+          $ref: "#/components/responses/success"
+        401:
+          $ref: "#/components/responses/authError"
+        404:
+          $ref: "#/components/responses/notFound"
+        500:
+          $ref: "#/components/responses/serverError"
+
+  /stores/{storeId}/comment:
+    get:
+      summary: "店舗のコメントを取得"
+      description: "店舗のコメントを取得する。"
+      tags:
+        - stores
+      parameters:
+        - $ref: "#/components/parameters/storeId"
+      responses:
+        200:
+          description: "店舗のコメントを取得"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseCommentSchema"
+        404:
+          $ref: "#/components/responses/notFound"
+        500:
+          $ref: "#/components/responses/serverError"
+
+  /stores/{storeId}/comment/create:
+    post:
+      summary: "店舗のコメント"
+      description: "店舗のコメントを投稿する。"
+      tags:
+        - stores
+      parameters:
+        - $ref: "#/components/parameters/storeId"
+      security:
+        - cookieAuth: []
+      requestBody:
+        $ref: "#/components/requestBodies/commentValidation"
+      responses:
+        200:
+          $ref: "#/components/responses/success"
+        400:
+          description: "バリデーションエラー"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateCommentValidationError"
+        401:
+          $ref: "#/components/responses/authError"
+        404:
+          $ref: "#/components/responses/notFound"
+        500:
+          $ref: "#/components/responses/serverError"
+
+  # 管理者関連
+  /admin/register:
+    post:
+      summary: "店舗管理者の登録"
+      description: "店舗管理者を登録する。"
+      tags:
+        - admin
+      requestBody:
+        $ref: "#/components/requestBodies/adminRegisterValidation"
+      responses:
+        200:
+          $ref: "#/components/responses/sendEmail"
+        400:
+          description: "バリデーションエラー"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateAdminValidationError"
+        500:
+          $ref: "#/components/responses/serverError"
+    
+  /admin/login:
+    post:
+      summary: "店舗管理者のログイン"
+      description: "店舗管理者のログイン"
+      tags:
+        - admin
+      requestBody:
+        $ref: "#/components/requestBodies/loginValidation"
+      responses:
+        200:
+          description: "店舗管理者のログイン成功"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseAdminSchema"
+        400:
+          description: "バリデーションエラー"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginValidationError"
+        500:
+          $ref: "#/components/responses/serverError"
+
+  /admin/update:
+    put:
+      summary: "店舗管理者の更新"
+      description: "店舗管理者の更新"
+      tags:
+        - admin
+      security:
+        - cookieAuth: []
+      requestBody:
+        $ref: "#/components/requestBodies/updateAdminValidation"
+      responses:
+        200:
+          $ref: "#/components/responses/success"
+        400:
+          description: "バリデーションエラー"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateAdminValidationError"
+        401:
+          $ref: "#/components/responses/authError"
+        500:
+          $ref: "#/components/responses/serverError"
+
+  /admin/delete:
+    delete:
+      summary: "店舗管理者の削除"
+      description: "店舗管理者を削除する。"
+      tags:
+        - admin
+      security:
+        - cookieAuth: []
+      responses:
+        200:
+          $ref: "#/components/responses/success"
+        401:
+          $ref: "#/components/responses/authError"
+        500:
+          $ref: "#/components/responses/serverError"
+
+  # 投稿関連
+  /admin/post:
+    get:
+      summary: "投稿の詳細情報を取得"
+      description: "投稿の詳細情報を取得"
+      tags:
+        - posts
+      parameters:
+        - $ref: "#/components/parameters/postId"
+      responses:
+        200:
+          description: "投稿の詳細情報を取得"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponsePostSchema"
+        404:
+          $ref: "#/components/responses/notFound"
+        500:
+          $ref: "#/components/responses/serverError"
+
+  /admin/post/create:
+    post:
+      summary: "投稿の作成"
+      description: "投稿を作成する。"
+      tags:
+        - posts
+      security:
+        - cookieAuth: []
+      requestBody:
+        $ref: "#/components/requestBodies/postValidation"
+      responses:
+        200:
+          $ref: "#/components/responses/success"
+        400:
+          description: "バリデーションエラー"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateAndUpdatePostValidationError"
+        401:
+          $ref: "#/components/responses/authError"
+        500:
+          $ref: "#/components/responses/serverError"
+
+  /admin/post/{postId}/update:
+    put:
+      summary: "投稿の更新"
+      description: "投稿を更新する。"
+      tags:
+        - posts
+      parameters:
+        - $ref: "#/components/parameters/postId"
+      security:
+        - cookieAuth: []
+      requestBody:
+        $ref: "#/components/requestBodies/postValidation"
+      responses:
+        200:
+          $ref: "#/components/responses/success"
+        400:
+          description: "バリデーションエラー"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateAndUpdatePostValidationError"
+        401:
+          $ref: "#/components/responses/authError"
+        404:
+          $ref: "#/components/responses/notFound"
+        500:
+          $ref: "#/components/responses/serverError"
+
+  /admin/post/{postId}/delete:
+    delete:
+      summary: "投稿の削除"
+      description: "投稿を削除する。"
+      tags:
+        - posts
+      parameters:
+        - $ref: "#/components/parameters/postId"
+      security:
+        - cookieAuth: []
+      responses:
+        200:
+          $ref: "#/components/responses/success"
+        401:
+          $ref: "#/components/responses/authError"
+        404:
+          $ref: "#/components/responses/notFound"
+        500:
+          $ref: "#/components/responses/serverError"
+
+# コンポーネント
+components:
+  #パラメーター
+  #pathパラメーターはエディター上でエラーが出るが、問題ない。
+  #swagger Previewがopenapi3.1.0に多分対応してないので、警告を解消することができない。
+  parameters:
+    userId:
+      name: userId
+      in: path
+      required: true
+      description: "ユーザーID"
+      schema:
+        type: string
+        example: "123e4567-e89b-12d3-a456-426614174000"
+        format: uuid
+    
+    genreId:
+      name: genreId
+      in: query
+      required: false
+      description: "ジャンルID"
+      schema:
+        type: string
+        example: "1"
+
+    storeId:
+      name: storeId
+      in: path
+      required: true
+      description: "店舗ID"
+      schema:
+        type: string
+        example: "1"
+
+    prefectureId:
+      name: prefectureId
+      in: query
+      required: false
+      description: "都道府県ID"
+      schema:
+        type: array
+        items:
+          type: string
+          example: "1"
+        example:
+          - "1"
+          - "2"
+      
+    tagId:
+      name: tagId
+      in: query
+      required: false
+      description: "タグID"
+      schema:
+        type: array
+        items:
+          type: string
+          example: "1"
+        example:
+          - "1"
+          - "2"
+
+    area:
+      name: area
+      in: query
+      required: false
+      description: "エリア"
+      schema:
+        type: array
+        items:
+          type: string
+          example:
+            - "関東"
+            - "関西"
+            - "中部"
+            - "近畿"
+            - "九州"
+            - "東北"
+            - "四国"
+          enum:
+            - "関東"
+            - "関西"
+            - "中部"
+            - "近畿"
+            - "九州"
+            - "東北"
+            - "四国"
+
+    keyword:
+      name: keyword
+      in: query
+      required: false
+      description: "キーワード"
+      schema:
+        type: string
+        example: "ウニ丼"
+
+    latitude:
+      name: latitude
+      in: query
+      required: false
+      description: "緯度"
+      schema:
+        type: number
+        example: 35.6895
+        format: float
+    
+    longitude:
+      name: longitude
+      in: query
+      required: false
+      description: "経度"
+      schema:
+        type: number
+        example: 139.6917
+        format: float
+
+    postId:
+      name: postId
+      in: path
+      required: true
+      description: "投稿ID"
+      schema:
+        type: string
+        example: "1"
+
+  #リクエストボディ
+  requestBodies:
+    registerValidation:
+      description: "メールアドレス&パスワードでのユーザー登録"
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CreateUserSchema"
+
+    loginValidation:
+      description: "メールアドレス&パスワードでのユーザーログイン"
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/LoginSchema"
+    
+    editValidation:
+      description: "ユーザー情報の編集"
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            $ref: "#/components/schemas/UpdateUserSchema"
+    
+    commentValidation:
+      description: "コメントの投稿"
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CreateCommentSchema"
+    
+    adminRegisterValidation:
+      description: "店舗管理者の登録"
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CreateAdminSchema"
+
+    resetPassword:
+      description: "パスワードのリセット"
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ResetPasswordSchema"
+
+    resetPasswordCallback:
+      description: "パスワードのリセットでcallbackされるAPI"
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CreateNewPasswordSchema"
+
+    accessToken:
+      description: "アクセストークンを送信"
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AccessTokenSchema"
+
+    postValidation:
+      description: "投稿の作成"
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            $ref: "#/components/schemas/CreateAndUpdatePostSchema"
+
+    updateAdminValidation:
+      description: "店舗管理者の更新"
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            $ref: "#/components/schemas/UpdateAdminSchema"
+
+  #schemas
+  schemas:
+    #汎用スキーマ
+    EmailSchema:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          description: "メールアドレス"
+          example: "example@example.com"
+          format: email
+          minLength: 1
+          maxLength: 64
+
+    PasswordSchema:
+      type: object
+      required:
+        - password
+      properties:
+        password:
+          type: string
+          description: "パスワード"
+          example: "Password"
+          minLength: 8
+          maxLength: 20
+          format: password
+
+    AccessTokenSchema:
+      type: object
+      required:
+        - accessToken
+      properties:
+        accessToken:
+          type: string
+          description: "URLから取得したtoken"
+          example: "cijij13213ubuihrqrhiu12moovwifof"
+
+    # 入力スキーマ
+    BaseUserSchema:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: "ユーザ名"
+          example: "田中 太郎"
+          minLength: 1
+          maxLength: 12
+    
+    CreateUserSchema:
+      allOf:
+        - $ref: "#/components/schemas/BaseUserSchema"
+        - $ref: "#/components/schemas/EmailSchema"
+        - $ref: "#/components/schemas/PasswordSchema"
+
+    UpdateUserSchema:
+      allOf:
+        - type: object
+        - $ref: "#/components/schemas/BaseUserSchema"
+      properties:
+        icon:
+          type: string
+          format: binary
+          description: "アイコン画像"
+
+    # 管理者スキーマ(ベーススキーマ)
+    BaseAdminSchema:
+      type: object
+      description: "店舗管理者の登録"
+      required:
+        - name
+        - phone
+        - address
+        - latitude
+        - longitude
+        - prefectureId
+      properties:
+        name:
+          type: string
+          description: "店舗名"
+          example: "スシロー"
+        phone:
+          type: string
+          description: "店舗の電話番号"
+          example: "03-1234-5678"
+          format: tel
+        address:
+          type: string
+          description: "店舗の住所"
+          example: "東京都千代田区永田町1-7-1"
+        latitude:
+          type: number
+          description: "店舗の緯度"
+          example: 35.6895
+          format: float
+        longitude:
+          type: number
+          description: "店舗の経度"
+          example: 139.6917
+          format: float
+        link:
+          type: string
+          description: "店舗の公式サイトのURL"
+          example: "https://example.com"
+        startAt:
+          type: string
+          description: "店舗の営業開始時間"
+          example: "10:00"
+          format: time
+        endAt:
+          type: string
+          description: "店舗の営業終了時間"
+          example: "22:00"
+          format: time
+        genreId:
+          type: string
+          description: "店舗のジャンルID"
+          example: "1"
+        prefectureId:
+          type: string
+          description: "店舗の都道府県ID。フォームには都道府県の名前を選択させる"
+          example: "1"
+        tags:
+          type: array
+          description: "店舗のタグID"
+          items:
+            type: string
+            description: "店舗のタグID"
+            example: "1"
+          example:
+            - "1"
+            - "2"
+
+
+    CreateAdminSchema:
+      description: "店舗管理者の登録"
+      allOf:
+        - type: object
+        - $ref: "#/components/schemas/BaseAdminSchema"
+        - $ref: "#/components/schemas/EmailSchema"
+        - $ref: "#/components/schemas/PasswordSchema"
+
+    UpdateAdminSchema:
+      description: "店舗管理者の更新。店舗の写真を新たに追加できる。"
+      allOf:
+        - type: object
+        - $ref: "#/components/schemas/BaseAdminSchema"
+      properties:
+        photo:
+          type: string
+          description: "店舗の写真"
+          format: binary
+          example: "photo.png"
+
+    LoginSchema:
+      allOf:
+        - type: object
+        - $ref: "#/components/schemas/EmailSchema"
+        - $ref: "#/components/schemas/PasswordSchema"
+
+    CreateCommentSchema:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          description: "コメント内容"
+          example: "美味しかったです"
+          minLength: 1
+          maxLength: 255
+
+    ResetPasswordSchema:
+      description: "パスワードをリセットするメールアドレス"
+      allOf:
+        - type: object
+        - $ref: "#/components/schemas/EmailSchema"
+
+    CreateNewPasswordSchema:
+      description: "新しいパスワード"
+      allOf:
+        - type: object
+        - $ref: "#/components/schemas/PasswordSchema"
+
+    CreateAndUpdatePostSchema:
+      type: object
+      required:
+        - title
+        - price
+        - photo
+      properties:
+        title:
+          type: string
+          description: "メニュー名"
+          example: "ウニ丼"
+          minLength: 1
+          maxLength: 20
+        price:
+          type: number
+          description: "メニューの価格"
+          example: 1000
+          format: integer
+        photo:
+          type: string
+          description: "メニューの写真"
+          format: binary
+          example: "menu.png"
+        description:
+          type: string
+          description: "メニューの説明"
+          example: "期間限定メニュー。9月末まで"
+          minLength: 1
+          maxLength: 100
+
+    # レスポンススキーマ
+    ResponseUserSchema:
+      description: "ユーザーの詳細情報を取得"
+      type: object
+      properties:
+        id:
+          type: string
+          description: "ユーザーID(uuid)"
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        email:
+          type: string
+          description: "メールアドレス"
+          example: "example@example.com"
+          format: email
+        name:
+          type: string
+          description: "ユーザー名"
+          example: "田中 太郎"
+          minLength: 1
+          maxLength: 12
+        icon:
+          type: string
+          description: "ユーザーのアイコン。初期アイコンはpublicから参照"
+          example: "https://example.com/icon.png"
+          default: "default-icon.png"
+        likeStores:
+          type: array
+          description: "いいねした店舗"
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "店舗ID(id)"
+                example: "1"
+              name:
+                type: string
+                description: "店舗名"
+                example: "店舗名"
+              photo:
+                type: string
+                description: "店舗の写真。初期写真はpublicから参照"
+                example: "https://example.com/photo.png"
+                default: "default-photo.png"
+            example:
+              - id: "1"
+                name: "店舗名"
+                photo: "https://example.com/photo.png"
+              - id: "2"
+                name: "店舗名"
+                photo: "https://example.com/photo.png"
+        
+
+
+    BaseStoreSchema:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "店舗ID"
+          example: "1"
+        name:
+          type: string
+          description: "店舗名"
+          example: "店舗名"
+        address:
+          type: string
+          description: "店舗の住所"
+          example: "東京都千代田区永田町1-7-1"
+        genre:
+          type: string
+          description: "店舗のジャンル"
+          example: "寿司"
+        isLike:
+          type: boolean
+          description: "ユーザーが店舗をいいねしてるかどうか"
+          example: true
+
+    ResponseStoreSchema:
+      type: array
+      description: "店舗の情報を取得。半径3km以内を優先的に取得"
+      items:
+        allOf:
+          - $ref: "#/components/schemas/BaseStoreSchema"
+          - type: object
+            properties:
+              likeCount:
+                type: number
+                description: "店舗のいいね数"
+                example: 10
+              commentCount:
+                type: number
+                description: "店舗のコメント数"
+                example: 10
+              posts:
+                type: array
+                description: "店舗の投稿。各4件まで表示"
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: "投稿ID"
+                      example: "1"
+                    title:
+                      type: string
+                      description: "投稿タイトル"
+                      example: "ウニ丼"
+                    price:
+                      type: number
+                      description: "投稿の価格"
+                      example: 1000
+                    photo:
+                      type: string
+                      description: "投稿の写真。"
+                      example: "https://example.com/photo.png"
+                      format: url
+      example:
+        - id: "1"
+          name: "店舗名"
+          address: "東京都千代田区永田町1-7-1"
+          genre: "寿司"
+          likeCount: 10
+          commentCount: 10
+          isLike: true
+          posts:
+            - id: "1"
+              title: "ウニ丼"
+              price: 1000
+              photo: "https://example.com/photo.png"
+              likeCount: 10
+              commentCount: 10
+            - id: "2"
+              title: "ウニ丼"
+              price: 1000
+              photo: "https://example.com/photo.png"
+              likeCount: 10
+              commentCount: 10
+            - id: "3"
+              title: "ウニ丼"
+              price: 1000
+              photo: "https://example.com/photo.png"
+              likeCount: 10
+              commentCount: 10
+            - id: "4"
+              title: "ウニ丼"
+              price: 1000
+              photo: "https://example.com/photo.png"
+              likeCount: 10
+              commentCount: 10
+
+    ResponseStoreDetailSchema:
+      allOf:
+        - $ref: "#/components/schemas/BaseStoreSchema"
+        - type: object
+          properties:
+            longitude:
+              type: number
+              description: "経度"
+              example: 139.6917
+              format: float
+            latitude:
+              type: number
+              description: "緯度"
+              example: 35.6895
+              format: float
+            link:
+              type: string
+              description: "店舗の公式サイトのURL"
+              example: "https://example.com"
+              format: url
+            startAt:
+              type: string
+              description: "店舗の営業開始時間"
+              example: "10:00"
+              format: time
+            endAt:
+              type: string
+              description: "店舗の営業終了時間"
+              example: "22:00"
+              format: time
+            comment:
+              type: array
+              description: "店舗の感想・コメント"
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: "コメントID"
+                    example: "1"
+                  content:
+                    type: string
+                    description: "コメント内容"
+                    example: "美味しかったです"
+                  createdAt:
+                    type: string
+                    description: "コメント作成日時"
+                    example: "2021-01-01 00:00:00"
+                    format: date-time
+                  userId:
+                    type: string
+                    description: "コメント者のID"
+                    example: "1"
+                  userName:
+                    type: string
+                    description: "コメント者の名前"
+                    example: "田中 太郎"
+                  userIcon:
+                    type: string
+                    description: "コメント者のアイコン"
+                    example: "https://example.com/icon.png"
+                    default: "default-icon.png"
+            posts:
+              type: array
+              description: "店舗の投稿"
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: "投稿ID"
+                    example: "1"
+                  title:
+                    type: string
+                    description: "投稿タイトル"
+                    example: "ウニ丼"
+                  price:
+                    type: number
+                    description: "投稿の価格"
+                    example: 1000
+                  photo:
+                    type: string
+                    description: "投稿の写真"
+                    example: "https://example.com/photo.png"
+                    format: url
+                  description:
+                    type: string
+                    description: "投稿の説明"
+                    example: "期間限定メニュー。9月末まで"
+            tags:
+              type: array
+              description: "投稿のタグ"
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: "タグID"
+                    example: "1"
+                  name:
+                    type: string
+                    description: "タグ名"
+                    example: "寿司"
+      example:
+        - id: "1"
+          name: "店舗名"
+          address: "東京都千代田区永田町1-7-1"
+          genre: "寿司"
+          isLike: true
+          phone: "03-1234-5678"
+          longitude: 139.6917
+          latitude: 35.6895
+          link: "https://example.com"
+          startAt: "10:00"
+          endAt: "22:00"
+          comment: 
+            - id: "1"
+              content: "美味しかったです"
+              createdAt: "2021-01-01 00:00:00"
+              userId: "1"
+              userName: "田中 太郎"
+              userIcon: "https://example.com/icon.png"
+            - id: "2"
+              content: "美味しかったです"
+              createdAt: "2021-01-01 00:00:00"
+              userId: "1"
+              userName: "田中 太郎"
+              userIcon: "https://example.com/icon.png"
+          posts: 
+            - id: "1"
+              title: "ウニ丼"
+              price: 1000
+              photo: "https://example.com/photo.png"
+              description: "期間限定メニュー。9月末まで"
+            - id: "2"
+              title: "ウニ丼"
+              price: 1000
+              photo: "https://example.com/photo.png"
+              description: "期間限定メニュー。9月末まで"
+          tags:
+            - id: "1"
+              name: "ネット予約可能"
+            - id: "2"
+              name: "宴会OK"
+
+    ResponseCommentSchema:
+      type: array
+      description: "店舗のコメント"
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+            description: "コメントID"
+            example: "1"
+          content:
+            type: string
+            description: "コメント内容"
+            example: "美味しかったです"
+          userId:
+            type: string
+            description: "コメント者のID"
+            format: uuid
+            example: "123e4567-e89b-12d3-a456-426614174000"
+          userName: 
+            type: string
+            description: "コメント者の名前"
+            example: "田中 太郎"
+          userIcon:
+            type: string
+            description: "コメント者のアイコン"
+            example: "https://example.com/icon.png"
+          createdAt:
+            type: string
+            description: "コメント作成日時"
+            example: "2021-01-01 00:00:00"
+            format: date-time
+        example:
+          - id: "1"
+            content: "美味しかったです"
+            userId: "123e4567-e89b-12d3-a456-426614174000"
+            userName: "田中 太郎"
+            userIcon: "https://example.com/icon.png"
+            createdAt: "2021-01-01 00:00:00"
+
+    ResponseAdminSchema:
+      description: "店舗管理者のアクセス時に返却するデータ"
+      type: object
+      properties:
+        id:
+          type: string
+          description: "店舗管理者のID"
+          example: "1"
+        name:
+          type: string
+          description: "店舗名"
+          example: "スシロー"
+        likeCount:
+          type: number
+          description: "店舗のいいね数"
+          example: 100
+        commentCount:
+          type: number
+          description: "店舗のコメント数"
+          example: 100
+        posts:
+          type: array
+          description: "店舗の投稿"
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "投稿ID"
+                example: "1"
+              title:
+                type: string
+                description: "投稿タイトル"
+                example: "ウニ丼"
+              price:
+                type: number
+                description: "投稿の価格"
+                example: 1000
+              photo:
+                type: string
+                description: "投稿の写真"
+                example: "https://example.com/photo.png"
+                format: url
+        comment:
+          type: array
+          description: "店舗に対するコメント"
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "コメントID"
+                example: "1"
+              content:
+                type: string
+                description: "コメント内容"
+                example: "美味しかったです"
+              userId:
+                type: string
+                description: "コメント者のID"
+                example: "1"
+              userName:
+                type: string
+                description: "コメント者の名前"
+                example: "田中 太郎"
+              userIcon:
+                type: string
+                description: "コメント者のアイコン"
+                example: "https://example.com/icon.png"
+              createdAt:
+                type: string
+                description: "コメント作成日時"
+                example: "2021-01-01 00:00:00"
+                format: date-time
+
+    ResponseEmailSchema:
+      description: "登録時やパスワードリセット時など、メールアドレスを返却する時に使う"
+      type: object
+      properties:
+        message:
+          type: string
+          description: "成功時"
+          example: "メールアドレスを送信しました。"
+        email:
+          type: string
+          description: "登録されたメールアドレス"
+          example: "example@example.com"
+          format: email
+
+    ResponsePostSchema:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "投稿ID"
+          example: "1"
+        title:
+          type: string
+          description: "メニュー名"
+          example: "うに丼"
+        price:
+          type: number
+          description: "メニューの価格"
+          example: 1000
+          format: integer
+        photo:
+          type: string
+          description: "メニューの写真"
+          example: "https://example.com/photo.png"
+          format: url
+        description:
+          type: string
+          description: "メニューの説明"
+          example: "期間限定メニュー。9月末まで"
+
+    # バリデーションエラースキーマ
+    # 共通バリデーションエラースキーマ
+    BaseValidationError:
+      type: object
+      properties:
+        message:
+          type: string
+          description: "エラーメッセージ"
+          example: "バリデーションエラーが発生しました"
+
+  
+    CreateUserValidationError:
+      allOf:
+        - $ref: "#/components/schemas/BaseValidationError"
+      type: object
+      properties:
+        errors:
+          type: object
+          description: "各フィールドのエラー詳細"
+          properties:
+            name:
+              type: string
+              description: "ユーザー名のバリデーションエラー"
+              example: 
+              - "ユーザー名は必須です。"
+              - "ユーザー名は20文字以下で入力してください。"
+            email:
+              type: string
+              description: "メールアドレスのバリデーションエラー"
+              example: 
+              - "メールアドレスは必須です。"
+              - "正しいメールアドレス形式で入力してください。"
+              - "このメールアドレスは既に登録されています。"
+            password:
+              type: string
+              description: "パスワードのバリデーションエラー"
+              example: 
+              - "パスワードは必須です。"
+              - "パスワードは8文字以上20文字以下で入力してください。"
+
+    LoginValidationError:
+      allOf:
+        - $ref: "#/components/schemas/BaseValidationError"
+      type: object
+      properties:
+        errors:
+          type: object
+          description: "各フィールドのエラー詳細"
+          properties:
+            email:
+              type: string
+              description: "メールアドレスのバリデーションエラー"
+              example: 
+              - "メールアドレスは必須です。"
+              - "正しいメールアドレス形式で入力してください。"
+            password:
+              type: string
+              description: "パスワードのバリデーションエラー"
+              example: 
+              - "パスワードは必須です。"
+              - "パスワードは8文字以上20文字以下で入力してください。"
+            credentials:
+              type: string
+              description: "ユーザー情報が見つからなかった場合"
+              example: "メールアドレスまたはパスワードが間違っています。"
+
+    UpdateUserValidationError:
+      allOf:
+        - $ref: "#/components/schemas/BaseValidationError"
+      type: object
+      properties:
+        errors:
+          type: object
+          description: "各フィールドのエラー詳細"
+          properties:
+            name: 
+              type: string
+              description: "ユーザー名のバリデーションエラー"
+              example: 
+              - "ユーザー名は必須です。"
+              - "ユーザー名は12文字以下で入力してください。"
+            icon:
+              type: string
+              description: "ユーザーのアイコンのバリデーションエラー"
+              example: "この画像は保存できません"
+
+    AdminCommonValidationError:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "店舗名のバリデーションエラー"
+          example: 
+          - "店舗名は必須です。"
+          - "店舗名は16文字以下で入力してください。"
+          minLength: 1
+          maxLength: 16
+        address:
+          type: string
+          description: "住所のバリデーションエラー"
+          example: 
+          - "住所は必須です。"
+          - "住所は40文字以下で入力してください。"
+          minLength: 1
+          maxLength: 40
+        phone:
+          type: string
+          description: "電話番号のバリデーションエラー"
+          example: 
+          - "電話番号は必須です。"
+          - "正しい電話番号形式で入力してください。"
+          format: tel
+        prefectureId:
+          type: string
+          description: "都道府県IDのバリデーションエラー"
+          example: 
+          - "都道府県は必須です。"
+          format: integer
+        genreId:
+          type: string
+          description: "ジャンルIDのバリデーションエラー"
+          example:
+            - "ジャンルは1つまでです"
+          format: integer
+        tags:
+          type: array
+          description: "タグIDのバリデーションエラー"
+          example:
+            - "タグは最大3つまでです"
+          format: integer
+          maxItems: 3
+        link:
+          type: string
+          description: "公式サイトのURLのバリデーションエラー"
+          example:
+            - "正しいURL形式で入力してください。"
+          format: url
+
+
+    CreateAdminValidationError:
+      allOf:
+        - $ref: "#/components/schemas/BaseValidationError"
+        - type: object
+          properties:
+            errors:
+              allOf:
+                - $ref: "#/components/schemas/AdminCommonValidationError"
+                - properties:
+                    email:
+                      type: string
+                      description: "メールアドレスのバリデーションエラー"
+                      example: 
+                      - "メールアドレスは必須です。"
+                      - "正しいメールアドレス形式で入力してください。"
+                      format: email
+                    password:
+                      type: string
+                      description: "パスワードのバリデーションエラー"
+                      example: 
+                      - "パスドレスは必須です。"
+                      - "パスワードは8文字以上20文字以下で入力してください。"
+                      minLength: 8
+                      maxLength: 20
+
+    UpdateAdminValidationError:
+      allOf:
+        - $ref: "#/components/schemas/BaseValidationError"
+        - type: object
+          properties:
+            errors:
+              allOf:
+                - $ref: "#/components/schemas/AdminCommonValidationError"
+
+
+    AccessTokenErrorSchema:
+      type: object
+      properties:
+        message:
+          type: string
+          description: "トークンエラー"
+          example: "トークンエラーが発生しました。再度ログインしてください。"
+
+    ResetPasswordValidationError:
+      allOf:
+        - $ref: "#/components/schemas/BaseValidationError"
+      type: object
+      properties:
+        errors:
+          type: object
+          description: "各フィールドのエラー詳細"
+          properties:
+            email:
+              type: string
+              description: "メールアドレスのバリデーションエラー"
+              example: 
+              - "メールアドレスは必須です。"
+              - "正しいメールアドレス形式で入力してください。"
+
+    CreateNewPasswordValidationError:
+      allOf:
+        - $ref: "#/components/schemas/BaseValidationError"
+      type: object
+      properties:
+        errors:
+          type: object
+          description: "各フィールドのエラー詳細"
+          properties:
+            password:
+              type: string
+              description: "パスワードのバリデーションエラー"
+              example: 
+              - "パスワードは必須です。"
+              - "パスワードは8文字以上20文字以下で入力してください。"
+              minLength: 8
+              maxLength: 20
+
+    CreateAndUpdatePostValidationError:
+      allOf:
+        - $ref: "#/components/schemas/BaseValidationError"
+      type: object
+      properties:
+        errors:
+          type: object
+          description: "各フィールドのエラー詳細"
+          properties:
+            title:
+              type: string
+              description: "メニュー名のバリデーションエラー"
+              example: 
+              - "メニュー名は必須です。"
+              - "メニュー名は20文字以下で入力してください。"
+            price:
+              type: string
+              description: "メニューの価格のバリデーションエラー"
+              example: 
+              - "メニューの価格は必須です。"
+            photo:
+              type: string
+              description: "メニューの写真のバリデーションエラー"
+              example: 
+              - "メニューの写真は必須です。"
+              - "この画像はアップロードできません。"
+            description:
+              type: string
+              description: "メニューの説明のバリデーションエラー"
+              example: 
+              - "メニューの説明は100文字以下で入力してください。"
+
+    CreateCommentValidationError:
+      description: "コメントのバリデーションエラー"
+      allOf:
+        - $ref: "#/components/schemas/BaseValidationError"
+      type: object
+      properties:
+        errors:
+          type: object
+          description: "各フィールドのエラー詳細"
+          properties:
+            content:
+              type: string
+              description: "コメント内容のバリデーションエラー"
+              example: 
+              - "コメント内容は必須です。"
+              - "コメント内容は255文字以下で入力してください。"
+              minLength: 1
+              maxLength: 255
+
+  # セキュリティ
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      name: accessToken
+      in: cookie
+
+  #汎用的なレスポンス
+  responses:
+    success:
+      description: "成功時"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: "success"
+                example: "success"
+    
+    sendEmail:
+      description: "登録されたメールアドレスを返却する時に使う"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ResponseEmailSchema"
+    
+    serverError:
+      description: "サーバーエラー"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: "サーバーエラーメッセージ"
+                example: "サーバーエラーが発生しました"
+
+    tokenError:
+      description: "トークンエラー"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AccessTokenErrorSchema"
+
+    authError:
+      description: "認証エラー"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: "認証エラーメッセージ"
+                example: "認証エラーが発生しました"
+
+    notFound:
+      description: "リソースが見つからない"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: "エラーメッセージ"
+                example: "見つかりませんでした。"
+
+    badRequest:
+      description: "リクエストエラー"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: "エラーメッセージ"
+                example: "リクエストエラーが発生しました"
