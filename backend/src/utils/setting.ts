@@ -1,5 +1,5 @@
 import { Context } from "hono"
-
+import { PrismaClient } from "@prisma/client"
 // 設定に関するファイル。
 // 環境変数の型定義
 export type Bindings = {
@@ -8,7 +8,7 @@ export type Bindings = {
     FRONT_DEV_URL : string
 }
 // アプリURLを取得する関数
-export const getAppUrl = (c : Context<{ Bindings : Bindings }>) => {
+export const getAppUrl = (c : Context<{ Bindings : Bindings}>) => {
     if (c.env.NODE_ENV === "production") {
         return c.env.FRONT_APP_URL
     }

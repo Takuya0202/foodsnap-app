@@ -33,10 +33,12 @@ export const supabaseMiddleware = (): MiddlewareHandler => {
       throw new Error('SUPABASE_PUBLISHABLE_KEY missing!')
     }
 
+    const runtimeEnv = env<{ NODE_ENV?: string }>(c)
+    const isProd = runtimeEnv.NODE_ENV === 'production'
     const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
         cookieOptions : {
-            sameSite : "none",
-            secure : process.env.NODE_ENV === "production",
+            sameSite : isProd ? 'none' : 'lax',
+            secure : isProd,
             httpOnly : true,
         },
         cookies: {
