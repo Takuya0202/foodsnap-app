@@ -9,6 +9,10 @@ export default function Login() {
     return (
         <div>
             <button onClick={handleGoogleLogin}>google Login</button>
+            <form action="">
+                <p>email</p>
+                
+            </form>
         </div>
     )
 }

@@ -4,3 +4,6 @@ SUPABASE_PUBLISHABLE_KEY=
 #フロントエンドのパス
 FRONT_APP_URL=
 FRONT_DEV_URL=http://localhost:3000
+#APIのパス
+API_APP_URL=
+API_DEV_URL=http://localhost:8787
