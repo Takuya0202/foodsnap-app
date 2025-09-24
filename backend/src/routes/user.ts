@@ -1,6 +1,6 @@
 import { zValidator } from "@hono/zod-validator";
 import { Context, Hono } from "hono";
-import { CreateUserRequest, createUserSchema, LoginUserRequest, loginUserSchema } from "../schema/user";
+import { CreateUserRequest, createUserSchema, LoginUserRequest, loginUserSchema, UpdateUserRequest, updateUserSchema } from "../schema/user";
 import { ValidationError } from "../types/errorResponse";
 import { getSupabase } from "../middleware/supabase";
 import { getAppUrl, getValidationErrorResponnse } from "../utils/setting";
@@ -9,6 +9,7 @@ import { SuccessRegisterResponse } from "../types/successResponse";
 import { supabaseAuthErrorCode } from "../utils/supabaseMessage";
 import { ZodError } from "zod";
 import { userDetailResponse } from "../types/userResponse";
+import { v4 as uuidv4 } from "uuid";
 
 
 export const userApp = new Hono()
@@ -17,7 +18,7 @@ export const userApp = new Hono()
         // バリデーションエラーの場合
         if (!result.success) {
             const errors = getValidationErrorResponnse(result.error as ZodError)
-            return c.json<ValidationError>({
+            return c.json({
                 message: "validation error",
                 errors: errors
             }, 400);
@@ -39,13 +40,13 @@ export const userApp = new Hono()
         })
         // supabaseエラー
         if (!user || !user.email || error) {
-            return c.json<SupabaseError>({
+            return c.json({
                 message: "supabase error",
                 error: error?.code ? supabaseAuthErrorCode[error.code] : '予期せぬエラーが発生しました。'
             }, 400);
         }
         // 成功したらemailを返却
-        return c.json<SuccessRegisterResponse>({
+        return c.json({
             message: "register success",
             email: user.email
         })
@@ -59,6 +60,10 @@ export const userApp = new Hono()
     try {
         if (!result.success) {
             const errors = getValidationErrorResponnse(result.error as ZodError)
+            return c.json({
+                message : "validation error",
+                errors : errors
+            }, 400);
         }
 
         const { email , password } : LoginUserRequest = result.data;
@@ -71,7 +76,7 @@ export const userApp = new Hono()
             return c.json({
                 message : 'fail for login',
                 error : 'メールアドレスまたはパスワードが正しくありません。'
-            })
+            }, 400);
         }
 
         return c.json({
@@ -160,3 +165,80 @@ export const userApp = new Hono()
         }, 500);
     }
 })
+  .put('/update' , zValidator('form' , updateUserSchema , async (result , c : Context) => {
+    try {
+        if (!result.success) {
+            const errors = getValidationErrorResponnse(result.error as ZodError)
+            return c.json({
+                message : "validation error",
+                errors : errors
+            }, 400);
+        }
+
+        const { name , icon } : UpdateUserRequest = result.data;
+        const supabase = getSupabase(c);
+        const { data : { user } , error : userError } = await supabase.auth.getUser();
+        if (!user || userError ) {
+            return c.json({
+                message : "unAuthorized",
+                error : "ユーザー情報の取得に失敗しました。再度ログインをお試しください。"
+            }, 401);
+        }
+
+        let path = null;
+        // アイコンをstorageにupload
+        if (icon) {
+            try {
+                // 拡張子を取得
+                const extention = icon.name.split('.').pop();
+                // path名を作成。
+                const iconUrl = `${uuidv4()}.${extention}`;
+                // upload
+                const { data : uploadData , error : uploadError } = await supabase
+                    .storage
+                    .from('icon')
+                    .upload(iconUrl , icon , {
+                        cacheControl : '3600',
+                        upsert : false,
+                    })
+                // 失敗
+                if (uploadError) {
+                    throw uploadError;
+                }
+                // urlを取得
+                const { data : { publicUrl } } = supabase.storage.from('icon').getPublicUrl(iconUrl);
+                path = publicUrl;
+            } catch (error) {
+                return c.json({
+                    message : 'fail to upload icon',
+                    error : 'アイコンのアップロードに失敗しました。再度お試しください。'
+                }, 400);
+            }
+        }
+
+        const { data : updateUser , error : updateUserError } = await supabase
+            .from('profiles')
+            .update({
+                name,
+                icon : path,
+                updated_at : new Date().toISOString()
+            })
+            .eq('user_id' , user.id)
+            .select();
+
+        if (updateUserError) {
+            return c.json({
+                message : 'fail to update user',
+                error : 'ユーザー情報の更新に失敗しました。再度お試しください。'
+            }, 400);
+        }
+        
+        return c.json({
+            message : 'success to update user'
+        })
+    } catch (error) {
+        return c.json({
+            message : 'internal server error',
+        }, 500);
+    }
+}))
