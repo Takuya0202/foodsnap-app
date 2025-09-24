@@ -3,10 +3,11 @@ import { SupabaseClient } from '@supabase/supabase-js'
 import type { Context, MiddlewareHandler } from 'hono'
 import { env } from 'hono/adapter'
 import { setCookie } from 'hono/cookie'
+import { Database } from '../types/supabase'
 
 declare module 'hono' {
   interface ContextVariableMap {
-    supabase: SupabaseClient
+    supabase: SupabaseClient<Database>
   }
 }
 

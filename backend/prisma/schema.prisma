@@ -32,6 +32,10 @@ model profile {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  // リレーションを追加
+  likes    Like[]
+  comments Comment[]
+
   @@map("profiles")
 }
 
@@ -122,14 +126,12 @@ model Tag {
 }
 
 model Comment {
-  id String @id @default(cuid())
-
-  userId  String @map("user_id") @db.Uuid
-  content String @db.Text
-
-  // リレーション
-  storeId String @map("store_id")
-  store   Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  id      String  @id @default(cuid())
+  userId  String  @map("user_id") @db.Uuid
+  content String  @db.Text
+  storeId String  @map("store_id")
+  store   Store   @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  profile profile @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -139,9 +141,10 @@ model Comment {
 
 // 中間テーブル(複合主キー)
 model Like {
-  userId  String @map("user_id") @db.Uuid
-  storeId String @map("store_id")
-  store   Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  userId  String  @map("user_id") @db.Uuid
+  storeId String  @map("store_id")
+  store   Store   @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  profile profile @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
