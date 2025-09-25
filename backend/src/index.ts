@@ -4,6 +4,7 @@ import { authApp } from './routes/auth'
 import { supabaseMiddleware } from './middleware/supabase'
 import { cors } from 'hono/cors'
 import { getAppUrl, Bindings } from './utils/setting'
+import { storeApp } from './routes/store'
 
 // honoRPCはメソッドチェーンにしないと参照できないので、このような書き方になる
 const app = new Hono<{ Bindings : Bindings }>()
@@ -25,6 +26,7 @@ const app = new Hono<{ Bindings : Bindings }>()
   // エンドポイントをグルーピング
   .route('/user', userApp)
   .route('/auth', authApp)
+  .route('/store' , storeApp)
 
 export default app
 export type AppType = typeof app
