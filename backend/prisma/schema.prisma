@@ -45,6 +45,7 @@ model Store {
   userId    String  @unique @map("user_id") @db.Uuid // authのリレーションはsupabaseの管理画面で行う
   name      String  @db.VarChar(64)
   address   String  @db.VarChar(128)
+  phone     String  @db.VarChar(32)
   latitude  Float
   longitude Float
   photo     String? @db.VarChar(255)

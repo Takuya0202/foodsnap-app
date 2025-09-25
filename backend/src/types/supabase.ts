@@ -313,6 +313,7 @@ export type Database = {
           link: string | null
           longitude: number
           name: string
+          phone: string
           photo: string | null
           prefecture_id: string | null
           start_at: string | null
@@ -329,6 +330,7 @@ export type Database = {
           link?: string | null
           longitude: number
           name: string
+          phone: string
           photo?: string | null
           prefecture_id?: string | null
           start_at?: string | null
@@ -345,6 +347,7 @@ export type Database = {
           link?: string | null
           longitude?: number
           name?: string
+          phone?: string
           photo?: string | null
           prefecture_id?: string | null
           start_at?: string | null

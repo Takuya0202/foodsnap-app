@@ -1,6 +1,6 @@
 import { Context, Hono } from "hono";
 import { getSupabase } from "../middleware/supabase";
-import { storeResponse } from "../types/storeResponse";
+import { storeDetailResponse, storeResponse } from "../types/storeResponse";
 import { getCookie, setCookie } from "hono/cookie";
 
 export const storeApp = new Hono()
@@ -252,5 +252,107 @@ export const storeApp = new Hono()
         message: 'Internal server error',
         error: 'サーバーエラーが発生しました。'
       }, 500);
+    }
+  })
+  // 店舗詳細取得
+  .get('/:storeId' , async(c : Context) => {
+    try {
+      const { storeId } = c.req.param();
+      if (!storeId) {
+        return c.json({
+          message : 'bad request',
+          error : '無効なリクエストです。'
+        } , 400)
+      }
+
+      const supabase = getSupabase(c);
+      const { data , error } = await supabase
+        .from('stores')
+        .select(`
+          id,
+          name,
+          address,
+          photo,
+          phone,
+          link,
+          latitude,
+          longitude,
+          start_at,
+          end_at,
+          genres (name),
+          comments (
+            id,
+            user_id,
+            content,
+            created_at,
+            profiles!user_id (
+              name,
+              icon
+            )
+          ),
+          posts (
+            id,
+            name,
+            price,
+            photo,
+            description
+          ),
+          store_tags (
+            tags (
+              id,
+              name
+            )
+          )
+          `)
+        .eq('id' , storeId)
+        .single();
+
+      if (!data || error) {
+        return c.json({
+          message : 'fail to refrence store',
+          error : '店舗が存在しません。'
+        } , 404);
+      }
+
+      const res : storeDetailResponse = {
+        id : data.id,
+        name : data.name,
+        address : data.address,
+        genre : data.genres?.name || null,
+        photo : data?.photo,
+        phone : data.phone,
+        link : data?.link,
+        latitude : data.latitude,
+        longitude : data.longitude,
+        startAt : data?.start_at,
+        endAt : data?.end_at,
+        comments : data.comments.map((comment) => ({
+          id : comment.id,
+          userId : comment.user_id,
+          userName : comment.profiles.name,
+          userIcon : comment.profiles?.icon,
+          content : comment.content,
+          createdAt : comment.created_at
+        })),
+        posts : data.posts.map((post) => ({
+          id : post.id,
+          name : post.name,
+          price : post.price,
+          photo : post.photo,
+          description : post?.description
+        })),
+        tags : data.store_tags.map((tag) => ({
+          id : tag.tags.id,
+          name : tag.tags.name
+        }))
+      }
+
+      return c.json(res , 200);
+
+    } catch (error) {
+      return c.json({
+        message : 'Internal server error',
+        error : 'サーバーエラーが発生しました。'
+      } , 500);
     }
   })
