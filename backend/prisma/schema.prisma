@@ -24,7 +24,7 @@ model profile {
   id Int @id @default(autoincrement())
 
   // Supabase Authのユーザーuuidを挿入
-  userId String  @unique @map("user_id") @db.Uuid
+  userId String  @unique @map("user_id") @db.Uuid // authのリレーションはsupabaseの管理画面で行う
   name   String  @db.VarChar(64)
   role   Role // admin or user
   icon   String? @db.VarChar(255)
@@ -42,7 +42,7 @@ model profile {
 model Store {
   id String @id @default(cuid())
 
-  userId    String  @unique @map("user_id") @db.Uuid
+  userId    String  @unique @map("user_id") @db.Uuid // authのリレーションはsupabaseの管理画面で行う
   name      String  @db.VarChar(64)
   address   String  @db.VarChar(128)
   latitude  Float

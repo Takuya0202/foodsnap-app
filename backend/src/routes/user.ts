@@ -1,11 +1,8 @@
 import { zValidator } from "@hono/zod-validator";
 import { Context, Hono } from "hono";
-import { CreateUserRequest, createUserSchema, LoginUserRequest, loginUserSchema, UpdateUserRequest, updateUserSchema } from "../schema/user";
-import { ValidationError } from "../types/errorResponse";
+import { CreateNewPasswordRequest, createNewPasswordSchema, CreateUserRequest, createUserSchema, LoginUserRequest, loginUserSchema, ResetPasswordRequest, resetPasswordSchema, UpdateUserRequest, updateUserSchema } from "../schema/user";
 import { getSupabase } from "../middleware/supabase";
 import { getAppUrl, getValidationErrorResponnse } from "../utils/setting";
-import { SupabaseError } from "../types/errorResponse";
-import { SuccessRegisterResponse } from "../types/successResponse";
 import { supabaseAuthErrorCode } from "../utils/supabaseMessage";
 import { ZodError } from "zod";
 import { userDetailResponse } from "../types/userResponse";
@@ -242,3 +239,118 @@ export const userApp = new Hono()
         }, 500);
     }
 }))
+  .delete('/delete' , async(c : Context) => {
+    try {
+        const supabase = getSupabase(c);
+        const { data : { user } , error : userError } = await supabase.auth.getUser();
+        if (!user || userError) {
+            return c.json({
+                message : 'unAuthorized',
+                error : 'ユーザー情報の取得に失敗しました。再度ログインをお試しください。'
+            }, 401);
+        }
+
+        // auth.user.idとprofiles.user_idはリレーション(cascade)なので、自動でprofilesも削除される。
+        const { data : deleteUser , error : deleteUserError } = await supabase.auth.admin.deleteUser(user.id);
+        if (deleteUserError) {
+            return c.json({
+                message : 'fail to delete user',
+                error : 'ユーザーの削除に失敗しました。再度お試しください。'
+            } , 400);
+        }
+
+        return c.json({
+            message : 'success to delete user',
+        } , 200);
+    } catch (error) {
+        return c.json({
+            message : 'internal server error',
+        } , 500);
+    }
+  })
+  .post('reset-password' , zValidator('json' , resetPasswordSchema , async(result , c : Context) => {
+    try {
+        if (!result.success) {
+            const errors = getValidationErrorResponnse(result.error as ZodError);
+            return c.json({
+                message : 'validation error',
+                errors : errors
+            } , 400);
+        }
+
+        const { email } : ResetPasswordRequest = result.data;
+        const supabase = getSupabase(c);
+
+        const { data , error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo : `${getAppUrl(c)}/user/reset-password/callback`
+        });
+
+        if (error) {
+            return c.json({
+                message : 'fail to reset password',
+                error : 'パスワードのリセットに失敗しました。再度お試しください。'
+            } , 400);
+        }
+
+        return c.json({
+            message : 'success to reset password',
+            email : email
+        } , 200);
+    } catch (error) {
+        return c.json({
+            message : 'internal server error',
+        } , 500);
+    }
+  }))
+  .post('/reset-passwprd/callback' , zValidator('json' , createNewPasswordSchema , async (result , c : Context) => {
+    try {
+        if (!result.success) {
+            const errors = getValidationErrorResponnse(result.error as ZodError);
+            return c.json({
+                message : 'validation error',
+                errors : errors
+            } , 400);
+        }
+        // トークンの取得
+        const authHeader = c.req.header('Authorization');
+        const accessToken = authHeader?.replace('Bearer' , '');
+
+        if (!accessToken) {
+            return c.json({
+                message : 'token not found',
+                error : '予期せぬエラーが発生しました。'
+            } , 400);
+        }
+
+        const { password } : CreateNewPasswordRequest = result.data;
+        const supabase = getSupabase(c);
+
+        const { data : { user } , error : userError} = await supabase.auth.getUser(accessToken);
+        if (userError || !user) {
+            return c.json({
+                message : 'access token error',
+                error : '予期せぬエラーが発生しました。'
+            } , 400);
+        }
+        
+        const { error : updateUserError } = await supabase.auth.admin.updateUserById(
+            user.id,
+            { password : password }
+        );
+
+        if (updateUserError) {
+            return c.json({
+                message : 'fail to update user',
+                error : 'パスワードの更新に失敗しました。再度お試しください。'
+            } , 400);
+        }
+
+        return c.json({
+            message : 'パスワードの変更に成功しました。'
+        } , 200);
+    } catch (error) {
+        return c.json({
+            message : 'internal server error',
+        } , 500);
+    }
+  }))

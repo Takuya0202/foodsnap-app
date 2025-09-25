@@ -27,8 +27,11 @@ const baseUserSchema = z.object({
 export const createUserSchema = baseUserSchema.pick({ name : true , email : true , password : true});
 export const updateUserSchema = baseUserSchema.pick({ name : true , icon : true});
 export const loginUserSchema = baseUserSchema.pick({ email : true , password : true});
-
+export const resetPasswordSchema = baseUserSchema.pick({ email : true });
+export const createNewPasswordSchema = baseUserSchema.pick({ password : true });
 // 型生成
 export type CreateUserRequest = z.infer<typeof createUserSchema>;
 export type UpdateUserRequest = z.infer<typeof updateUserSchema>;
 export type LoginUserRequest = z.infer<typeof loginUserSchema>;
+export type ResetPasswordRequest = z.infer<typeof resetPasswordSchema>;
+export type CreateNewPasswordRequest = z.infer<typeof createNewPasswordSchema>;

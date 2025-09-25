@@ -3,6 +3,7 @@ import { getSupabase } from "../middleware/supabase";
 import { getAppUrl , getApiUrl} from "../utils/setting";
 import { supabaseAuthErrorCode } from "../utils/supabaseMessage";
 
+// OAuthやcallbackなどに関するエンドポイント
 export const authApp = new Hono()
   .get('/google', async(c: Context) => {
     try {
@@ -85,7 +86,10 @@ export const authApp = new Hono()
   })
   // ユーザー登録(email)でcallbackされるページ
   .post('user/callback' , async(c : Context) => {
-    const { accessToken } = await c.req.json<{ accessToken : string }>();
+    // フロントからのトークン取得
+    const authHeader = c.req.header('Authorization');
+    const accessToken = authHeader?.replace('Bearer' , '');
+    
     if (!accessToken) {
         return c.json({
             message : 'accessToken not found',
