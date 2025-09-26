@@ -1,5 +1,6 @@
 "use client"
 import { client } from "@/utils/setting"
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function TopPage() {
@@ -17,6 +18,7 @@ export default function TopPage() {
     return (
         <div>
             <h1>TopPage</h1>
+            <Link href='/user'>ステータス確認</Link>
             <button onClick={handleLogout}>ログアウト</button>
         </div>
     )

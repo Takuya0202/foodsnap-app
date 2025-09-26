@@ -1,7 +1,12 @@
 import { Context, Hono } from "hono";
 import { getSupabase } from "../middleware/supabase";
-import { storeDetailResponse, storeResponse } from "../types/storeResponse";
+import { commentResponse, storeDetailResponse, storeResponse } from "../types/storeResponse";
 import { getCookie, setCookie } from "hono/cookie";
+import { zValidator } from "@hono/zod-validator";
+import { CreateCommentRequest, createCommentSchema } from "../schema/store";
+import { getValidationErrorResponnse } from "../utils/setting";
+import { ZodError } from "zod";
+import cuid from "cuid";
 
 export const storeApp = new Hono()
   .get('/top', async (c: Context) => {
@@ -356,3 +361,201 @@ export const storeApp = new Hono()
       } , 500);
     }
   })
+  // いいね
+  .post('/:storeId/like' , async(c : Context ) => {
+    try {
+      const { storeId } = c.req.param();
+      if (!storeId) {
+        return c.json({
+          message : 'bad request',
+          error : '無効なリクエストです。'
+        } , 400);
+      }
+
+      // ユーザー情報を取得
+      const supabase = getSupabase(c);
+      const { data : { user } , error : userError } = await supabase.auth.getUser();
+      if (!user || !user.id || userError ) {
+        return c.json({
+          message : 'unAuthorized',
+          error : 'ログインが必要です。'
+        } , 401);
+      }
+
+      // ユーザーがいいねしているかどうか
+      const { data  : isLike , error : isLikeError } = await supabase
+        .from('likes')
+        .select('*')
+        .eq('user_id' , user.id)
+        .eq('store_id' , storeId)
+        .single();
+
+      if (isLikeError) {
+        return c.json({
+          message : 'fail to check like',
+          error : 'いいねの確認に失敗しました。'
+        } , 400);
+      }
+      
+      // いいねしていない場合、追加
+      if (!isLike) {
+        const { data : likeData , error : likeError } = await supabase
+          .from('likes')
+          .insert({
+            user_id : user.id,
+            store_id : storeId,
+            created_at : new Date().toISOString(),
+            updated_at : new Date().toISOString(),
+          })
+          .select()
+
+        if (!likeData || likeError) {
+          return c.json({
+            message : 'fail to add like',
+            error : 'いいねに失敗しました。'
+          } , 400);
+        }
+        else {
+          return c.json({
+            message : 'いいねに成功しました。',
+          } , 200);
+        }
+      }
+      // いいねをしている場合、削除
+      else {
+        const { data : likeData , error : likeError } = await supabase
+          .from('likes')
+          .delete()
+          .eq('user_id' , user.id)
+          .eq('store_id' , storeId)
+          .select();
+        
+        if (!likeData || likeError) {
+          return c.json({
+            message : 'fail to delete like',
+            error : 'いいねの削除に失敗しました。'
+          } , 400);
+        }
+        else {
+          return c.json({
+            message : 'いいねを削除しました。',
+          } , 200);
+        }
+      }
+    } catch (error) {
+      return c.json({
+        message : 'Internal server error',
+        error : 'サーバーエラーが発生しました。'
+      } , 500);
+    }
+  })
+  // コメントの取得
+  .get('/:storeId/comments' , async(c : Context) => {
+    try {
+      const { storeId } = c.req.param();
+      if (!storeId) {
+        return c.json({
+          message : 'bad request',
+          error : '無効なリクエストです。'
+        } , 400);
+      }
+
+      const supabase = getSupabase(c);
+
+      const { data , error } = await supabase
+        .from('comments')
+        .select(`
+          id,
+          user_id,
+          content,
+          created_at,
+          profiles!user_id (
+            name,
+            icon
+          )
+        `)
+        .eq('store_id' , storeId)
+      
+      if (!data || error) {
+        return c.json({
+          message : 'fail to get comments',
+          error : 'コメントの取得に失敗しました。'
+        } , 400);
+      }
+
+      const res : commentResponse = data.map((comment) => ({
+        id : comment.id,
+        userId : comment.user_id,
+        userName : comment.profiles.name,
+        userIcon : comment.profiles?.icon,
+        content : comment.content,
+        createdAt : comment.created_at
+      }));
+
+      return c.json(res , 200);
+
+    } catch (error) {
+      return c.json({
+        message : 'Internal server error',
+        error : 'サーバーエラーが発生しました。'
+      } , 500);
+    }
+  })
+  // コメントの投稿
+  .post('/:storeId/comments' , zValidator('json' , createCommentSchema , async(result , c : Context ) => {
+    try {
+      const { storeId } = c.req.param();
+      if (!storeId) {
+        return c.json({
+          message : 'bad request',
+          error : '無効なリクエストです。'
+        } , 400);
+      }
+
+      if (!result.success) {
+        const errors = getValidationErrorResponnse(result.error as ZodError);
+        return c.json({
+          message : 'validation error',
+          errors : errors
+        } , 400);
+      }
+
+      const { content } : CreateCommentRequest = result.data;
+      const supabase = getSupabase(c);
+      const { data : { user } , error : userError } = await supabase.auth.getUser();
+      if (!user || !user.id || userError) {
+        return c.json({
+          message : 'unAuthorized',
+          error : 'ログインが必要です。'
+        } , 401);
+      }
+
+      const { data : insertData , error : insertError } = await supabase
+        .from('comments')
+        .insert({
+          id : cuid(),
+          user_id : user.id,
+          store_id : storeId,
+          content : content,
+          created_at : new Date().toISOString(),
+          updated_at : new Date().toISOString(),
+        })
+        .select();
+      
+      if (!insertData || insertError) {
+        return c.json({
+          message : 'fail to insert comment',
+          error : 'コメントの投稿に失敗しました。'
+        } , 400);
+      }
+
+      return c.json({
+        message : 'コメントを投稿しました。',
+      } , 200);
+    } catch (error) {
+      return c.json({
+        message : 'Internal server error',
+        error : 'サーバーエラーが発生しました。'
+      } , 500);
+    }
+  }))

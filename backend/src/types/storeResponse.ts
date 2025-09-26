@@ -50,3 +50,12 @@ export type storeDetailResponse = {
         name : string,
     }> | null,
 }
+
+export type commentResponse = Array<{
+    id : string,
+    userId : string,
+    userName : string,
+    userIcon : string | null,
+    content : string,
+    createdAt : string,
+}> | null
