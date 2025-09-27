@@ -65,6 +65,8 @@ const baseAdminSchema = z.object({
 
 export const createAdminSchema = baseAdminSchema;
 export const updateAdminSchema = baseAdminSchema.omit({ password: true, email: true });
+export const loginAdminSchema = baseAdminSchema.pick({ email: true, password: true });
 
 export type CreateAdminRequest = z.infer<typeof createAdminSchema>;
 export type UpdateAdminRequest = z.infer<typeof updateAdminSchema>;
+export type LoginAdminRequest = z.infer<typeof loginAdminSchema>;

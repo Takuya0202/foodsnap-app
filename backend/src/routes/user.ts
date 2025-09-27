@@ -13,7 +13,7 @@ import {
   updateUserSchema,
 } from '../schema/user';
 import { getSupabase } from '../middleware/supabase';
-import { getAppUrl, getValidationErrorResponnse } from '../utils/setting';
+import { getValidationErrorResponnse } from '../utils/setting';
 import { supabaseAuthErrorCode } from '../utils/supabaseMessage';
 import { ZodError } from 'zod';
 import { userDetailResponse } from '../types/userResponse';
@@ -50,7 +50,7 @@ export const userApp = new Hono()
             data: {
               name,
             },
-            emailRedirectTo: `${getAppUrl(c)}/user/auth/callback`,
+            emailRedirectTo: `${c.env.APP_URL}/user/auth/callback`,
           },
         });
         // supabaseエラー
@@ -385,7 +385,7 @@ export const userApp = new Hono()
         const supabase = getSupabase(c);
 
         const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${getAppUrl(c)}/user/reset-password/callback`,
+          redirectTo: `${c.env.APP_URL}/user/reset-password/callback`,
         });
 
         if (error) {

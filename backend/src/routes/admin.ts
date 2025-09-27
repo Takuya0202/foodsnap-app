@@ -1,10 +1,11 @@
 import { zValidator } from '@hono/zod-validator';
 import { Context, Hono } from 'hono';
-import { CreateAdminRequest, createAdminSchema } from '../schema/admin';
-import { getAppUrl, getValidationErrorResponnse } from '../utils/setting';
+import { CreateAdminRequest, createAdminSchema, LoginAdminRequest, loginAdminSchema } from '../schema/admin';
+import { getValidationErrorResponnse } from '../utils/setting';
 import { ZodError } from 'zod';
 import { getSupabase } from '../middleware/supabase';
 import { v4 as uuidv4 } from 'uuid';
+import { AdminReponse } from '../types/adminReponse';
 
 export const adminApp = new Hono().post(
   '/register',
@@ -139,7 +140,7 @@ export const adminApp = new Hono().post(
         email,
         password,
         options: {
-          emailRedirectTo: `${getAppUrl(c)}/admin/auth/callback`,
+          emailRedirectTo: `${c.env.APP_URL}/admin/auth/callback`,
           data: {
             name,
             phone,
@@ -183,4 +184,90 @@ export const adminApp = new Hono().post(
       );
     }
   })
-);
+)
+  .post('/login' , zValidator('json' , loginAdminSchema , async(result , c : Context) => {
+    if (!result.success) {
+      const errors = getValidationErrorResponnse(result.error as ZodError);
+      return c.json({
+        message : 'validation error',
+        errors : errors,
+      });
+    }
+
+    const { email , password } : LoginAdminRequest = result.data;
+    const supabase = getSupabase(c);
+
+    const { data : { user } , error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (!user || error ) {
+      return c.json({
+        message : 'fail for login',
+        error : 'メールアドレスまたはパスワードが正しくありません。',
+      } , 400);
+    }
+
+    // 管理者の情報を取得
+    const { data :  admin  , error : adminError } = await supabase
+      .from('stores')
+      .select(`
+          id,
+          name,
+          likes (count),
+          posts (
+            id,
+            name,
+            price,
+            photo,
+            description,
+            updated_at
+          ),
+          comments (
+            count,
+            id,
+            content,
+            user_id,
+            profiles!user_id (
+              name,
+              icon
+            ),
+            created_at
+          )
+      `)
+      .eq('user_id' , user.id)
+      .single();
+
+    if (!admin || adminError) {
+      return c.json({
+        message : 'fail to get admin',
+        error : '管理者の情報の取得に失敗しました。再度ログインをお試しください。',
+      } , 400);
+    }
+
+    const res : AdminReponse = {
+      id : admin.id,
+      name : admin.name,
+      likeCount : admin.likes[0]?.count,
+      commentCount : admin.comments[0]?.count,
+      posts : admin.posts.map(post => ({
+        id : post.id,
+        name : post.name,
+        price : post.price,
+        photo : post.photo,
+        description : post.description,
+        updatedAt : post.updated_at,
+      })) || null,
+      comments : admin.comments.map(comment => ({
+        id : comment.id,
+        content : comment.content,
+        userId : comment.user_id,
+        userName : comment.profiles.name,
+        userIcon : comment.profiles.icon,
+        createdAt : comment.created_at,
+      })) || null,
+    }
+
+    return c.json(res , 200);
+  }))

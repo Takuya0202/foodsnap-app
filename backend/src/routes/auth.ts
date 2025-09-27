@@ -1,6 +1,5 @@
 import { Context, Hono } from 'hono';
 import { getSupabase } from '../middleware/supabase';
-import { getAppUrl, getApiUrl } from '../utils/setting';
 import { supabaseAuthErrorCode } from '../utils/supabaseMessage';
 import cuid from 'cuid';
 import { AdminReponse } from '../types/adminReponse';
@@ -17,28 +16,18 @@ export const authApp = new Hono()
       } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${getApiUrl(c)}/api/auth/google/callback`,
+          redirectTo: `${c.env.API_URL}/api/auth/google/callback`,
         },
       });
 
       // エラー、urlの取得不足
       if (error || !url) {
-        return c.json(
-          {
-            message: 'fail for google auth',
-            error: error?.message || 'url not found',
-          },
-          400
-        );
+        throw error;
       }
       return c.redirect(url, 302);
     } catch (error) {
-      return c.json(
-        {
-          message: 'internal server error',
-        },
-        500
-      );
+      console.log(error);
+      return c.redirect(`${c.env.APP_URL}/auth/error`, 302);
     }
   })
   // OAuthのcallbackで呼び出される。
@@ -46,29 +35,29 @@ export const authApp = new Hono()
     // 認可コードを取得
     const code = c.req.query('code');
     if (!code) {
-      return c.redirect(`${getAppUrl(c)}/auth/error`, 302);
+      return c.redirect(`${c.env.APP_URL}/auth/error`, 302);
     }
 
     try {
       const supabase = getSupabase(c);
       // 認可コードをトークンに交換
       const {
-        data: { session },
+        data: { user },
         error: exchangeError,
       } = await supabase.auth.exchangeCodeForSession(code);
       // ユーザー情報の取得失敗
-      if (exchangeError) {
-        return c.redirect(`${getAppUrl(c)}/auth/error`, 302);
-      }
-      const user = session?.user;
-      if (!user) {
-        return c.redirect(`${getAppUrl(c)}/auth/error`, 302);
+      if (!user || exchangeError) {
+        throw exchangeError;
       }
       const { data: isExist, error: selectError } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', user.id)
         .single();
+
+      if (selectError) {
+        throw selectError;
+      }
 
       // 新規ユーザーの場合、profileテーブルにユーザー情報を確立
       if (!isExist) {
@@ -83,19 +72,17 @@ export const authApp = new Hono()
             updated_at: new Date().toISOString(),
           })
           .select();
-
-        if (insertError) {
-          return c.redirect(`${getAppUrl(c)}/auth/error`, 302);
+        
+        // profileの登録に失敗
+        if (!insertData || insertError) {
+          throw insertError;
         }
       }
-
-      if (selectError) {
-        return c.redirect(`${getAppUrl(c)}/auth/error`, 302);
-      }
       // topページにリダイレクト
-      return c.redirect(`${getAppUrl(c)}/top`, 302);
+      return c.redirect(`${c.env.APP_URL}/top`, 302);
     } catch (error) {
-      return c.redirect(`${getAppUrl(c)}/auth/error`, 302);
+      console.log(error);
+      return c.redirect(`${c.env.APP_URL}/auth/error`, 302);
     }
   })
   // ユーザー登録(email)でcallbackされるページ

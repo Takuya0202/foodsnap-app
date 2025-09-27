@@ -3,7 +3,7 @@ import { userApp } from './routes/user';
 import { authApp } from './routes/auth';
 import { supabaseMiddleware } from './middleware/supabase';
 import { cors } from 'hono/cors';
-import { getAppUrl, Bindings } from './utils/setting';
+import { Bindings } from './utils/setting';
 import { storeApp } from './routes/store';
 import { adminApp } from './routes/admin';
 
@@ -15,7 +15,7 @@ const app = new Hono<{ Bindings: Bindings }>()
   // cors。環境変数は動的に取得するため、asyncでラップする。
   .use('*', async (c, next) => {
     const corsMiddleware = cors({
-      origin: getAppUrl(c),
+      origin: c.env.APP_URL,
       allowMethods: ['*'],
       allowHeaders: ['content-type', 'authorization', 'Cookie'],
       exposeHeaders: ['*'],
@@ -29,6 +29,7 @@ const app = new Hono<{ Bindings: Bindings }>()
   .route('/auth', authApp)
   .route('/store', storeApp)
   .route('/admin', adminApp);
+
 
 export default app;
 export type AppType = typeof app;
