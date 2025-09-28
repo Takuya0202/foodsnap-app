@@ -1,11 +1,11 @@
 import { zValidator } from '@hono/zod-validator';
 import { Context, Hono } from 'hono';
-import { CreateAdminRequest, createAdminSchema, LoginAdminRequest, loginAdminSchema } from '../schema/admin';
+import { CreateAdminRequest, createAdminSchema, LoginAdminRequest, loginAdminSchema, UpdateAdminRequest, updateAdminSchema } from '../schema/admin';
 import { getValidationErrorResponnse } from '../utils/setting';
 import { ZodError } from 'zod';
 import { getSupabase } from '../middleware/supabase';
 import { v4 as uuidv4 } from 'uuid';
-import { AdminReponse } from '../types/adminReponse';
+import { AdminDetailReponse, AdminReponse } from '../types/adminReponse';
 
 export const adminApp = new Hono().post(
   '/register',
@@ -270,4 +270,148 @@ export const adminApp = new Hono().post(
     }
 
     return c.json(res , 200);
+  }))
+  .get('/detail' , async (c : Context) => {
+    try {
+      const supabase = getSupabase(c);
+      const { data : { user } , error : userError } = await supabase.auth.getUser();
+
+      if (!user || userError ) {
+        return c.json({
+          message : 'unAuthorized',
+          error : '認証に失敗しました。再度ログインをお試しください。',
+        } , 401);
+      }
+
+      const { data : admin , error : adminError } = await supabase
+        .from('stores')
+        .select(`
+          id,
+          name,
+          phone,
+          address,
+          photo,
+          link,
+          start_at,
+          end_at,
+          latitude,
+          longitude,
+          genre_id,
+          prefecture_id,
+          store_tags (
+            tags (
+              id,
+              name
+            )
+          )
+        `)
+        .eq('user_id' , user.id)
+        .single();
+
+        if (!admin || adminError ) {
+          return c.json({
+            message : 'fail to get admin',
+            error : '管理者の情報の取得に失敗しました。再度ログインをお試しください。',
+          } , 400);
+        }
+
+        const res : AdminDetailReponse = {
+          id : admin.id,
+          name : admin.name,
+          address : admin.address,
+          latitude : admin.latitude,
+          longitude : admin.longitude,
+          phone : admin.phone,
+          prefectureId : admin.prefecture_id,
+          genreId : admin.genre_id,
+          tags : admin.store_tags.map((tag) => ({
+            id : tag.tags.id,
+            name : tag.tags.name,
+          })) || null,
+          photo : admin.photo,
+          link : admin.link,
+          startAt : admin.start_at,
+          endAt : admin.end_at,
+        }
+
+      return c.json(res , 200);
+    } catch (error) {
+      return c.json({
+        message : 'internal server error',
+      } , 500);
+    }
+  })
+  .put('/update' , zValidator('form' , updateAdminSchema , async(result , c : Context ) => {
+    if (!result.success) {
+      const errors = getValidationErrorResponnse(result.error as ZodError);
+      return c.json({
+        message : 'validation error',
+        errors : errors,
+      } , 400);
+    }
+
+    const { name , phone , address , latitude , longitude , prefectureId , genreId , tags , link , startAt , endAt , photo } : UpdateAdminRequest = result.data;
+    const supabase =getSupabase(c);
+    const { data : { user } , error : userErrorr } = await supabase.auth.getUser();
+
+    if (!user || userErrorr ) {
+      return c.json({
+        message : 'unAuthorized',
+        error : '認証に失敗しました。再度ログインをお試しください。',
+      } , 401);
+    } 
+
+    let path = null;
+    if (photo) {
+      try {
+        const extention = photo.name.split('.').pop();
+        const photoUrl = `${uuidv4()}.${extention}`;
+        const { data : uploadData , error : uploadError } = await supabase
+          .storage
+          .from('photo')
+          .update(photoUrl , photo , {
+            cacheControl : '3600',
+            upsert : false,
+          })
+        if (!uploadData || uploadError) {
+          throw uploadError;
+        }
+        const { data : { publicUrl } } = supabase.storage.from('photo').getPublicUrl(photoUrl);
+        path = publicUrl;
+      } catch (error) {
+        return c.json({
+          message : 'fail to upload photo',
+          error : '写真のアップロードに失敗しました。再度お試しください。',
+        } , 400);
+      }
+    }
+
+    // 更新    storesとstore_tagsのトランザクション。rpcを使う。
+    const { data : admin , error : adminError } = await supabase.rpc('update_admin_stores' , {
+      _user_id : user.id,
+      _name : name,
+      _phone : phone,
+      _address : address,
+      _latitude : latitude,
+      _longitude : longitude,
+      _end_at : endAt ,
+      _start_at : startAt,
+      _prefecture_id : prefectureId,
+      _genre_id : genreId,
+      _link : link,
+      _photo : path || undefined,
+      _tag_ids : tags || undefined,
+    })
+
+      if (adminError) {
+        console.log(adminError);
+        return c.json({
+          message : 'fail to update admin',
+          error : '管理者の情報の更新に失敗しました。再度お試しください。',
+        } , 400);
+      }
+
+    return c.json({
+      message : '更新に成功しました。',
+    } , 200);
   }))

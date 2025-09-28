@@ -188,70 +188,25 @@ export const authApp = new Hono()
       }
 
       try {
-        // 管理者情報の登録。profileとstore,tagsのトランザクションを行う
-        // profileの作成
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            user_id: user.id,
-            name: user.user_metadata.name,
-            role: 'admin',
-            icon: null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          })
-          .select();
+        // 管理者情報の登録。rpcを使ってトランザクション
+        const { data : admin , error : adminError } = await supabase.rpc('create_admin_with_store' , {
+          _user_id : user.id,
+          _name : user.user_metadata.name,
+          _phone : user.user_metadata.phone,
+          _address : user.user_metadata.address,
+          _latitude : user.user_metadata.latitude,
+          _longitude : user.user_metadata.longitude,
+          _start_at : user.user_metadata.start_at || null,
+          _end_at : user.user_metadata.end_at || null,
+          _prefecture_id : user.user_metadata.prefecture_id,
+          _genre_id : user.user_metadata.genre_id || null,
+          _link : user.user_metadata.link || null,
+          _photo : user.user_metadata.photo || null,
+          _tag_ids : user.user_metadata.tag_ids || [],
+        })
 
-        if (!profileData || profileError) {
-          throw profileError;
-        }
-        // storeの作成
-        const { data: storeData, error: storeError } = await supabase
-          .from('stores')
-          .insert({
-            id: cuid(),
-            user_id: user.id,
-            name: user.user_metadata.name,
-            phone: user.user_metadata.phone,
-            address: user.user_metadata.address,
-            latitude: user.user_metadata.latitude,
-            longitude: user.user_metadata.longitude,
-            prefecture_id: user.user_metadata.prefectureId,
-            genre_id: user.user_metadata?.genreId,
-            start_at: user.user_metadata?.startAt,
-            end_at: user.user_metadata?.endAt,
-            link: user.user_metadata?.link,
-            photo: user.user_metadata?.photo,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          })
-          .select()
-          .single();
-
-        if (!storeData || storeError) {
-          supabase.from('profiles').delete().eq('user_id', user.id);
-          throw storeError;
-        }
-
-        // tagsの作成
-        if (user.user_metadata?.tags && user.user_metadata?.tags.length > 0) {
-          const { data: tagsData, error: tagsError } = await supabase
-            .from('store_tags')
-            .insert(
-              user.user_metadata?.tags.map((tag: string) => ({
-                store_id: storeData.id,
-                tag_id: tag,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-              }))
-            )
-            .select();
-
-          if (!tagsData || tagsError) {
-            supabase.from('profiles').delete().eq('user_id', user.id);
-            supabase.from('stores').delete().eq('id', storeData.id);
-            throw tagsError;
-          }
+        if (adminError) {
+          throw adminError;
         }
       } catch (error) {
         console.log(error);
