@@ -1,6 +1,6 @@
 import { Context, Hono } from 'hono';
 import { getSupabase } from '../middleware/supabase';
-import { commentResponse, storeDetailResponse, storeResponse } from '../types/storeResponse';
+import { commentResponse, storeDetailResponse, storeResponse, storeSearchResponse } from '../types/storeResponse';
 import { getCookie, setCookie } from 'hono/cookie';
 import { zValidator } from '@hono/zod-validator';
 import { CreateCommentRequest, createCommentSchema } from '../schema/store';
@@ -645,4 +645,45 @@ export const storeApp = new Hono()
         );
       }
     })
-  );
+  )
+  .get('/search' , async (c : Context) => {
+    try {
+      const supabase = getSupabase(c);
+      // 存在してるジャンル、地域、タグの取得
+      const [genres,prefectures,tags ] = await Promise.all([
+        supabase.from('genres').select(`id , name`),
+        supabase.from('prefectures').select(`id , name , area`),
+        supabase.from('tags').select(`id , name`),
+      ]);
+
+      if (genres.error || prefectures.error || tags.error) {
+        return c.json({
+          message : 'fail to get search',
+          error : '検索の取得に失敗しました。'
+        } , 400);
+      }
+
+      const res : storeSearchResponse = {
+        genres : genres.data.map((genre) => ({
+          id : genre.id,
+          name : genre.name
+        })),
+        prefectures : prefectures.data.map((prefecture) => ({
+          id : prefecture.id,
+          name : prefecture.name,
+          area : prefecture.area
+        })),
+        tags : tags.data.map((tag) => ({
+          id : tag.id,
+          name : tag.name
+        })),
+      };
+
+      return c.json(res , 200);
+    } catch (error) {
+      return c.json({
+        message : 'Internal server error',
+        error : 'サーバーエラーが発生しました。',
+      } , 500);
+    }
+  }) 

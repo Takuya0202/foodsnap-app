@@ -59,3 +59,20 @@ export type commentResponse = Array<{
   content: string;
   createdAt: string;
 }> | null;
+
+// 検索するときに表示させるレスポンス
+export type storeSearchResponse = {
+  genres : Array<{
+    id :string,
+    name : string,
+  }>;
+  prefectures : Array<{
+    id : string,
+    name : string,
+    area : string,
+  }>;
+  tags : Array<{
+    id : string,
+    name : string,
+  }>
+}

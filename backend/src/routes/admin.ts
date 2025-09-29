@@ -415,3 +415,35 @@ export const adminApp = new Hono().post(
       message : '更新に成功しました。',
     } , 200);
   }))
+  .delete('/delete' , async (c : Context ) => {
+    try {
+      const supabase =getSupabase(c);
+      const { data : { user } , error : userError } = await supabase.auth.getUser();
+      
+      if (!user || userError ){
+        return c.json({
+          message : 'unAuthorized',
+          error : '認証に失敗しました。再度ログインをお試しください。',
+        } , 401);
+      } 
+      // 管理者もauth.userとcascadeなので、消すだけで大丈夫なはず。
+      const { data : deleteAdmin , error : deleteAdminError } = await supabase.auth.admin.deleteUser(user.id);
+
+      if (deleteAdminError) {
+        console.log(deleteAdminError);
+        return c.json({
+          message : 'fail to delete admin',
+          error : '管理者の削除に失敗しました。再度お試しください。',
+        } , 400);
+      }
+
+      return c.json({
+        message : '削除に成功しました。',
+      } , 200);
+    } catch (error) {
+      console.log(error);
+      return c.json({
+        message : 'internal server error',
+      } , 500);
+    }
+  })
