@@ -6,6 +6,7 @@ import { cors } from 'hono/cors';
 import { Bindings } from './utils/setting';
 import { storeApp } from './routes/store';
 import { adminApp } from './routes/admin';
+import { postApp } from './routes/post';
 
 // honoRPCはメソッドチェーンにしないと参照できないので、このような書き方になる
 const app = new Hono<{ Bindings: Bindings }>()
@@ -28,7 +29,8 @@ const app = new Hono<{ Bindings: Bindings }>()
   .route('/user', userApp)
   .route('/auth', authApp)
   .route('/store', storeApp)
-  .route('/admin', adminApp);
+  .route('/admin', adminApp)
+  .route('/post' , postApp);
 
 
 export default app;

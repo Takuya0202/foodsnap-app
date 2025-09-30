@@ -1,9 +1,8 @@
 import { Context, Hono } from 'hono';
 import { getSupabase } from '../middleware/supabase';
 import { supabaseAuthErrorCode } from '../utils/supabaseMessage';
-import cuid from 'cuid';
 import { AdminReponse } from '../types/adminReponse';
-
+import { serverError , authError } from '../utils/setting';
 // OAuthやcallbackなどに関するエンドポイント
 export const authApp = new Hono()
   .get('/google', async (c: Context) => {
@@ -93,10 +92,7 @@ export const authApp = new Hono()
 
     if (!accessToken) {
       return c.json(
-        {
-          message: 'accessToken not found',
-          error: '認証に失敗しました。',
-        },
+        authError,
         400
       );
     }
@@ -108,10 +104,7 @@ export const authApp = new Hono()
       } = await supabase.auth.getUser(accessToken);
       if (!user || getUserError) {
         return c.json(
-          {
-            message: 'fail for get user',
-            error: '認証に失敗しました。',
-          },
+          authError,
           400
         );
       }
@@ -133,7 +126,7 @@ export const authApp = new Hono()
         return c.json(
           {
             message: 'fail for insert profile',
-            error: '認証に失敗しました。',
+            error: '登録に失敗しました。',
           },
           400
         );
@@ -148,9 +141,7 @@ export const authApp = new Hono()
       );
     } catch (error) {
       return c.json(
-        {
-          message: 'internal server error',
-        },
+        serverError,
         500
       );
     }
@@ -162,10 +153,7 @@ export const authApp = new Hono()
 
     if (!accessToken) {
       return c.json(
-        {
-          message: 'accessToken not found',
-          error: '認証に失敗しました。',
-        },
+        authError,
         400
       );
     }
@@ -179,10 +167,7 @@ export const authApp = new Hono()
 
       if (!user || getUserError) {
         return c.json(
-          {
-            message: 'fail for get user',
-            error: '認証に失敗しました。',
-          },
+          authError,
           400
         );
       }
@@ -289,9 +274,7 @@ export const authApp = new Hono()
     } catch (error) {
       console.log(error);
       return c.json(
-        {
-          message: 'internal server error',
-        },
+        serverError,
         500
       );
     }
@@ -316,15 +299,13 @@ export const authApp = new Hono()
       // ログアウト成功
       return c.json(
         {
-          message: 'success for logout',
+          message: 'ログアウトしました。'
         },
         200
       );
     } catch (error) {
       return c.json(
-        {
-          message: 'internal server error',
-        },
+        serverError,
         500
       );
     }

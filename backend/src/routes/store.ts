@@ -7,6 +7,7 @@ import { CreateCommentRequest, createCommentSchema } from '../schema/store';
 import { getValidationErrorResponnse } from '../utils/setting';
 import { ZodError } from 'zod';
 import cuid from 'cuid';
+import { serverError , authError } from '../utils/setting';
 
 export const storeApp = new Hono()
   .get('/top', async (c: Context) => {
@@ -120,10 +121,7 @@ export const storeApp = new Hono()
       if (error) {
         console.error('Supabase error (all stores):', error);
         return c.json(
-          {
-            message: 'fail to get stores',
-            error: '店舗の取得に失敗しました。',
-          },
+          serverError,
           400
         );
       }
@@ -160,10 +158,7 @@ export const storeApp = new Hono()
     } catch (error) {
       console.error('Unexpected error in /top:', error);
       return c.json(
-        {
-          message: 'Internal server error',
-          error: 'サーバーエラーが発生しました。',
-        },
+        serverError,
         500
       );
     }
@@ -269,10 +264,7 @@ export const storeApp = new Hono()
       return c.json(res, 200);
     } catch (error) {
       return c.json(
-        {
-          message: 'Internal server error',
-          error: 'サーバーエラーが発生しました。',
-        },
+        serverError,
         500
       );
     }
@@ -381,10 +373,7 @@ export const storeApp = new Hono()
       return c.json(res, 200);
     } catch (error) {
       return c.json(
-        {
-          message: 'Internal server error',
-          error: 'サーバーエラーが発生しました。',
-        },
+        serverError,
         500
       );
     }
@@ -411,10 +400,7 @@ export const storeApp = new Hono()
       } = await supabase.auth.getUser();
       if (!user || !user.id || userError) {
         return c.json(
-          {
-            message: 'unAuthorized',
-            error: 'ログインが必要です。',
-          },
+          authError,
           401
         );
       }
@@ -494,10 +480,7 @@ export const storeApp = new Hono()
       }
     } catch (error) {
       return c.json(
-        {
-          message: 'Internal server error',
-          error: 'サーバーエラーが発生しました。',
-        },
+        serverError,
         500
       );
     }
@@ -556,10 +539,7 @@ export const storeApp = new Hono()
       return c.json(res, 200);
     } catch (error) {
       return c.json(
-        {
-          message: 'Internal server error',
-          error: 'サーバーエラーが発生しました。',
-        },
+        serverError,
         500
       );
     }
@@ -599,10 +579,7 @@ export const storeApp = new Hono()
         } = await supabase.auth.getUser();
         if (!user || !user.id || userError) {
           return c.json(
-            {
-              message: 'unAuthorized',
-              error: 'ログインが必要です。',
-            },
+            authError,
             401
           );
         }
@@ -637,10 +614,7 @@ export const storeApp = new Hono()
         );
       } catch (error) {
         return c.json(
-          {
-            message: 'Internal server error',
-            error: 'サーバーエラーが発生しました。',
-          },
+          serverError,
           500
         );
       }
@@ -681,9 +655,6 @@ export const storeApp = new Hono()
 
       return c.json(res , 200);
     } catch (error) {
-      return c.json({
-        message : 'Internal server error',
-        error : 'サーバーエラーが発生しました。',
-      } , 500);
+      return c.json(serverError , 500);
     }
   }) 

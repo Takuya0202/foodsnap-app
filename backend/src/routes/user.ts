@@ -13,11 +13,11 @@ import {
   updateUserSchema,
 } from '../schema/user';
 import { getSupabase } from '../middleware/supabase';
-import { getValidationErrorResponnse } from '../utils/setting';
+import { getValidationErrorResponnse, uploadImage } from '../utils/setting';
 import { supabaseAuthErrorCode } from '../utils/supabaseMessage';
 import { ZodError } from 'zod';
 import { userDetailResponse } from '../types/userResponse';
-import { v4 as uuidv4 } from 'uuid';
+import { serverError , authError } from '../utils/setting';
 
 export const userApp = new Hono()
   .post(
@@ -72,9 +72,7 @@ export const userApp = new Hono()
         });
       } catch (error) {
         return c.json(
-          {
-            message: 'internal server error',
-          },
+          serverError,
           500
         );
       }
@@ -122,9 +120,7 @@ export const userApp = new Hono()
         );
       } catch (error) {
         return c.json(
-          {
-            message: 'internal server error',
-          },
+          serverError,
           500
         );
       }
@@ -141,10 +137,7 @@ export const userApp = new Hono()
       // 未認証
       if (!user || !user.email || error) {
         return c.json(
-          {
-            message: 'unAuthorized',
-            error: 'ユーザー情報の取得に失敗しました。再度ログインをお試しください。',
-          },
+          authError,
           401
         );
       }
@@ -213,10 +206,7 @@ export const userApp = new Hono()
       return c.json(res, 200);
     } catch (error) {
       return c.json(
-        {
-          message: 'internal server error',
-          error: 'サーバー内部エラーが発生しました。',
-        },
+        serverError,
         500
       );
     }
@@ -244,38 +234,22 @@ export const userApp = new Hono()
         } = await supabase.auth.getUser();
         if (!user || userError) {
           return c.json(
-            {
-              message: 'unAuthorized',
-              error: 'ユーザー情報の取得に失敗しました。再度ログインをお試しください。',
-            },
+            authError,
             401
           );
         }
 
+        // 既存データの取得
+        const { data : existData , error : existError } = await supabase
+          .from('profiles')
+          .select('icon')
+          .eq('user_id' , user.id)
+          .single();
         let path = null;
         // アイコンをstorageにupload
         if (icon) {
           try {
-            // 拡張子を取得
-            const extention = icon.name.split('.').pop();
-            // path名を作成。
-            const iconUrl = `${uuidv4()}.${extention}`;
-            // upload
-            const { data: uploadData, error: uploadError } = await supabase.storage
-              .from('icon')
-              .upload(iconUrl, icon, {
-                cacheControl: '3600',
-                upsert: false,
-              });
-            // 失敗
-            if (uploadError) {
-              throw uploadError;
-            }
-            // urlを取得
-            const {
-              data: { publicUrl },
-            } = supabase.storage.from('icon').getPublicUrl(iconUrl);
-            path = publicUrl;
+            path = await uploadImage(supabase , icon , 'icon' , existData?.icon);
           } catch (error) {
             return c.json(
               {
@@ -312,9 +286,7 @@ export const userApp = new Hono()
         });
       } catch (error) {
         return c.json(
-          {
-            message: 'internal server error',
-          },
+          serverError,
           500
         );
       }
@@ -329,10 +301,7 @@ export const userApp = new Hono()
       } = await supabase.auth.getUser();
       if (!user || userError) {
         return c.json(
-          {
-            message: 'unAuthorized',
-            error: 'ユーザー情報の取得に失敗しました。再度ログインをお試しください。',
-          },
+          authError,
           401
         );
       }
@@ -359,9 +328,7 @@ export const userApp = new Hono()
       );
     } catch (error) {
       return c.json(
-        {
-          message: 'internal server error',
-        },
+        serverError,
         500
       );
     }
@@ -407,9 +374,7 @@ export const userApp = new Hono()
         );
       } catch (error) {
         return c.json(
-          {
-            message: 'internal server error',
-          },
+          serverError,
           500
         );
       }
@@ -482,9 +447,7 @@ export const userApp = new Hono()
         );
       } catch (error) {
         return c.json(
-          {
-            message: 'internal server error',
-          },
+          serverError,
           500
         );
       }
