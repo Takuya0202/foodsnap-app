@@ -24,7 +24,7 @@ model profile {
   id Int @id @default(autoincrement())
 
   // Supabase Authのユーザーuuidを挿入
-  userId String  @unique @map("user_id") @db.Uuid
+  userId String  @unique @map("user_id") @db.Uuid // authのリレーションはsupabaseの管理画面で行う
   name   String  @db.VarChar(64)
   role   Role // admin or user
   icon   String? @db.VarChar(255)
@@ -32,15 +32,20 @@ model profile {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  // リレーションを追加
+  likes    Like[]
+  comments Comment[]
+
   @@map("profiles")
 }
 
 model Store {
   id String @id @default(cuid())
 
-  userId    String  @unique @map("user_id") @db.Uuid
+  userId    String  @unique @map("user_id") @db.Uuid // authのリレーションはsupabaseの管理画面で行う
   name      String  @db.VarChar(64)
   address   String  @db.VarChar(128)
+  phone     String  @db.VarChar(32)
   latitude  Float
   longitude Float
   photo     String? @db.VarChar(255)
@@ -122,14 +127,12 @@ model Tag {
 }
 
 model Comment {
-  id String @id @default(cuid())
-
-  userId  String @map("user_id") @db.Uuid
-  content String @db.Text
-
-  // リレーション
-  storeId String @map("store_id")
-  store   Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  id      String  @id @default(cuid())
+  userId  String  @map("user_id") @db.Uuid
+  content String  @db.Text
+  storeId String  @map("store_id")
+  store   Store   @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  profile profile @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -139,9 +142,10 @@ model Comment {
 
 // 中間テーブル(複合主キー)
 model Like {
-  userId  String @map("user_id") @db.Uuid
-  storeId String @map("store_id")
-  store   Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  userId  String  @map("user_id") @db.Uuid
+  storeId String  @map("store_id")
+  store   Store   @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  profile profile @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

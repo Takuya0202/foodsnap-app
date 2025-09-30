@@ -2,7 +2,21 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "foodsnap-backend",
   "main": "src/index.ts",
-  "compatibility_date": "2025-09-12"
+  "compatibility_date": "2025-09-12",
+  "vars": {
+    "ENVIRONMENT" : "dev",
+    "APP_URL" : "http://localhost:3000",
+    "API_URL" : "http://localhost:8787",
+  },
+  "env": {
+    "production" : {
+      "vars": {
+        "ENVIRONMENT" : "production",
+        "APP_URL" : "",
+        "API_URL" : "",
+      }
+    },
+  },
   // "compatibility_flags": [
   //   "nodejs_compat"
   // ],
