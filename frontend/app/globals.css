@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+@layer utilities {
+  .shadow-form {
+    box-shadow: 6px 4px 4px rgba(0, 0, 0, 0.25);
+  }
+  .modal-background {
+    background: linear-gradient(to right, rgba(0, 0, 0, 0.6), #979797);
+  }
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;

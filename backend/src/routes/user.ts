@@ -13,87 +13,91 @@ import {
   updateUserSchema,
 } from '../schema/user';
 import { getSupabase } from '../middleware/supabase';
-import { getValidationErrorResponnse, uploadImage } from '../utils/setting';
+import { getValidationErrorResponnse, uploadImage, Bindings } from '../utils/setting';
 import { supabaseAuthErrorCode } from '../utils/supabaseMessage';
 import { ZodError } from 'zod';
 import { userDetailResponse } from '../types/userResponse';
 import { serverError , authError } from '../utils/setting';
 
-export const userApp = new Hono()
+export const userApp = new Hono<{ Bindings: Bindings }>()
   .post(
     '/register',
-    zValidator('json', createUserSchema, async (result, c: Context) => {
-      try {
-        // バリデーションエラーの場合
-        if (!result.success) {
-          const errors = getValidationErrorResponnse(result.error as ZodError);
-          return c.json(
-            {
-              message: 'validation error',
-              errors: errors,
-            },
-            400
-          );
-        }
-        // 成功時
-        const { name, email, password }: CreateUserRequest = result.data;
-        // supabaseクライアントの生成
-        const supabase = getSupabase(c);
-        // ユーザー仮登録
-        const {
-          data: { user },
-          error,
-        } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              name,
-            },
-            emailRedirectTo: `${c.env.APP_URL}/user/auth/callback`,
-          },
-        });
-        // supabaseエラー
-        if (!user || !user.email || error) {
-          return c.json(
-            {
-              message: 'supabase error',
-              error: error?.code
-                ? supabaseAuthErrorCode[error.code]
-                : '予期せぬエラーが発生しました。',
-            },
-            400
-          );
-        }
-        // 成功したらemailを返却
-        return c.json({
-          message: 'register success',
-          email: user.email,
-        });
-      } catch (error) {
+    zValidator('json', createUserSchema, (result, c) => {
+      // バリデーションエラーの場合
+      if (!result.success) {
+        const errors = getValidationErrorResponnse(result.error as ZodError);
         return c.json(
-          serverError,
-          500
+          {
+            message: 'validation error',
+            error: errors,
+          },
+          400
         );
       }
-    })
+    }),
+    async (c) => {
+    try {
+      // 成功時
+      const { name, email, password }: CreateUserRequest = c.req.valid('json');
+      // supabaseクライアントの生成
+      const supabase = getSupabase(c);
+      // ユーザー仮登録
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+          },
+          emailRedirectTo: `${c.env.APP_URL}/user/auth/callback`,
+        },
+      });
+      // supabaseエラー
+      if (!user || !user.email || error) {
+        return c.json(
+          {
+            message: 'supabase error',
+            error: error?.code
+              ? supabaseAuthErrorCode[error.code]
+              : '予期せぬエラーが発生しました。',
+          },
+          400
+        );
+      }
+      // 成功したらemailを返却
+      return c.json({
+        message: 'register success',
+        email: user.email,
+      });
+    } catch (error) {
+    return c.json(
+      serverError,
+      500
+      );
+    }
+    }
   )
   .post(
     '/login',
-    zValidator('json', loginUserSchema, async (result, c: Context) => {
+    zValidator('json', loginUserSchema, (result, c) => {
+      // バリデーションエラーの場合
+      if (!result.success) {
+        const errors = getValidationErrorResponnse(result.error as ZodError);
+        return c.json(
+          {
+            message: 'validation error',
+            error: errors,
+          },
+          400
+        );
+      }
+    }),
+    async (c) => {
       try {
-        if (!result.success) {
-          const errors = getValidationErrorResponnse(result.error as ZodError);
-          return c.json(
-            {
-              message: 'validation error',
-              errors: errors,
-            },
-            400
-          );
-        }
-
-        const { email, password }: LoginUserRequest = result.data;
+        const { email, password } = c.req.valid('json');
         const supabase = getSupabase(c);
         const {
           data: { user },
@@ -124,7 +128,7 @@ export const userApp = new Hono()
           500
         );
       }
-    })
+    }
   )
   // ログインユーザーの情報取得
   .get('/detail', async (c: Context) => {
