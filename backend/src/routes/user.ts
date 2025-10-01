@@ -71,7 +71,7 @@ export const userApp = new Hono<{ Bindings: Bindings }>()
       return c.json({
         message: 'register success',
         email: user.email,
-      });
+      } , 200);
     } catch (error) {
     return c.json(
       serverError,
