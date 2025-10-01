@@ -57,6 +57,7 @@ export const userApp = new Hono<{ Bindings: Bindings }>()
       });
       // supabaseエラー
       if (!user || !user.email || error) {
+        console.log(error);
         return c.json(
           {
             message: 'supabase error',

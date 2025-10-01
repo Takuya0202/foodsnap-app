@@ -11,7 +11,7 @@ export default function InputText({ placeholder, label, type, ...props }: props)
       </label>
       <input
         type={type || "text"}
-        className="px-2 py-1.5 bg-[#181818] border-2 border-[#b9b9b9] text-[#b9b9b9] rounded-[8px] placeholder:text-[#b9b9b9] placeholder:opacity-70"
+        className="px-2 py-1.5 bg-[#181818] border-2 border-[#b9b9b9] text-[#b9b9b9] rounded-[8px] placeholder:text-[#b9b9b9] placeholder:opacity-70 w-full"
         placeholder={placeholder}
         id={label}
         {...props}

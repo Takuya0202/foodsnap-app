@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import Logo from "../atoms/others/Logo";
+import Logo from "../atoms/icons/Logo";
 import GoogleLogin from "../atoms/buttons/google-button";
 import SeparateBar from "../atoms/others/separate-bar";
 import UserRegister from "../molecules/forms/user-register";
@@ -8,8 +8,8 @@ import UserRegister from "../molecules/forms/user-register";
 export default function RegisterForm() {
   return (
     <div
-      className="w-[312px] h-auto min-h-[400px] rounded-[10px] bg-[#181818] py-6
-        flex flex-col items-center space-y-4 shadow-[6px_4px_4px_rgba(0,0,0,0.25)]"
+      className="w-[312px] h-auto min-h-[520px] rounded-[10px] bg-[#181818] py-6
+        flex flex-col items-center space-y-4 shadow-[6px_4px_4px_rgba(0,0,0,0.25)] justify-around"
     >
       <div className="my-8">
         <Logo />

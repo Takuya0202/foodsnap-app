@@ -9,12 +9,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import FieldError from "../../atoms/errors/field-error";
 import { client } from "@/utils/setting";
-import ErrorToaster from "../../atoms/toaster/error-toaster";
+import { useToaster } from "@/app/zustand/toaster";
 
 export default function UserLogin() {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [toasterOpen, setToasterOpen] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string>("");
+  const { open } = useToaster();
   const router = useRouter();
   const defaultValues = {
     email: "",
@@ -53,43 +52,40 @@ export default function UserLogin() {
           if (errors.password) setError("password", { message: errors.password });
         } else {
           // バリデーション以外のエラーはトースターで表示
-          setErrorMessage(data.error || "エラーが発生しました。");
-          setToasterOpen(true);
+          open(data.error || "エラーが発生しました。", "error");
         }
       }
     } catch {
-      setErrorMessage("通信に失敗しました。");
-      setToasterOpen(true);
+      open("通信に失敗しました。", "error");
     } finally {
       setIsSubmitting(false);
     }
   };
   return (
-    <>
-      <ErrorToaster text={errorMessage} open={toasterOpen} onClose={() => setToasterOpen(false)} />
-      <form
-        className="flex flex-col justify-center items-center space-y-4 w-[86%] mx-auto"
-        onSubmit={handleSubmit(onsubmit)}
-      >
-        <div className="w-full flex flex-col items-start space-y-2">
-          <InputText
-            label="メールアドレス"
-            placeholder="foodsnap@example.com"
-            {...register("email")}
-          />
-          {errors.email && <FieldError>{errors.email.message}</FieldError>}
-        </div>
-        <div className="w-full flex flex-col items-start space-y-2">
-          <InputText
-            label="パスワード"
-            placeholder="8文字以上大文字を含む"
-            type="password"
-            {...register("password")}
-          />
-          {errors.password && <FieldError>{errors.password.message}</FieldError>}
-        </div>
+    <form
+      className="flex flex-col justify-center items-center space-y-4 w-[86%] mx-auto"
+      onSubmit={handleSubmit(onsubmit)}
+    >
+      <div className="w-full flex flex-col items-start space-y-2">
+        <InputText
+          label="メールアドレス"
+          placeholder="foodsnap@example.com"
+          {...register("email")}
+        />
+        {errors.email && <FieldError>{errors.email.message}</FieldError>}
+      </div>
+      <div className="w-full flex flex-col items-start space-y-2">
+        <InputText
+          label="パスワード"
+          placeholder="8文字以上大文字を含む"
+          type="password"
+          {...register("password")}
+        />
+        {errors.password && <FieldError>{errors.password.message}</FieldError>}
+      </div>
+      <div className="my-2">
         <SubmitButton width="240" height="32" text="ログイン" isSubmitting={isSubmitting} />
-      </form>
-    </>
+      </div>
+    </form>
   );
 }
