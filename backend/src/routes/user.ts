@@ -18,6 +18,7 @@ import { supabaseAuthErrorCode } from '../utils/supabaseMessage';
 import { ZodError } from 'zod';
 import { userDetailResponse } from '../types/userResponse';
 import { serverError , authError } from '../utils/setting';
+import { createServerClient } from '@supabase/ssr';
 
 export const userApp = new Hono<{ Bindings: Bindings }>()
   .post(
@@ -304,38 +305,32 @@ export const userApp = new Hono<{ Bindings: Bindings }>()
         data: { user },
         error: userError,
       } = await supabase.auth.getUser();
+      
       if (!user || userError) {
-        return c.json(
-          authError,
-          401
-        );
+        return c.json(authError, 401);
       }
 
-      // auth.user.idとprofiles.user_idはリレーション(cascade)なので、自動でprofilesも削除される。
-      const { data: deleteUser, error: deleteUserError } = await supabase.auth.admin.deleteUser(
-        user.id
+      // Service Role Keyでauth.usersから完全削除
+      const supabaseAdmin = createServerClient(
+        c.env.SUPABASE_URL, 
+        c.env.SUPABASE_SERVICE_ROLE_KEY,
+        { cookies: { getAll() { return []; }, setAll() {} }}
       );
+      
+      const { error: deleteUserError } = await supabaseAdmin.auth.admin.deleteUser(user.id);
+      
       if (deleteUserError) {
-        return c.json(
-          {
-            message: 'fail to delete user',
-            error: 'ユーザーの削除に失敗しました。再度お試しください。',
-          },
-          400
-        );
+        return c.json({
+          message: 'fail to delete user',
+          error: 'ユーザーの削除に失敗しました。',
+        }, 400);
       }
 
-      return c.json(
-        {
-          message: 'success to delete user',
-        },
-        200
-      );
+      return c.json({
+        message: 'success to delete user',
+      }, 200);
     } catch (error) {
-      return c.json(
-        serverError,
-        500
-      );
+      return c.json(serverError, 500);
     }
   })
   .post(

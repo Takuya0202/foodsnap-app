@@ -78,7 +78,7 @@ export const authApp = new Hono()
         }
       }
       // topページにリダイレクト
-      return c.redirect(`${c.env.APP_URL}/top`, 302);
+      return c.redirect(`${c.env.APP_URL}/stores/top`, 302);
     } catch (error) {
       console.log(error);
       return c.redirect(`${c.env.APP_URL}/auth/error`, 302);

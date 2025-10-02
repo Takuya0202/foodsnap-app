@@ -17,7 +17,7 @@ const app = new Hono<{ Bindings: Bindings }>()
   .use('*', async (c, next) => {
     const corsMiddleware = cors({
       origin: c.env.APP_URL,
-      allowMethods: ['*'],
+      allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       allowHeaders: ['content-type', 'authorization', 'Cookie'],
       exposeHeaders: ['*'],
       credentials: true,

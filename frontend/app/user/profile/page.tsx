@@ -2,7 +2,9 @@
 
 import { client } from "@/utils/setting";
 import { useEffect, useState } from "react";
-import UserProfile from "../components/molecules/user-profile";
+import UserProfile from "../../components/molecules/user-profile";
+import DeleteUser from "@/app/components/organisms/deleteUser";
+import SpUserFooter from "@/app/components/molecules/footer/sp-user-footer";
 
 export default function UserPage() {
   const [name, setName] = useState<string>("");
@@ -23,6 +25,8 @@ export default function UserPage() {
     <div>
       <h1>UserPage</h1>
       <UserProfile name={name} icon={icon} />
+      <DeleteUser />
+      <SpUserFooter />
     </div>
   );
 }

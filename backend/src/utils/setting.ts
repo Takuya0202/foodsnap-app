@@ -8,6 +8,8 @@ export type Bindings = {
   ENVIRONMENT: string;
   APP_URL: string;
   API_URL: string;
+  SUPABASE_URL: string;
+  SUPABASE_SERVICE_ROLE_KEY: string;
 };
 
 // サーバーエラーとauthエラーのレスポンス
