@@ -6,8 +6,10 @@ type props = {
 export default function ConfirmDelete({ setIsOpen }: props) {
   return (
     <div className="flex justify-center items-center bg-[rgba(0,0,0,0.6)] w-full h-full">
-      <div className="flex flex-col bg-[#181818] w-[86%] mx-auto rounded-[6px] p-4
-      shadow-[6px_4px_4px_rgba(0,0,0,0.25)]">
+      <div
+        className="flex flex-col bg-[#181818] w-[86%] mx-auto rounded-[6px] p-4
+      shadow-[6px_4px_4px_rgba(0,0,0,0.25)]"
+      >
         <div>
           <h1 className="text-[#ff0000] text-lg font-bold">警告</h1>
         </div>

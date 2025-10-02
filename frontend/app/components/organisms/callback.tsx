@@ -11,17 +11,18 @@ export default function Callback() {
       <div className="flex flex-col justify-between items-center w-[96%] mx-auto min-h-[380px]">
         <Check />
 
-        <p className="text-white text-center text-[20px] font-bold">ユーザー登録中です。<br/>
-            しばらくお待ちください。
+        <p className="text-white text-center text-[20px] font-bold">
+          ユーザー登録中です。
+          <br />
+          しばらくお待ちください。
         </p>
 
-
-        <CircularProgress 
-        size={40}
-        sx={{
-          color: "#3b82f6",
-          marginBottom: "20px"
-        }}
+        <CircularProgress
+          size={40}
+          sx={{
+            color: "#3b82f6",
+            marginBottom: "20px",
+          }}
         />
       </div>
     </div>

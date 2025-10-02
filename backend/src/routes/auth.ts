@@ -52,7 +52,7 @@ export const authApp = new Hono()
         .from('profiles')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (selectError) {
         throw selectError;
