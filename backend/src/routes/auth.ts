@@ -87,10 +87,12 @@ export const authApp = new Hono()
   // ユーザー登録(email)でcallbackされるページ
   .post('user/callback', async (c: Context) => {
     // フロントからのトークン取得
-    const authHeader = c.req.header('Authorization');
-    const accessToken = authHeader?.replace('Bearer', '');
+    const authHeader = c.req.header('authorization');
+    console.log(authHeader);
+    const code = authHeader?.replace('Bearer ', '').trim();
 
-    if (!accessToken) {
+    if (!code) {
+      console.log('code is null');
       return c.json(
         authError,
         400
@@ -101,13 +103,14 @@ export const authApp = new Hono()
       const {
         data: { user },
         error: getUserError,
-      } = await supabase.auth.getUser(accessToken);
+      } = await supabase.auth.exchangeCodeForSession(code);
       if (!user || getUserError) {
         return c.json(
           authError,
           400
         );
       }
+
       // profileテーブルにユーザー情報を確立。アイコンはnull
       const { data: insertData, error: insertError } = await supabase
         .from('profiles')

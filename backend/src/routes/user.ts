@@ -53,7 +53,7 @@ export const userApp = new Hono<{ Bindings: Bindings }>()
           data: {
             name,
           },
-          emailRedirectTo: `${c.env.APP_URL}/user/auth/callback`,
+          emailRedirectTo: `${c.env.APP_URL}/auth/user/callback`,
         },
       });
       // supabaseエラー
