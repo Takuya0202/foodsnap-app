@@ -267,6 +267,11 @@ export const userApp = new Hono<{ Bindings: Bindings }>()
           }
         }
 
+        // アイコンが変更されなかった場合は既存のアイコン。
+        if(!path) {
+          path = existData?.icon || null;
+        }
+
         const { data: updateUser, error: updateUserError } = await supabase
           .from('profiles')
           .update({

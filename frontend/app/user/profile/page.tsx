@@ -7,6 +7,7 @@ import DeleteUser from "@/app/components/organisms/deleteUser";
 import SpUserFooter from "@/app/components/molecules/footer/sp-user-footer";
 import { useUser } from "@/app/zustand/user";
 import SpUserHeader from "@/app/components/molecules/header/sp-user-header";
+import UserEditButton from "@/app/components/atoms/buttons/userEdit-button";
 export default function UserPage() {
   const { setUser } = useUser();
   useEffect(() => {
@@ -25,6 +26,10 @@ export default function UserPage() {
       <SpUserHeader />
       <div className="flex justify-center items-center">
         <UserProfile />
+      </div>
+
+      <div className="flex justify-center items-center">
+        <UserEditButton />
       </div>
       <DeleteUser />
       <SpUserFooter />

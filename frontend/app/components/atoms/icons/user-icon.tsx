@@ -6,7 +6,7 @@ export default function UserIcon() {
   const { icon } = useUser();
   return (
     <Image
-      src={icon || "/default-icon.png"}
+      src={icon || "/default-icon.svg"}
       alt="ユーザーアイコン"
       width={64}
       height={64}
