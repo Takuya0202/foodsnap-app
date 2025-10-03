@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 // ユーザー情報を管理するstate
 type UserState = {
@@ -40,10 +41,17 @@ type UserState = {
   ) => void;
 };
 
-export const useUser = create<UserState>((set) => ({
-  id: "",
-  name: "",
-  icon: "",
-  likeStores: [],
-  setUser: (id, name, icon, likeStores) => set({ id, name, icon, likeStores }),
-}));
+export const useUser = create<UserState>()(
+  persist(
+    (set) => ({
+      id: "",
+      name: "",
+      icon: "",
+      likeStores: [],
+      setUser: (id, name, icon, likeStores) => set({ id, name, icon, likeStores }),
+    }),
+    {
+      name : "user",
+    }
+  )
+)
