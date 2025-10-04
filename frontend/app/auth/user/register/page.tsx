@@ -1,0 +1,45 @@
+"use client";
+import Link from "next/link";
+import { useState } from "react";
+import GoogleLogin from "@/app/features/auth/google-login";
+import Logo from "@/app/components/elements/icons/Logo";
+import Separator from "@/app/components/elements/others/separator";
+import UserRegister from "@/app/features/auth/user-register";
+import EmailConfirmation from "@/app/features/auth/email-confirmation";
+
+export default function Register() {
+  const [isSent, setIsSent] = useState(false);
+  const [email, setEmail] = useState("");
+
+  const handleEmailSent = (sentEmail: string) => {
+    setEmail(sentEmail);
+    setIsSent(true);
+  };
+
+  const handleBack = () => {
+    setIsSent(false);
+  };
+
+  return (
+    <div className="flex items-center justify-center h-screen">
+      {isSent ? (
+        <EmailConfirmation email={email} onBack={handleBack} />
+      ) : (
+        <div
+          className="w-[312px] h-auto min-h-[520px] rounded-[10px] bg-[#181818] py-6
+            flex flex-col items-center space-y-4 shadow-[6px_4px_4px_rgba(0,0,0,0.25)] justify-around"
+        >
+          <div className="my-8">
+            <Logo />
+          </div>
+          <GoogleLogin />
+          <Separator />
+          <UserRegister onEmailSent={handleEmailSent} />
+          <Link href={"/auth/user/login"} className="text-[#3d91ff]">
+            既にアカウントをお持ちの方
+          </Link>
+        </div>
+      )}
+    </div>
+  );
+}

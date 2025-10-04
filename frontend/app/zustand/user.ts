@@ -51,7 +51,7 @@ export const useUser = create<UserState>()(
       setUser: (id, name, icon, likeStores) => set({ id, name, icon, likeStores }),
     }),
     {
-      name : "user",
+      name: "user",
     }
   )
-)
+);

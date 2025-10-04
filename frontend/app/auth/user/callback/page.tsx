@@ -1,5 +1,5 @@
 "use client";
-import Callback from "@/app/components/organisms/callback";
+import EmailCallback from "@/app/features/auth/email-callback";
 import { useToaster } from "@/app/zustand/toaster";
 import { client } from "@/utils/setting";
 import { useRouter } from "next/navigation";
@@ -17,7 +17,7 @@ export default function UserCallbackPage() {
 
     if (!codeParam) {
       open("認証情報が取得できませんでした", "error");
-      router.push("/user/login");
+      router.push("/auth/user/login");
     }
 
     setCode(codeParam);
@@ -46,7 +46,7 @@ export default function UserCallbackPage() {
         }
       } catch (e) {
         open("ネットワークエラーが発生しました", "error");
-        router.push("/user/login");
+        router.push("/auth/user/login");
       }
     }
 
@@ -55,7 +55,7 @@ export default function UserCallbackPage() {
 
   return (
     <div className="h-screen flex justify-center items-center">
-      <Callback />
+      <EmailCallback />
     </div>
   );
 }

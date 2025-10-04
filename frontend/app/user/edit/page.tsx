@@ -1,8 +1,9 @@
-import UserEditForm from "@/app/components/molecules/forms/user-edit";
+import EditProfile from "@/app/features/user/edit-profile";
+
 export default function UserEdit() {
   return (
     <>
-      <UserEditForm />
+      <EditProfile />
     </>
-  )
+  );
 }

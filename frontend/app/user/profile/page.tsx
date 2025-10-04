@@ -2,12 +2,12 @@
 
 import { client } from "@/utils/setting";
 import { useEffect } from "react";
-import UserProfile from "../../components/molecules/user-profile";
-import DeleteUser from "@/app/components/organisms/deleteUser";
-import SpUserFooter from "@/app/components/molecules/footer/sp-user-footer";
+import ProfileDisplay from "../../features/user/profile-display";
+import UserDelete from "@/app/features/user/user-delete";
+import SpUserFooter from "@/app/components/layouts/footer/sp-user-footer";
 import { useUser } from "@/app/zustand/user";
-import SpUserHeader from "@/app/components/molecules/header/sp-user-header";
-import UserEditButton from "@/app/components/atoms/buttons/userEdit-button";
+import Link from "next/link";
+
 export default function UserPage() {
   const { setUser } = useUser();
   useEffect(() => {
@@ -23,15 +23,16 @@ export default function UserPage() {
 
   return (
     <div>
-      <SpUserHeader />
       <div className="flex justify-center items-center">
-        <UserProfile />
+        <ProfileDisplay />
       </div>
 
       <div className="flex justify-center items-center">
-        <UserEditButton />
+        <button className="text-white font-bold bg-[#181818] rounded-[6px] cursor-pointer px-4 py-2">
+          <Link href="/user/edit">プロフィールを編集</Link>
+        </button>
       </div>
-      <DeleteUser />
+      <UserDelete />
       <SpUserFooter />
     </div>
   );
