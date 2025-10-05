@@ -58,7 +58,7 @@ export default function UserRegister({ onEmailSent }: Props) {
           open(data.error || "エラーが発生しました。", "error");
         }
       }
-    } catch (error) {
+    } catch {
       open("通信に失敗しました。", "error");
     } finally {
       setIsSubmitting(false);

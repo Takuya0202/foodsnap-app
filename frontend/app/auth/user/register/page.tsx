@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import LinkButton from "../../../components/elements/buttons/link-button";
 import { useState } from "react";
 import GoogleLogin from "@/app/features/auth/google-login";
 import Logo from "@/app/components/elements/icons/Logo";
@@ -35,9 +35,7 @@ export default function Register() {
           <GoogleLogin />
           <Separator />
           <UserRegister onEmailSent={handleEmailSent} />
-          <Link href={"/auth/user/login"} className="text-[#3d91ff]">
-            既にアカウントをお持ちの方
-          </Link>
+          <LinkButton href="/auth/user/login">既にアカウントをお持ちの方</LinkButton>
         </div>
       )}
     </div>

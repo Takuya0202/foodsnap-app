@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import LinkButton from "../../../components/elements/buttons/link-button";
 import GoogleLogin from "../../../features/auth/google-login";
 import Logo from "../../../components/elements/icons/Logo";
 import Separator from "../../../components/elements/others/separator";
@@ -19,9 +19,10 @@ export default function Login() {
         <GoogleLogin />
         <Separator />
         <UserLogin />
-        <Link href={"/auth/user/register"} className="text-[#3d91ff]">
-          アカウントをお持ちでない方
-        </Link>
+        <LinkButton href="/auth/user/register">アカウントをお持ちでない方</LinkButton>
+        <div>
+          <LinkButton href="/stores/top">ログインせずに始める</LinkButton>
+        </div>
       </div>
     </div>
   );
