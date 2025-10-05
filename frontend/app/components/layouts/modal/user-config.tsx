@@ -6,6 +6,10 @@ import UserLogout from "@/app/features/auth/logout";
 import UserDelete from "@/app/features/user/user-delete";
 import { Close, ExitToApp, Store } from "@mui/icons-material";
 import "./animation.css";
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css";
+import { useState } from "react";
+
 // ユーザーの設定を開くモーダル
 type props = {
   setIsOpen: (isOpen: boolean) => void;
@@ -13,61 +17,89 @@ type props = {
 
 export default function UserConfig({ setIsOpen }: props) {
   const { isAuthenticated, name } = useUser();
+  const [isClose, setIsClose] = useState<boolean>(false);
+  const closeDistance = 50; // 閉じる距離
 
+  const handleClose = () => {
+    setIsClose(true);
+    // アニメーション終了時にモーダルを閉じる。
+    setTimeout(() => {
+      setIsOpen(false);
+    }, 300);
+  };
   return (
-    <div className="w-full h-screen bg-[#3d3d3d] z-50 fixed top-0 right-0 flex justify-end animate-[fadeIn_0.3s_ease-in-out]">
-      {/* モーダル本体 */}
-      <div className="w-[70%] max-w-[320px] h-full bg-[#181818] animate-[slideInRight_0.3s_ease-in-out]">
-        <div className="flex flex-col items-start p-4 space-y-8">
-          {/* closeボタン */}
-          <div className="flex justify-end">
-            <button onClick={() => setIsOpen(false)} className="mr-3">
-              <Close
-                sx={{
-                  color: "#3d3d3d",
-                }}
-              />
-            </button>
-          </div>
-          {isAuthenticated ? (
-            <>
-              <div className="flex items-center space-x-10">
-                <UserIcon />
-                <p className="text-white text-lg">{name}</p>
+    <div
+      className={`w-full h-screen bg-[#3d3d3d] z-[60] fixed top-0 right-0 flex justify-end
+    ${isClose ? "animate-[slideOutRight_0.3s_ease-in-out]" : "animate-[fadeIn_0.3s_ease-in-out]"}`}
+    >
+      <Swiper
+        className="w-full h-full"
+        onTouchEnd={(swiper) => {
+          const diffX = swiper.touches.currentX - swiper.touches.startX;
+          if (diffX > closeDistance) {
+            handleClose();
+          }
+        }}
+        allowTouchMove={true}
+        resistance={true}
+        resistanceRatio={0.85}
+      >
+        <SwiperSlide>
+          <div className="w-[70%] max-w-[320px] h-full bg-[#181818] animate-[slideInRight_0.3s_ease-in-out] ml-auto">
+            <div className="flex flex-col items-start p-4 space-y-8">
+              {/* closeボタン */}
+              <div className="flex justify-end">
+                <button onClick={handleClose} className="pl-3 ">
+                  <Close
+                    sx={{
+                      color: "white",
+                      width: "32px",
+                      height: "32px",
+                    }}
+                  />
+                </button>
               </div>
+              {isAuthenticated ? (
+                <>
+                  <div className="flex items-center space-x-10">
+                    <UserIcon />
+                    <p className="text-white text-lg">{name}</p>
+                  </div>
 
-              <div>
-                <UserLogout />
-              </div>
+                  <div>
+                    <UserLogout />
+                  </div>
 
+                  <div>
+                    <UserDelete />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <LinkButton
+                    href="/auth/user/login"
+                    icon={<ExitToApp sx={{ color: "#ffffff", width: "24px", height: "24px" }} />}
+                    richMode={true}
+                    className="text-white"
+                  >
+                    ログイン
+                  </LinkButton>
+                </>
+              )}
               <div>
-                <UserDelete />
+                <LinkButton
+                  href="/auth/admin/login"
+                  icon={<Store sx={{ color: "#ffffff", width: "24px", height: "24px" }} />}
+                  richMode={true}
+                  className="text-white"
+                >
+                  店舗登録はこちら
+                </LinkButton>
               </div>
-            </>
-          ) : (
-            <>
-              <LinkButton
-                href="/auth/user/login"
-                icon={<ExitToApp sx={{ color: "#ffffff", width: "24px", height: "24px" }} />}
-                richMode={true}
-                className="text-white"
-              >
-                ログイン
-              </LinkButton>
-            </>
-          )}
-          <div>
-            <LinkButton
-              href="/auth/admin/login"
-              icon={<Store sx={{ color: "#ffffff", width: "24px", height: "24px" }} />}
-              richMode={true}
-              className="text-white"
-            >
-              店舗登録はこちら
-            </LinkButton>
+            </div>
           </div>
-        </div>
-      </div>
+        </SwiperSlide>
+      </Swiper>
     </div>
   );
 }
