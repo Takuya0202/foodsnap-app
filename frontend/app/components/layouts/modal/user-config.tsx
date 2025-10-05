@@ -48,8 +48,8 @@ export default function UserConfig({ setIsOpen }: props) {
           <div className="w-[70%] max-w-[320px] h-full bg-[#181818] animate-[slideInRight_0.3s_ease-in-out] ml-auto">
             <div className="flex flex-col items-start p-4 space-y-8">
               {/* closeボタン */}
-              <div className="flex justify-end">
-                <button onClick={handleClose} className="pl-3 ">
+              <div className="flex justify-end w-full mt-4 mr-4">
+                <button onClick={handleClose}>
                   <Close
                     sx={{
                       color: "white",

@@ -46,7 +46,7 @@ export type storeDetailResponse = {
     description: string | null;
   }> | null;
   tags: Array<{
-    id: string;
+    id: number;
     name: string;
   }> | null;
 };
@@ -63,16 +63,16 @@ export type commentResponse = Array<{
 // 検索するときに表示させるレスポンス
 export type storeSearchResponse = {
   genres : Array<{
-    id :string,
+    id :number,
     name : string,
   }>;
   prefectures : Array<{
-    id : string,
+    id : number,
     name : string,
     area : string,
   }>;
   tags : Array<{
-    id : string,
+    id : number,
     name : string,
   }>
 }

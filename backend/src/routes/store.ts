@@ -199,17 +199,17 @@ export const storeApp = new Hono()
 
       // ジャンル検索
       if (genreId) {
-        query = query.eq('genre_id', genreId);
+        query = query.eq('genre_id', Number(genreId));
       }
 
       // 都道府県検索
       if (prefectureIds.length > 0) {
-        query = query.in('prefecture_id', prefectureIds);
+        query = query.in('prefecture_id', prefectureIds.map(Number));
       }
 
       // タグ検索
       if (tagIds.length > 0) {
-        query = query.in('tags.id', tagIds);
+        query = query.in('tags.id', tagIds.map(Number));
       }
 
       // エリア検索
@@ -269,6 +269,46 @@ export const storeApp = new Hono()
       );
     }
   })
+  // 検索の取得 honoは動的ルーティングのidとtopやstoreのidの区別ができないので、先にやる。
+  .get('/search' , async (c : Context) => {
+    try {
+      const supabase = getSupabase(c);
+      // 存在してるジャンル、地域、タグの取得
+      const [genres,prefectures,tags ] = await Promise.all([
+        supabase.from('genres').select(`id , name`),
+        supabase.from('prefectures').select(`id , name , area`),
+        supabase.from('tags').select(`id , name`),
+      ]);
+      
+      if (genres.error || prefectures.error || tags.error) {
+        return c.json({
+          message : 'fail to get search',
+          error : '検索の取得に失敗しました。'
+        } , 400);
+      }
+
+      const res : storeSearchResponse = {
+        genres : genres.data.map((genre) => ({
+          id : genre.id,
+          name : genre.name
+        })),
+        prefectures : prefectures.data.map((prefecture) => ({
+          id : prefecture.id,
+          name : prefecture.name,
+          area : prefecture.area
+        })),
+        tags : tags.data.map((tag) => ({
+          id : tag.id,
+          name : tag.name
+        })),
+      };
+
+      return c.json(res , 200);
+    } catch (error) {
+      return c.json(serverError , 500);
+    }
+  }) 
+
   // 店舗詳細取得
   .get('/:storeId', async (c: Context) => {
     try {
@@ -620,41 +660,3 @@ export const storeApp = new Hono()
       }
     })
   )
-  .get('/search' , async (c : Context) => {
-    try {
-      const supabase = getSupabase(c);
-      // 存在してるジャンル、地域、タグの取得
-      const [genres,prefectures,tags ] = await Promise.all([
-        supabase.from('genres').select(`id , name`),
-        supabase.from('prefectures').select(`id , name , area`),
-        supabase.from('tags').select(`id , name`),
-      ]);
-
-      if (genres.error || prefectures.error || tags.error) {
-        return c.json({
-          message : 'fail to get search',
-          error : '検索の取得に失敗しました。'
-        } , 400);
-      }
-
-      const res : storeSearchResponse = {
-        genres : genres.data.map((genre) => ({
-          id : genre.id,
-          name : genre.name
-        })),
-        prefectures : prefectures.data.map((prefecture) => ({
-          id : prefecture.id,
-          name : prefecture.name,
-          area : prefecture.area
-        })),
-        tags : tags.data.map((tag) => ({
-          id : tag.id,
-          name : tag.name
-        })),
-      };
-
-      return c.json(res , 200);
-    } catch (error) {
-      return c.json(serverError , 500);
-    }
-  }) 

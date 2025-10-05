@@ -1,11 +1,11 @@
-import { Menu } from "@mui/icons-material";
+import HamburgerButton from "../../elements/buttons/hamburger-button";
 // スマホサイズでのユーザー画面のヘッダー
 export default function SpUserHeader() {
   return (
     <>
       <div
         className="w-full py-4 px-5 flex justify-between items-center bg-[#181818]
-        fixed top-0 z-50"
+        fixed top-0 z-55"
       >
         {/* キーワード入力 */}
         <div>
@@ -16,14 +16,7 @@ export default function SpUserHeader() {
             placeholder="キーワードを入力"
           />
         </div>
-
-        <button className="w-[48px] h-[32px] flex justify-center items-center bg-[#3d3d3d]">
-          <Menu
-            sx={{
-              color: "#fff",
-            }}
-          />
-        </button>
+        <HamburgerButton />
       </div>
 
       <div className="w-full h-[64px]"></div>

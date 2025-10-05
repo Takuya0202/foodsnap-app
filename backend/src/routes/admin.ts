@@ -45,7 +45,7 @@ export const adminApp = new Hono().post(
         const { data: genre, error: genreError } = await supabase
           .from('genres')
           .select('id')
-          .eq('id', genreId)
+          .eq('id', Number(genreId))
           .single();
 
         if (!genre || genreError) {
@@ -64,7 +64,7 @@ export const adminApp = new Hono().post(
         const { data: prefecture, error: prefectureError } = await supabase
           .from('prefectures')
           .select('id')
-          .eq('id', prefectureId)
+          .eq('id', Number(prefectureId))
           .single();
 
         if (!prefecture || prefectureError) {
@@ -83,7 +83,7 @@ export const adminApp = new Hono().post(
         const { data: tagsData, error: tagsError } = await supabase
           .from('tags')
           .select('id')
-          .in('id', tags);
+          .in('id', tags.map(Number));
 
         // 全てのタグが存在するか
         if (tags.length !== tagsData?.length || tagsError) {
