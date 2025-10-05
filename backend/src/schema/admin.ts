@@ -63,7 +63,7 @@ const baseAdminSchema = z.object({
     .optional(),
 });
 
-export const createAdminSchema = baseAdminSchema;
+export const createAdminSchema = baseAdminSchema.omit({ photo: true });
 export const updateAdminSchema = baseAdminSchema.omit({ password: true, email: true });
 export const loginAdminSchema = baseAdminSchema.pick({ email: true, password: true });
 

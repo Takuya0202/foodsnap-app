@@ -4,11 +4,13 @@ import { DeleteForever } from "@mui/icons-material";
 import { useToaster } from "@/app/zustand/toaster";
 import { client } from "@/utils/setting";
 import { useRouter } from "next/navigation";
+import { useUser } from "@/app/zustand/user";
 
 export default function UserDelete() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const router = useRouter();
+  const { clearUser } = useUser();
   const { open } = useToaster();
 
   const handleDelete = async () => {
@@ -17,6 +19,7 @@ export default function UserDelete() {
       const res = await client.api.user.delete.$delete();
       if (res.status === 200) {
         open("アカウント削除しました", "success");
+        clearUser();
         router.push("/auth/user/login");
       } else {
         const data = await res.json();

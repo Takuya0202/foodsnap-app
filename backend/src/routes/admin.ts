@@ -9,7 +9,7 @@ import { serverError , authError } from '../utils/setting';
 
 export const adminApp = new Hono().post(
   '/register',
-  zValidator('form', createAdminSchema, async (result, c: Context) => {
+  zValidator('json', createAdminSchema, async (result, c: Context) => {
     try {
       if (!result.success) {
         const errors = getValidationErrorResponnse(result.error as ZodError);
@@ -36,7 +36,6 @@ export const adminApp = new Hono().post(
         link,
         startAt,
         endAt,
-        photo,
       }: CreateAdminRequest = result.data;
 
       const supabase = getSupabase(c);
@@ -97,21 +96,6 @@ export const adminApp = new Hono().post(
           );
         }
       }
-      // photoをstorageに保管して、urlの取得
-      let path = null;
-      if (photo) {
-        try {
-          path = await uploadImage(supabase , photo , 'photo');
-        } catch (error) {
-          return c.json(
-            {
-              message: 'fail to upload photo',
-              error: '写真のアップロードに失敗しました。再度お試しください。',
-            },
-            400
-          );
-        }
-      }
 
       // signup
       const {
@@ -129,7 +113,6 @@ export const adminApp = new Hono().post(
             latitude,
             longitude,
             link,
-            photo: path,
             startAt,
             endAt,
             genreId,
@@ -352,7 +335,7 @@ export const adminApp = new Hono().post(
       let path = null;
       if (photo) {
         try {
-          path = await uploadImage(supabase , photo , 'photo' , existData?.photo)
+          path = await uploadImage(supabase , user.id , photo , 'photo' , existData?.photo)
         } catch (error) {
           return c.json({
             message : 'fail to upload photo',

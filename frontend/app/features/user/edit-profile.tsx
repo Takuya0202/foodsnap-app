@@ -13,11 +13,12 @@ import { useToaster } from "@/app/zustand/toaster";
 import { client } from "@/utils/setting";
 import { useRouter } from "next/navigation";
 import SubmitButton from "../../components/elements/buttons/submit-button";
+import LinkButton from "@/app/components/elements/buttons/link-button";
 
 export default function EditProfile() {
   const [previewwIcon, setPreviewIcon] = useState<string | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const { name, icon: iconUrl } = useUser();
+  const { name, icon: iconUrl, setChecked } = useUser();
   const { open } = useToaster();
   const router = useRouter();
 
@@ -35,12 +36,15 @@ export default function EditProfile() {
 
   useEffect(() => {
     setValue("name", name);
+    setValue("icon", undefined);
   }, [name, setValue]);
 
+  // ファイル変更時
   const handleIconChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setPreviewIcon(URL.createObjectURL(file));
+      setValue("icon", file);
     }
   };
 
@@ -56,6 +60,7 @@ export default function EditProfile() {
 
       if (res.status === 200) {
         open("ユーザー情報を更新しました", "success");
+        setChecked(); // ユーザー情報を再取得させる
         router.push("/user/profile");
       } else {
         const data = await res.json();
@@ -80,15 +85,17 @@ export default function EditProfile() {
         className="flex flex-col justify-center items-center space-y-4 w-[86%] mx-auto"
       >
         <div>
-          <div className="flex justify-center items-center">
+          <div className="flex justify-center items-center my-4">
             <label htmlFor="icon" className="relative">
-              <Image
-                src={previewwIcon || iconUrl || "/default-icon.svg"}
-                alt="ユーザーのアイコン"
-                width={64}
-                height={64}
-                className="rounded-full object-contain opacity-80"
-              />
+              <div className="w-16 h-16 rounded-full overflow-hidden">
+                <Image
+                  src={previewwIcon || iconUrl || "/default-icon.svg"}
+                  alt="ユーザーアイコン"
+                  width={64}
+                  height={64}
+                  className="w-full h-full object-cover"
+                />
+              </div>
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
                 <Add sx={{ color: "white", width: 16, height: 16 }} />
               </div>
@@ -96,10 +103,10 @@ export default function EditProfile() {
               {/* 隠し */}
               <input
                 type="file"
+                id="icon"
                 {...register("icon")}
                 accept=".jpg,.jpeg,.png"
                 className="hidden"
-                id="icon"
                 onChange={handleIconChange}
               />
             </label>
@@ -109,7 +116,10 @@ export default function EditProfile() {
         <InputText placeholder="ユーザー名" {...register("name")} />
         {errors.name && <FieldError>{errors.name.message}</FieldError>}
 
-        <SubmitButton text="更新" width="200" height="40" isSubmitting={isSubmitting} />
+        <div className="flex items-center space-x-5">
+          <LinkButton href="/user/profile">キャンセル</LinkButton>
+          <SubmitButton text="更新" width="160" height="40" isSubmitting={isSubmitting} />
+        </div>
       </form>
     </div>
   );

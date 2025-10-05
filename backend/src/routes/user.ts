@@ -245,7 +245,6 @@ export const userApp = new Hono<{ Bindings: Bindings }>()
           401
         );
       }
-
       // 既存データの取得
       const { data : existData , error : existError } = await supabase
         .from('profiles')
@@ -256,8 +255,9 @@ export const userApp = new Hono<{ Bindings: Bindings }>()
       // アイコンをstorageにupload
       if (icon) {
         try {
-          path = await uploadImage(supabase , icon , 'icon' , existData?.icon);
+          path = await uploadImage(supabase , user.id , icon , 'icon' , existData?.icon);
         } catch (error) {
+          console.log(error);
           return c.json(
             {
               message: 'fail to upload icon',
