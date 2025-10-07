@@ -4,8 +4,9 @@ type props = {
   type?: string;
 };
 export default function InputText({ placeholder, label, type, ...props }: props) {
+  const baseClass = label ? "flex flex-col space-y-2 w-full" : "w-full";
   return (
-    <div className="flex flex-col space-y-2 w-full">
+    <div className={baseClass}>
       <label htmlFor={label} className="text-white">
         {label}
       </label>

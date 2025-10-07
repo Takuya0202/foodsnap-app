@@ -238,7 +238,12 @@ export default function Search({ setIsOpen }: props) {
               transition: "transform 0.2s",
             }}
           />
-          <p className="text-white text-base font-bold">タグ検索</p>
+          <p className="text-white text-base font-bold">
+            タグ検索
+            {selectedTagIds.length > 0 && (
+              <span className="ml-2 text-sm text-[#3c28c2]">({selectedTagIds.length}件選択中)</span>
+            )}
+          </p>
         </button>
 
         {openTag && (
