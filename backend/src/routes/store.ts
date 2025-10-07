@@ -3,7 +3,7 @@ import { getSupabase } from '../middleware/supabase';
 import { commentResponse, storeDetailResponse, storeResponse, storeSearchResponse } from '../types/storeResponse';
 import { getCookie, setCookie } from 'hono/cookie';
 import { zValidator } from '@hono/zod-validator';
-import { CreateCommentRequest, createCommentSchema } from '../schema/store';
+import { CreateCommentRequest, createCommentSchema, searchStoreQuerySchema, SearchStoreQueryRequest } from '../schema/store';
 import { getValidationErrorResponnse } from '../utils/setting';
 import { ZodError } from 'zod';
 import cuid from 'cuid';
@@ -163,15 +163,20 @@ export const storeApp = new Hono()
       );
     }
   })
-  .get('/index', async (c: Context) => {
+  .get('/index', 
+    zValidator('query', searchStoreQuerySchema, async (result, c: Context) => {
+      if (!result.success) {
+        return c.json({
+          message: 'validation error',
+          error : "無効なクエリです"
+        }, 400);
+      }
+    }),
+    async (c) => {
     try {
       // クエリの取得
       const supabase = getSupabase(c);
-      const { genreId, keyword } = c.req.query();
-      const prefectureIds: string[] = c.req.queries('prefectureId') || [];
-      const tagIds: string[] = c.req.queries('tagId') || [];
-      const areas: string[] = c.req.queries('area') || [];
-
+      const { genreId, keyword, prefectureIds, tagIds}: SearchStoreQueryRequest = c.req.valid('query');
       // 取得するクエリ
       let query = supabase
         .from('stores')
@@ -199,22 +204,17 @@ export const storeApp = new Hono()
 
       // ジャンル検索
       if (genreId) {
-        query = query.eq('genre_id', Number(genreId));
+        query = query.eq('genre_id', genreId);
       }
 
       // 都道府県検索
-      if (prefectureIds.length > 0) {
+      if (prefectureIds && prefectureIds.length > 0) {
         query = query.in('prefecture_id', prefectureIds.map(Number));
       }
 
       // タグ検索
-      if (tagIds.length > 0) {
+      if (tagIds && tagIds.length > 0) {
         query = query.in('tags.id', tagIds.map(Number));
-      }
-
-      // エリア検索
-      if (areas.length > 0) {
-        query = query.in('prefectures.area', areas);
       }
 
       // キーワード検索

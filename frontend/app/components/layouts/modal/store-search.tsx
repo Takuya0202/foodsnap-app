@@ -20,7 +20,7 @@ export default function StoreSearch({ setIsOpen }: props) {
 
   return (
     <div
-      className={`w-full h-screen bg-[#3d3d3d] z-[100] fixed top-0 right-0 flex justify-end
+      className={`w-full h-screen bg-[#3d3d3d] z-[100] fixed top-0 right-0 flex justify-end overflow-y-scroll
         ${isClose ? "animate-[slideOutRight_0.3s_ease-in-out]" : "animate-[fadeIn_0.3s_ease-in-out]"}`}
     >
       <Swiper
@@ -50,7 +50,7 @@ export default function StoreSearch({ setIsOpen }: props) {
                   />
                 </button>
               </div>
-              <Search />
+              <Search setIsOpen={setIsOpen} />
             </div>
           </div>
         </SwiperSlide>

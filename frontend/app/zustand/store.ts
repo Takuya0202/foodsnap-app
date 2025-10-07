@@ -1,7 +1,7 @@
 import { create } from "zustand";
 
 // 存在するジャンル、エリア、タグを取得
-type Stores = {
+type FilterState = {
   genres: {
     id: number;
     name: string;
@@ -36,7 +36,7 @@ type Stores = {
   ) => void;
 };
 
-export const useStores = create<Stores>((set) => ({
+export const useFilter = create<FilterState>((set) => ({
   genres: [],
   prefectures: [],
   tags: [],

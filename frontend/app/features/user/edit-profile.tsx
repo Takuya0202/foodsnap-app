@@ -52,10 +52,7 @@ export default function EditProfile() {
     try {
       setIsSubmitting(true);
       const res = await client.api.user.update.$put({
-        form: {
-          name: req.name,
-          icon: req.icon,
-        },
+        form: req.icon === undefined ? { name: req.name } : { name: req.name, icon: req.icon }, // iconがundefinedの場合はnameのみ更新
       });
 
       if (res.status === 200) {
