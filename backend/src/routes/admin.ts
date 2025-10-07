@@ -1,26 +1,30 @@
 import { zValidator } from '@hono/zod-validator';
 import { Context, Hono } from 'hono';
 import { CreateAdminRequest, createAdminSchema, LoginAdminRequest, loginAdminSchema, UpdateAdminRequest, updateAdminSchema } from '../schema/admin';
-import { getValidationErrorResponnse, uploadImage } from '../utils/setting';
+import { getValidationErrorResponnse, uploadImage, Bindings } from '../utils/setting';
 import { ZodError } from 'zod';
 import { getSupabase } from '../middleware/supabase';
 import { AdminDetailReponse, AdminReponse } from '../types/adminReponse';
 import { serverError , authError } from '../utils/setting';
 
-export const adminApp = new Hono().post(
+export const adminApp = new Hono<{ Bindings: Bindings }>()
+.post(
   '/register',
-  zValidator('json', createAdminSchema, async (result, c: Context) => {
+  zValidator('json', createAdminSchema, async (result , c: Context) => {
+    if (!result.success) {
+      const errors = getValidationErrorResponnse(result.error as ZodError);
+      return c.json(
+        {
+          message: 'validation error',
+          errors: errors,
+        },
+        400
+      );
+    }
+  }),
+
+    async(c) => {
     try {
-      if (!result.success) {
-        const errors = getValidationErrorResponnse(result.error as ZodError);
-        return c.json(
-          {
-            message: 'validation error',
-            errors: errors,
-          },
-          400
-        );
-      }
       // データの取得
       const {
         name,
@@ -36,7 +40,7 @@ export const adminApp = new Hono().post(
         link,
         startAt,
         endAt,
-      }: CreateAdminRequest = result.data;
+      }: CreateAdminRequest = c.req.valid('json');
 
       const supabase = getSupabase(c);
 
@@ -146,7 +150,6 @@ export const adminApp = new Hono().post(
       );
     }
   })
-)
   .post('/login' , zValidator('json' , loginAdminSchema , async(result , c : Context) => {
     if (!result.success) {
       const errors = getValidationErrorResponnse(result.error as ZodError);
