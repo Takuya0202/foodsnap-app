@@ -117,19 +117,19 @@ export type Database = {
       genres: {
         Row: {
           created_at: string
-          id: string
+          id: number
           name: string
           updated_at: string
         }
         Insert: {
           created_at?: string
-          id: string
+          id?: number
           name: string
           updated_at: string
         }
         Update: {
           created_at?: string
-          id?: string
+          id?: number
           name?: string
           updated_at?: string
         }
@@ -216,21 +216,21 @@ export type Database = {
         Row: {
           area: string
           created_at: string
-          id: string
+          id: number
           name: string
           updated_at: string
         }
         Insert: {
           area: string
           created_at?: string
-          id: string
+          id?: number
           name: string
           updated_at: string
         }
         Update: {
           area?: string
           created_at?: string
-          id?: string
+          id?: number
           name?: string
           updated_at?: string
         }
@@ -270,19 +270,19 @@ export type Database = {
         Row: {
           created_at: string
           store_id: string
-          tag_id: string
+          tag_id: number
           updated_at: string
         }
         Insert: {
           created_at?: string
           store_id: string
-          tag_id: string
+          tag_id: number
           updated_at: string
         }
         Update: {
           created_at?: string
           store_id?: string
-          tag_id?: string
+          tag_id?: number
           updated_at?: string
         }
         Relationships: [
@@ -307,7 +307,7 @@ export type Database = {
           address: string
           created_at: string
           end_at: string | null
-          genre_id: string | null
+          genre_id: number | null
           id: string
           latitude: number
           link: string | null
@@ -315,7 +315,7 @@ export type Database = {
           name: string
           phone: string
           photo: string | null
-          prefecture_id: string | null
+          prefecture_id: number | null
           start_at: string | null
           updated_at: string
           user_id: string
@@ -324,7 +324,7 @@ export type Database = {
           address: string
           created_at?: string
           end_at?: string | null
-          genre_id?: string | null
+          genre_id?: number | null
           id: string
           latitude: number
           link?: string | null
@@ -332,7 +332,7 @@ export type Database = {
           name: string
           phone: string
           photo?: string | null
-          prefecture_id?: string | null
+          prefecture_id?: number | null
           start_at?: string | null
           updated_at: string
           user_id: string
@@ -341,7 +341,7 @@ export type Database = {
           address?: string
           created_at?: string
           end_at?: string | null
-          genre_id?: string | null
+          genre_id?: number | null
           id?: string
           latitude?: number
           link?: string | null
@@ -349,7 +349,7 @@ export type Database = {
           name?: string
           phone?: string
           photo?: string | null
-          prefecture_id?: string | null
+          prefecture_id?: number | null
           start_at?: string | null
           updated_at?: string
           user_id?: string
@@ -374,19 +374,19 @@ export type Database = {
       tags: {
         Row: {
           created_at: string
-          id: string
+          id: number
           name: string
           updated_at: string
         }
         Insert: {
           created_at?: string
-          id: string
+          id?: number
           name: string
           updated_at: string
         }
         Update: {
           created_at?: string
-          id?: string
+          id?: number
           name?: string
           updated_at?: string
         }

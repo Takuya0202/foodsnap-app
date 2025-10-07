@@ -3,7 +3,7 @@ import { getSupabase } from '../middleware/supabase';
 import { commentResponse, storeDetailResponse, storeResponse, storeSearchResponse } from '../types/storeResponse';
 import { getCookie, setCookie } from 'hono/cookie';
 import { zValidator } from '@hono/zod-validator';
-import { CreateCommentRequest, createCommentSchema } from '../schema/store';
+import { CreateCommentRequest, createCommentSchema, searchStoreQuerySchema, SearchStoreQueryRequest } from '../schema/store';
 import { getValidationErrorResponnse } from '../utils/setting';
 import { ZodError } from 'zod';
 import cuid from 'cuid';
@@ -163,15 +163,20 @@ export const storeApp = new Hono()
       );
     }
   })
-  .get('/index', async (c: Context) => {
+  .get('/index', 
+    zValidator('query', searchStoreQuerySchema, async (result, c: Context) => {
+      if (!result.success) {
+        return c.json({
+          message: 'validation error',
+          error : "無効なクエリです"
+        }, 400);
+      }
+    }),
+    async (c) => {
     try {
       // クエリの取得
       const supabase = getSupabase(c);
-      const { genreId, keyword } = c.req.query();
-      const prefectureIds: string[] = c.req.queries('prefectureId') || [];
-      const tagIds: string[] = c.req.queries('tagId') || [];
-      const areas: string[] = c.req.queries('area') || [];
-
+      const { genreId, keyword, prefectureIds, tagIds}: SearchStoreQueryRequest = c.req.valid('query');
       // 取得するクエリ
       let query = supabase
         .from('stores')
@@ -203,18 +208,13 @@ export const storeApp = new Hono()
       }
 
       // 都道府県検索
-      if (prefectureIds.length > 0) {
-        query = query.in('prefecture_id', prefectureIds);
+      if (prefectureIds && prefectureIds.length > 0) {
+        query = query.in('prefecture_id', prefectureIds.map(Number));
       }
 
       // タグ検索
-      if (tagIds.length > 0) {
-        query = query.in('tags.id', tagIds);
-      }
-
-      // エリア検索
-      if (areas.length > 0) {
-        query = query.in('prefectures.area', areas);
+      if (tagIds && tagIds.length > 0) {
+        query = query.in('tags.id', tagIds.map(Number));
       }
 
       // キーワード検索
@@ -269,6 +269,46 @@ export const storeApp = new Hono()
       );
     }
   })
+  // 検索の取得 honoは動的ルーティングのidとtopやstoreのidの区別ができないので、先にやる。
+  .get('/search' , async (c : Context) => {
+    try {
+      const supabase = getSupabase(c);
+      // 存在してるジャンル、地域、タグの取得
+      const [genres,prefectures,tags ] = await Promise.all([
+        supabase.from('genres').select(`id , name`),
+        supabase.from('prefectures').select(`id , name , area`),
+        supabase.from('tags').select(`id , name`),
+      ]);
+      
+      if (genres.error || prefectures.error || tags.error) {
+        return c.json({
+          message : 'fail to get search',
+          error : '検索の取得に失敗しました。'
+        } , 400);
+      }
+
+      const res : storeSearchResponse = {
+        genres : genres.data.map((genre) => ({
+          id : genre.id,
+          name : genre.name
+        })),
+        prefectures : prefectures.data.map((prefecture) => ({
+          id : prefecture.id,
+          name : prefecture.name,
+          area : prefecture.area
+        })),
+        tags : tags.data.map((tag) => ({
+          id : tag.id,
+          name : tag.name
+        })),
+      };
+
+      return c.json(res , 200);
+    } catch (error) {
+      return c.json(serverError , 500);
+    }
+  }) 
+
   // 店舗詳細取得
   .get('/:storeId', async (c: Context) => {
     try {
@@ -620,41 +660,3 @@ export const storeApp = new Hono()
       }
     })
   )
-  .get('/search' , async (c : Context) => {
-    try {
-      const supabase = getSupabase(c);
-      // 存在してるジャンル、地域、タグの取得
-      const [genres,prefectures,tags ] = await Promise.all([
-        supabase.from('genres').select(`id , name`),
-        supabase.from('prefectures').select(`id , name , area`),
-        supabase.from('tags').select(`id , name`),
-      ]);
-
-      if (genres.error || prefectures.error || tags.error) {
-        return c.json({
-          message : 'fail to get search',
-          error : '検索の取得に失敗しました。'
-        } , 400);
-      }
-
-      const res : storeSearchResponse = {
-        genres : genres.data.map((genre) => ({
-          id : genre.id,
-          name : genre.name
-        })),
-        prefectures : prefectures.data.map((prefecture) => ({
-          id : prefecture.id,
-          name : prefecture.name,
-          area : prefecture.area
-        })),
-        tags : tags.data.map((tag) => ({
-          id : tag.id,
-          name : tag.name
-        })),
-      };
-
-      return c.json(res , 200);
-    } catch (error) {
-      return c.json(serverError , 500);
-    }
-  }) 

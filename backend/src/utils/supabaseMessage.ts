@@ -17,6 +17,7 @@ export const supabaseAuthErrorCode: Record<string, string> = {
     'このメールアドレスは既に登録されています。ログインするか、別のメールアドレスをお使いください。',
   email_not_confirmed:
     'メールアドレスの確認が完了していません。メールをご確認いただき、確認リンクをクリックしてください。',
+  email_address_invalid : 'メールアドレスの形式が正しくありません。',
   email_provider_disabled: 'メールアドレスでのサインアップは現在ご利用いただけません。',
   flow_state_expired: 'セッションの有効期限が切れました。もう一度最初からお試しください。',
   flow_state_not_found: 'セッション情報が見つかりません。もう一度最初からお試しください。',

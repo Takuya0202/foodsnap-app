@@ -28,7 +28,7 @@ const baseAdminSchema = z.object({
     .regex(/^[0-9]{10,11}$/, { message: '電話番号は数字のみで入力してください。' }),
   address: z
     .string()
-    .min(1, { message: '住所は必須で。' })
+    .min(1, { message: '住所は必須です。' })
     .max(32, { message: '住所は32文字以内で入力してください。' }),
   latitude: z
     .number()
@@ -51,9 +51,9 @@ const baseAdminSchema = z.object({
       message: '終了時間はHH:mm形式で入力してください。',
     })
     .optional(),
-  prefectureId: z.string().min(1, { message: '都道府県は必須です。' }),
-  genreId: z.string().optional(),
-  tags: z.array(z.string()).max(3, { message: 'タグは3つまでです。' }).optional(),
+  prefectureId: z.number().min(1, { message: '都道府県は必須です。' }),
+  genreId: z.number().optional(),
+  tags: z.array(z.number()).max(3, { message: 'タグは3つまでです。' }).optional(),
   photo: z
     .custom<File>()
     .refine(file => file.size <= ALLOWED_IMAGE_SIZE, { message: '写真は6MB以内にしてください' })
@@ -63,7 +63,7 @@ const baseAdminSchema = z.object({
     .optional(),
 });
 
-export const createAdminSchema = baseAdminSchema;
+export const createAdminSchema = baseAdminSchema.omit({ photo: true });
 export const updateAdminSchema = baseAdminSchema.omit({ password: true, email: true });
 export const loginAdminSchema = baseAdminSchema.pick({ email: true, password: true });
 

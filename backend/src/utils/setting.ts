@@ -8,6 +8,8 @@ export type Bindings = {
   ENVIRONMENT: string;
   APP_URL: string;
   API_URL: string;
+  SUPABASE_URL: string;
+  SUPABASE_SERVICE_ROLE_KEY: string;
 };
 
 // サーバーエラーとauthエラーのレスポンス
@@ -35,41 +37,43 @@ export const getValidationErrorResponnse = (ze: ZodError): Record<string, string
 // storageに画像をuploadする関数。成功時はバケットパスを返却する。
 export async function uploadImage(
   supabase :SupabaseClient<Database>,
+  userId : string,
   file : File,
   backet : string,
   existUrl : string | null = null ) : Promise<string> {
+  // ここの処理についてだが、更新の場合、updateではなく、uploadしてから削除にする。なぜかupdateだとキャッシュを無効化しても反映までに時間がかかる。
   try {
-    // update
-    if (existUrl && existUrl.includes('supabase')){
-      // バケットパスを取得
-      const bucketPath = existUrl.split('/').pop(); // これはバケットパスがネストされていないことを想定。uuid.拡張子
-      if (!bucketPath) {
-        throw new Error('画像の更新に失敗しました。');
-      }
-      const { data , error } = await supabase.storage.from(backet).update(
-          bucketPath , file , {
-          cacheControl : '3600',
-          upsert : true,
-        }
-      )
-      if (error) {
-        throw error;
-      }
-      return existUrl;
-    }
-    // 新しくuploadするためのバケットパス生成
+    // uploadするためのバケットパス生成
     const extension = file.name.split('.').pop();
-    const bucketPath = `${uuidv4()}.${extension}`;
+    const bucketPath = `${userId}/${uuidv4()}.${extension}`;
     // upload
     const { data , error } = await supabase.storage.from(backet).upload(
       bucketPath , file , {
-        cacheControl : '3600',
+        cacheControl : '3600', 
         upsert : false,
       }
     )
     if (error) {
       throw error;
     }
+
+    // 既存のデータがある場合、削除。
+    if (existUrl && existUrl.includes('supabase')){
+      // バケットパスを取得
+      const bucketPath = existUrl.split('/').slice(-2).join('/'); // バケットパスがユーザーid/uuid.拡張子
+      if (!bucketPath) {
+        throw new Error('画像の更新に失敗しました。');
+      }
+
+      // 既存のストレージを削除
+      const { data : deleteData , error : deleteError } = await supabase.storage
+        .from(backet)
+        .remove([bucketPath])
+      if (deleteError) {
+        throw deleteError;
+      }
+    }
+
     // publicUrlを返却
     const { data : { publicUrl } } = supabase.storage.from(backet).getPublicUrl(bucketPath);
     return publicUrl;

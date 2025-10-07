@@ -88,7 +88,7 @@ export const postApp = new Hono()
       let path = null;
       if (photo) {
         try {
-          path = await uploadImage(supabase , photo , 'post');
+          path = await uploadImage(supabase , user.id , photo , 'post');
         } catch (error) {
           return c.json({
             message : 'fail to upload photo',
@@ -192,7 +192,7 @@ export const postApp = new Hono()
       let path = null;
       if (photo) {
         try {
-          path = await uploadImage(supabase , photo , 'post' , existData.photo);
+          path = await uploadImage(supabase , user.id , photo , 'post' , existData.photo);
         } catch (error) {
           return c.json({
             message : 'fail to upload photo',

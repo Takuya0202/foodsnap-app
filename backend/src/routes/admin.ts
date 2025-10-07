@@ -1,26 +1,30 @@
 import { zValidator } from '@hono/zod-validator';
 import { Context, Hono } from 'hono';
 import { CreateAdminRequest, createAdminSchema, LoginAdminRequest, loginAdminSchema, UpdateAdminRequest, updateAdminSchema } from '../schema/admin';
-import { getValidationErrorResponnse, uploadImage } from '../utils/setting';
+import { getValidationErrorResponnse, uploadImage, Bindings } from '../utils/setting';
 import { ZodError } from 'zod';
 import { getSupabase } from '../middleware/supabase';
 import { AdminDetailReponse, AdminReponse } from '../types/adminReponse';
 import { serverError , authError } from '../utils/setting';
 
-export const adminApp = new Hono().post(
+export const adminApp = new Hono<{ Bindings: Bindings }>()
+.post(
   '/register',
-  zValidator('form', createAdminSchema, async (result, c: Context) => {
+  zValidator('json', createAdminSchema, async (result , c: Context) => {
+    if (!result.success) {
+      const errors = getValidationErrorResponnse(result.error as ZodError);
+      return c.json(
+        {
+          message: 'validation error',
+          errors: errors,
+        },
+        400
+      );
+    }
+  }),
+
+    async(c) => {
     try {
-      if (!result.success) {
-        const errors = getValidationErrorResponnse(result.error as ZodError);
-        return c.json(
-          {
-            message: 'validation error',
-            errors: errors,
-          },
-          400
-        );
-      }
       // データの取得
       const {
         name,
@@ -36,8 +40,7 @@ export const adminApp = new Hono().post(
         link,
         startAt,
         endAt,
-        photo,
-      }: CreateAdminRequest = result.data;
+      }: CreateAdminRequest = c.req.valid('json');
 
       const supabase = getSupabase(c);
 
@@ -46,7 +49,7 @@ export const adminApp = new Hono().post(
         const { data: genre, error: genreError } = await supabase
           .from('genres')
           .select('id')
-          .eq('id', genreId)
+          .eq('id', Number(genreId))
           .single();
 
         if (!genre || genreError) {
@@ -65,7 +68,7 @@ export const adminApp = new Hono().post(
         const { data: prefecture, error: prefectureError } = await supabase
           .from('prefectures')
           .select('id')
-          .eq('id', prefectureId)
+          .eq('id', Number(prefectureId))
           .single();
 
         if (!prefecture || prefectureError) {
@@ -84,7 +87,7 @@ export const adminApp = new Hono().post(
         const { data: tagsData, error: tagsError } = await supabase
           .from('tags')
           .select('id')
-          .in('id', tags);
+          .in('id', tags.map(Number));
 
         // 全てのタグが存在するか
         if (tags.length !== tagsData?.length || tagsError) {
@@ -92,21 +95,6 @@ export const adminApp = new Hono().post(
             {
               message: 'invalid tags',
               error: '存在しないタグです。',
-            },
-            400
-          );
-        }
-      }
-      // photoをstorageに保管して、urlの取得
-      let path = null;
-      if (photo) {
-        try {
-          path = await uploadImage(supabase , photo , 'photo');
-        } catch (error) {
-          return c.json(
-            {
-              message: 'fail to upload photo',
-              error: '写真のアップロードに失敗しました。再度お試しください。',
             },
             400
           );
@@ -129,7 +117,6 @@ export const adminApp = new Hono().post(
             latitude,
             longitude,
             link,
-            photo: path,
             startAt,
             endAt,
             genreId,
@@ -163,7 +150,6 @@ export const adminApp = new Hono().post(
       );
     }
   })
-)
   .post('/login' , zValidator('json' , loginAdminSchema , async(result , c : Context) => {
     if (!result.success) {
       const errors = getValidationErrorResponnse(result.error as ZodError);
@@ -352,7 +338,7 @@ export const adminApp = new Hono().post(
       let path = null;
       if (photo) {
         try {
-          path = await uploadImage(supabase , photo , 'photo' , existData?.photo)
+          path = await uploadImage(supabase , user.id , photo , 'photo' , existData?.photo)
         } catch (error) {
           return c.json({
             message : 'fail to upload photo',

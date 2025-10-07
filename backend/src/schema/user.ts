@@ -24,11 +24,13 @@ const baseUserSchema = z.object({
     }),
   icon: z
     .custom<File>()
-    .refine(file => file.size <= ALLOWED_IMAGE_SIZE, { message: 'アイコンは6MB以内にしてください' })
-    .refine(file => ALLOWED_IMAGE_TYPE.includes(file.type), {
-      message: 'アイコンはjpeg,png,jpgのみアップロードできます。',
+    .optional()
+    .refine((file) => !file || file.size <= ALLOWED_IMAGE_SIZE, {
+      message: 'アイコンは6MB以内にしてください',
     })
-    .optional(),
+    .refine((file) => !file || ALLOWED_IMAGE_TYPE.includes(file.type), {
+      message: 'アイコンはjpeg,png,jpgのみアップロードできます。',
+    }),
 });
 
 // 各エンドポイント用のスキーマ

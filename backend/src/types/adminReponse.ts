@@ -29,10 +29,10 @@ export type AdminDetailReponse = {
   latitude : number,
   longitude : number,
   phone : string,
-  prefectureId : string | null,
-  genreId : string | null,
+  prefectureId : number | null,
+  genreId : number | null,
   tags : Array<{
-    id : string,
+    id : number,
     name : string,
   }> | null,
   photo : string | null,

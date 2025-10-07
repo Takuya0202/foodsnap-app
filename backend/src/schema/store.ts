@@ -17,3 +17,13 @@ export const createCommentSchema = CommentSchema;
 
 // 型生成
 export type CreateCommentRequest = z.infer<typeof createCommentSchema>;
+
+// indexのクエリスキーマ
+export const searchStoreQuerySchema = z.object({
+  genreId : z.coerce.number().nullable(),
+  keyword : z.string().nullable(),
+  prefectureIds : z.array(z.coerce.number()).nullable(),
+  tagIds : z.array(z.coerce.number()).nullable(),
+})
+
+export type SearchStoreQueryRequest = z.infer<typeof searchStoreQuerySchema>;
