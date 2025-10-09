@@ -176,74 +176,15 @@ export const adminApp = new Hono<{ Bindings: Bindings }>()
           error : 'メールアドレスまたはパスワードが正しくありません。',
         } , 400);
       }
-  
-      // 管理者の情報を取得
-      const { data :  admin  , error : adminError } = await supabase
-        .from('stores')
-        .select(`
-            id,
-            name,
-            likes (count),
-            posts (
-              id,
-              name,
-              price,
-              photo,
-              description,
-              updated_at
-            ),
-            comments (
-              count,
-              id,
-              content,
-              user_id,
-              profiles!user_id (
-                name,
-                icon
-              ),
-              created_at
-            )
-        `)
-        .eq('user_id' , user.id)
-        .single();
-  
-      if (!admin || adminError) {
-        return c.json({
-          message : 'fail to get admin',
-          error : '管理者の情報の取得に失敗しました。再度ログインをお試しください。',
-        } , 400);
-      }
-  
-  
-      const res : AdminReponse = {
-        id : admin.id,
-        name : admin.name,
-        likeCount : admin.likes[0]?.count,
-        commentCount : admin.comments[0]?.count,
-        posts : admin.posts.map(post => ({
-          id : post.id,
-          name : post.name,
-          price : post.price,
-          photo : post.photo,
-          description : post.description,
-          updatedAt : post.updated_at,
-        })) || null,
-        comments : admin.comments.map(comment => ({
-          id : comment.id,
-          content : comment.content,
-          userId : comment.user_id,
-          userName : comment.profiles.name,
-          userIcon : comment.profiles.icon,
-          createdAt : comment.created_at,
-        })) || null,
-      }
-  
-      return c.json(res , 200);
+      return c.json({
+        message : 'ログインに成功しました。'
+      }, 200);
     } catch (error) {
       return c.json(serverError , 500);
     }
   }
 )
+  // dashboardで表示する情報を取得する
   .get('/dashboard' , async (c : Context) => {
     try {
       const supabase = getSupabase(c);
@@ -267,7 +208,6 @@ export const adminApp = new Hono<{ Bindings: Bindings }>()
             updated_at
           ),
           comments (
-            count,
             id,
             content,
             user_id,
@@ -292,7 +232,7 @@ export const adminApp = new Hono<{ Bindings: Bindings }>()
         id : admin.id,
         name : admin.name,
         likeCount : admin.likes[0]?.count,
-        commentCount : admin.comments[0]?.count,
+        commentCount : admin.comments?.length || 0,
         posts : admin.posts.map(post => ({
           id : post.id,
           name : post.name,
@@ -316,6 +256,7 @@ export const adminApp = new Hono<{ Bindings: Bindings }>()
       return c.json(serverError , 500);
     }
   })
+  // 編集する時にセットするデータ
   .get('/detail' , async (c : Context) => {
     try {
       const supabase = getSupabase(c);

@@ -1,5 +1,3 @@
-"use client";
-
 import LinkButton from "../../../components/elements/buttons/link-button";
 import GoogleLogin from "../../../features/auth/google-login";
 import Logo from "../../../components/elements/icons/Logo";

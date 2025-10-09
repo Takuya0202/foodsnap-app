@@ -88,7 +88,6 @@ export const authApp = new Hono()
   .post('user/callback', async (c: Context) => {
     // フロントからのトークン取得
     const authHeader = c.req.header('authorization');
-    console.log(authHeader);
     const code = authHeader?.replace('Bearer ', '').trim();
 
     if (!code) {
@@ -151,13 +150,13 @@ export const authApp = new Hono()
   })
   // 管理者のcallback
   .post('/admin/callback', async (c: Context) => {
-    const authHeader = c.req.header('Authorization');
-    const accessToken = authHeader?.replace('Bearer', '');
+    const authHeader = c.req.header('authorization');
+    const code = authHeader?.replace('Bearer ', '').trim();
 
-    if (!accessToken) {
+    if (!code) {
       return c.json(
         authError,
-        400
+        401
       );
     }
 
@@ -166,12 +165,12 @@ export const authApp = new Hono()
       const {
         data: { user },
         error: getUserError,
-      } = await supabase.auth.getUser(accessToken);
+      } = await supabase.auth.exchangeCodeForSession(code);
 
       if (!user || getUserError) {
         return c.json(
           authError,
-          400
+          401
         );
       }
 
@@ -186,18 +185,17 @@ export const authApp = new Hono()
           _longitude : user.user_metadata.longitude,
           _start_at : user.user_metadata.start_at || null,
           _end_at : user.user_metadata.end_at || null,
-          _prefecture_id : user.user_metadata.prefecture_id,
-          _genre_id : user.user_metadata.genre_id || null,
+          _prefecture_id : user.user_metadata.prefectureId,
+          _genre_id : user.user_metadata.genreId || null,
           _link : user.user_metadata.link || null,
           _photo : user.user_metadata.photo || null,
-          _tag_ids : user.user_metadata.tag_ids || [],
+          _tag_ids : user.user_metadata.tags || [],
         })
 
         if (adminError) {
           throw adminError;
         }
       } catch (error) {
-        console.log(error);
         return c.json(
           {
             message: 'insert error',
@@ -223,7 +221,6 @@ export const authApp = new Hono()
             updated_at
           ),
           comments (
-            count,
             id,
             content,
             user_id,
@@ -237,7 +234,8 @@ export const authApp = new Hono()
         )
         .eq('user_id', user.id)
         .single();
-
+      console.log(selectData);
+      console.log(selectError);
       if (!selectData || selectError) {
         return c.json(
           {
@@ -252,7 +250,7 @@ export const authApp = new Hono()
         id: selectData.id,
         name: selectData.name,
         likeCount: selectData.likes[0]?.count,
-        commentCount: selectData.comments[0]?.count,
+        commentCount: selectData.comments?.length || 0,
         posts:
           selectData.posts.map(post => ({
             id: post.id,
