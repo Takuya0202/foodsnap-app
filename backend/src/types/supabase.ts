@@ -396,41 +396,75 @@ export type Database = {
     Views: {
       [_ in never]: never
     }
+
+    // ここからsupabase rpcのポスグレ関数
     Functions: {
       create_admin_with_store: {
-        Args: {
-          _address: string
-          _end_at: string
-          _genre_id: string
-          _latitude: number
-          _link: string
-          _longitude: number
-          _name: string
-          _phone: string
-          _photo: string
-          _prefecture_id: string
-          _start_at: string
-          _tag_ids: string[]
-          _user_id: string
-        }
+        Args:
+          | {
+              _address: string
+              _end_at: string
+              _genre_id: number
+              _latitude: number
+              _link: string
+              _longitude: number
+              _name: string
+              _phone: string
+              _photo: string
+              _prefecture_id: number
+              _start_at: string
+              _tag_ids: number[]
+              _user_id: string
+            }
+          | {
+              _address: string
+              _end_at: string
+              _genre_id: string
+              _latitude: number
+              _link: string
+              _longitude: number
+              _name: string
+              _phone: string
+              _photo: string
+              _prefecture_id: string
+              _start_at: string
+              _tag_ids: string[]
+              _user_id: string
+            }
         Returns: Json
       }
       update_admin_stores: {
-        Args: {
-          _address: string
-          _end_at?: string
-          _genre_id?: string
-          _latitude: number
-          _link?: string
-          _longitude: number
-          _name: string
-          _phone: string
-          _photo?: string
-          _prefecture_id: string
-          _start_at?: string
-          _tag_ids?: string[]
-          _user_id: string
-        }
+        Args:
+          | {
+              _address: string
+              _end_at?: string
+              _genre_id?: number
+              _latitude: number
+              _link?: string
+              _longitude: number
+              _name: string
+              _phone: string
+              _photo?: string
+              _prefecture_id: number
+              _start_at?: string
+              _tag_ids?: number[]
+              _user_id: string
+            }
+          | {
+              _address: string
+              _end_at?: string
+              _genre_id?: string
+              _latitude: number
+              _link?: string
+              _longitude: number
+              _name: string
+              _phone: string
+              _photo?: string
+              _prefecture_id: string
+              _start_at?: string
+              _tag_ids?: string[]
+              _user_id: string
+            }
         Returns: Json
       }
       update_stores_and_tags: {

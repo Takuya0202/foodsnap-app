@@ -1,23 +1,24 @@
 "use client";
 import EmailCallback from "@/app/features/auth/email-callback";
+import { useDashboard } from "@/app/zustand/dashboard";
 import { useToaster } from "@/app/zustand/toaster";
 import { client } from "@/utils/setting";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
-export default function UserCallbackPage() {
+export default function AdminCallback() {
   const { open } = useToaster();
   const router = useRouter();
   const [code, setCode] = useState<string | null>(null);
+  const { setData } = useDashboard();
 
   useEffect(() => {
-    // クライアントサイドでURLパラメータを取得
+    // パラメータの取得
     const urlParams = new URLSearchParams(window.location.search);
     const codeParam = urlParams.get("code");
 
     if (!codeParam) {
       open("認証情報が取得できませんでした", "error");
-      router.push("/auth/user/login");
+      router.push("/auth/admin/login");
     }
 
     setCode(codeParam);
@@ -26,32 +27,40 @@ export default function UserCallbackPage() {
   useEffect(() => {
     if (!code) return;
 
-    async function callbackUser() {
+    // 管理者本登録
+    async function callbackAdmin() {
       try {
-        const res = await client.api.auth.user.callback.$post(
-          {}, // 第二引数は必須。リクエストボディ。これがわかるのに2時間かかった。くそ
+        const res = await client.api.auth.admin.callback.$post(
+          {},
           {
             headers: {
               authorization: `Bearer ${code}`,
             },
           }
         );
-
         if (res.status === 200) {
-          open("ユーザー登録が完了しました", "success");
-          router.push("/stores/top");
+          const data = await res.json();
+          setData(
+            data.id,
+            data.name,
+            data.likeCount,
+            data.commentCount,
+            data.posts || [],
+            data.comments || []
+          );
+          open("管理者本登録が完了しました", "success");
+          router.push("/admin/dashboard");
         } else {
           const data = await res.json();
           open(data.error, "error");
         }
       } catch {
         open("ネットワークエラーが発生しました", "error");
-        router.push("/auth/user/login");
+        router.push("/auth/admin/login");
       }
     }
-
-    callbackUser();
-  }, [code, open, router]);
+    callbackAdmin();
+  }, [code, open, router, setData]);
 
   return (
     <div className="h-screen flex justify-center items-center">

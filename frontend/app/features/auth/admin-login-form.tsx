@@ -3,6 +3,7 @@
 import SubmitButton from "@/app/components/elements/buttons/submit-button";
 import FieldError from "@/app/components/elements/errors/field-error";
 import InputText from "@/app/components/elements/input/input-text";
+import { useDashboard } from "@/app/zustand/dashboard";
 import { useToaster } from "@/app/zustand/toaster";
 import { LoginAdminRequest, loginAdminSchema } from "@/schema/admin";
 import { client } from "@/utils/setting";
@@ -15,6 +16,7 @@ export default function AdminLoginForm() {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const router = useRouter();
   const { open } = useToaster();
+  const { setData } = useDashboard();
   const defaultValues: LoginAdminRequest = {
     email: "",
     password: "",
@@ -42,6 +44,14 @@ export default function AdminLoginForm() {
       if (res.status === 200) {
         const data = await res.json();
         open("ログインに成功しました。", "success");
+        setData(
+          data.id,
+          data.name,
+          data.likeCount,
+          data.commentCount,
+          data.posts || [],
+          data.comments || []
+        );
         router.push("/admin/dashboard");
       } else {
         const data = await res.json();
@@ -65,8 +75,10 @@ export default function AdminLoginForm() {
   };
   return (
     <div className="w-[90%] flex justify-center items-center mx-auto">
-      <form className="flex flex-col items-center space-y-4 justify-center w-full"
-      onSubmit={handleSubmit(onsumbit)}>
+      <form
+        className="flex flex-col items-center space-y-4 justify-center w-full"
+        onSubmit={handleSubmit(onsumbit)}
+      >
         <div className="w-full flex flex-col items-start space-y-2">
           <InputText
             label="メールアドレス"
