@@ -43,7 +43,7 @@ export default function UserLogin() {
       if (res.status === 200) {
         reset();
         open("ログインしました。", "success");
-        router.push("/stores/top");
+        window.location.href = "/stores/top"; // routerにするとcookieが反映されてない可能性あるから
       } else {
         const data = await res.json();
         // バリデーションエラーはRPCの型推論が利かないので、unkonwnで型指定

@@ -19,6 +19,7 @@ import { ZodError } from 'zod';
 import { userDetailResponse } from '../types/userResponse';
 import { serverError , authError } from '../utils/setting';
 import { createServerClient } from '@supabase/ssr';
+import { setCookie } from 'hono/cookie';
 
 export const userApp = new Hono<{ Bindings: Bindings }>()
   .post(
@@ -102,7 +103,7 @@ export const userApp = new Hono<{ Bindings: Bindings }>()
         const { email, password } = c.req.valid('json');
         const supabase = getSupabase(c);
         const {
-          data: { user },
+          data: { user , session},
           error,
         } = await supabase.auth.signInWithPassword({
           email,
@@ -117,6 +118,20 @@ export const userApp = new Hono<{ Bindings: Bindings }>()
             400
           );
         }
+
+        // なぜかcookieが設定されないので、自身で保存
+        setCookie(c , 'sb-access-token' , session.access_token , {
+          httpOnly: true,
+          secure: c.env.ENVIRONMENT === 'production',
+          sameSite: c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
+          maxAge: 60 * 60 * 24 * 7,
+        })
+        setCookie(c , 'sb-refresh-token' , session.refresh_token , {
+          httpOnly: true,
+          secure: c.env.ENVIRONMENT === 'production',
+          sameSite: c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
+          maxAge: 60 * 60 * 24 * 7,
+        })
 
         return c.json(
           {
