@@ -49,7 +49,7 @@ export default function AdminCallback() {
             data.comments || []
           );
           open("管理者本登録が完了しました", "success");
-          router.push("/admin/dashboard");
+          window.location.href = "/admin/dashboard";
         } else {
           const data = await res.json();
           open(data.error, "error");

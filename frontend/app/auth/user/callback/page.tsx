@@ -39,7 +39,7 @@ export default function UserCallbackPage() {
 
         if (res.status === 200) {
           open("ユーザー登録が完了しました", "success");
-          router.push("/stores/top");
+          window.location.href = "/stores/top"; // routerにすると即時cookieが反映されてない可能性ある
         } else {
           const data = await res.json();
           open(data.error, "error");

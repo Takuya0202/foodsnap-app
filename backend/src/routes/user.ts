@@ -121,12 +121,14 @@ export const userApp = new Hono<{ Bindings: Bindings }>()
 
         // なぜかcookieが設定されないので、自身で保存
         setCookie(c , 'sb-access-token' , session.access_token , {
+          path : '/',
           httpOnly: true,
           secure: c.env.ENVIRONMENT === 'production',
           sameSite: c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
           maxAge: 60 * 60 * 24 * 7,
         })
         setCookie(c , 'sb-refresh-token' , session.refresh_token , {
+          path : '/',
           httpOnly: true,
           secure: c.env.ENVIRONMENT === 'production',
           sameSite: c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
@@ -171,21 +173,21 @@ export const userApp = new Hono<{ Bindings: Bindings }>()
             icon,
             user_id,
             likes (
-                store : stores (
-                    id,
-                    name,
-                    address,
-                    photo,
-                    posts (
-                        id,
-                        name,
-                        price,
-                        photo,
-                        description
-                    ),
-                    likes (count),
-                    comments (count)
-                )
+              store : stores (
+                  id,
+                  name,
+                  address,
+                  photo,
+                  posts (
+                      id,
+                      name,
+                      price,
+                      photo,
+                      description
+                  ),
+                  likes (count),
+                  comments (count)
+              )
             )
             `
         )

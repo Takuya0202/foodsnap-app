@@ -7,13 +7,11 @@ import { useToaster } from "@/app/zustand/toaster";
 import { LoginAdminRequest, loginAdminSchema } from "@/schema/admin";
 import { client } from "@/utils/setting";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 export default function AdminLoginForm() {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const router = useRouter();
   const { open } = useToaster();
   const defaultValues: LoginAdminRequest = {
     email: "",
@@ -42,7 +40,7 @@ export default function AdminLoginForm() {
       if (res.status === 200) {
         const data = await res.json();
         open(data.message, "success");
-        router.push("/admin/dashboard");
+        window.location.href = "/admin/dashboard";
       } else {
         const data = await res.json();
         if (data.message === "validation error") {

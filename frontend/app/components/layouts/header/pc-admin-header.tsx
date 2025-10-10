@@ -22,7 +22,7 @@ export default function PcAdminHeader() {
           <Settings sx={{ color: "#fff", width: "24px", height: "24px" }} />
           <p className="text-white font-bold">管理者情報の編集</p>
         </button>
-        <UserLogout />
+        <UserLogout path="admin" />
       </div>
     </header>
   );

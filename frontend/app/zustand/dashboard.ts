@@ -1,6 +1,7 @@
 import { create } from "zustand";
 // 管理者ダッシュボードのステート
 type DashboardState = {
+  isLoading: boolean;
   id: string;
   name: string;
   likeCount: number;
@@ -24,6 +25,7 @@ type DashboardState = {
         createdAt: string;
       }[]
     | null;
+  setLoading: (isLoading: boolean) => void;
   setData: (
     id: string,
     name: string,
@@ -48,12 +50,14 @@ type DashboardState = {
 };
 
 export const useDashboard = create<DashboardState>((set) => ({
+  isLoading: false,
   id: "",
   name: "",
   likeCount: 0,
   commentCount: 0,
   posts: null,
   comments: null,
+  setLoading: (isLoading) => set({ isLoading }),
   setData: (id, name, likeCount, commentCount, posts, comments) =>
     set({
       id,

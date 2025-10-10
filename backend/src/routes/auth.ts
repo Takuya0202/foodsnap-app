@@ -106,22 +106,6 @@ export const authApp = new Hono()
         return c.json(authError, 400);
       }
 
-      // 自前でcookieを保存
-      setCookie(c , 'sb-access-token', session.access_token , {
-        path : '/',
-        httpOnly : true,
-        secure : c.env.ENVIRONMENT === 'production',
-        sameSite : c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
-        maxAge : 60 * 60 * 24 * 7, // 7日
-      })
-      setCookie(c , 'sb-refresh-token', session.refresh_token , {
-        path : '/',
-        httpOnly : true,
-        secure : c.env.ENVIRONMENT === 'production',
-        sameSite : c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
-        maxAge : 60 * 60 * 24 * 7, // 7日
-      })
-
       // profileテーブルにユーザー情報を確立。アイコンはnull
       const { data: insertData, error: insertError } = await supabase
         .from('profiles')
@@ -145,6 +129,22 @@ export const authApp = new Hono()
           400
         );
       }
+
+      // 自前でcookieを保存
+      setCookie(c , 'sb-access-token', session.access_token , {
+        path : '/',
+        httpOnly : true,
+        secure : c.env.ENVIRONMENT === 'production',
+        sameSite : c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
+        maxAge : 60 * 60 * 24 * 7, // 7日
+      })
+      setCookie(c , 'sb-refresh-token', session.refresh_token , {
+        path : '/',
+        httpOnly : true,
+        secure : c.env.ENVIRONMENT === 'production',
+        sameSite : c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
+        maxAge : 60 * 60 * 24 * 7, // 7日
+      })
 
       // 登録成功
       return c.json(
@@ -172,7 +172,7 @@ export const authApp = new Hono()
     try {
       const supabase = getSupabase(c);
       const {
-        data: { user },
+        data: { user, session },
         error: getUserError,
       } = await supabase.auth.exchangeCodeForSession(code);
 
@@ -213,6 +213,22 @@ export const authApp = new Hono()
           400
         );
       }
+
+      // 自前でcookieを保存
+      setCookie(c , 'sb-access-token', session.access_token , {
+        path : '/',
+        httpOnly : true,
+        secure : c.env.ENVIRONMENT === 'production',
+        sameSite : c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
+        maxAge : 60 * 60 * 24 * 7, // 7日
+      })
+      setCookie(c , 'sb-refresh-token', session.refresh_token , {
+        path : '/',
+        httpOnly : true,
+        secure : c.env.ENVIRONMENT === 'production',
+        sameSite : c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
+        maxAge : 60 * 60 * 24 * 7, // 7日
+      })
       // 登録成功
       const { data: selectData, error: selectError } = await supabase
         .from('stores')
@@ -243,8 +259,7 @@ export const authApp = new Hono()
         )
         .eq('user_id', user.id)
         .single();
-      console.log(selectData);
-      console.log(selectError);
+
       if (!selectData || selectError) {
         return c.json(
           {

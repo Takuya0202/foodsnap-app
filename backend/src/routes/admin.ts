@@ -6,6 +6,7 @@ import { ZodError } from 'zod';
 import { getSupabase } from '../middleware/supabase';
 import { AdminDetailReponse, AdminReponse } from '../types/adminReponse';
 import { serverError , authError } from '../utils/setting';
+import { setCookie } from 'hono/cookie';
 
 export const adminApp = new Hono<{ Bindings: Bindings }>()
 .post(
@@ -165,17 +166,33 @@ export const adminApp = new Hono<{ Bindings: Bindings }>()
       const { email , password } : LoginAdminRequest = c.req.valid('json');
       const supabase = getSupabase(c);
   
-      const { data : { user } , error } = await supabase.auth.signInWithPassword({
+      const { data : { user , session } , error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
-  
+
       if (!user || error ) {
         return c.json({
           message : 'fail for login',
           error : 'メールアドレスまたはパスワードが正しくありません。',
         } , 400);
       }
+
+      setCookie(c,'sb-access-token',session.access_token,{
+        path : '/',
+        httpOnly : true,
+        secure : c.env.ENVIRONMENT === 'production',
+        sameSite : c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
+        maxAge : 60 * 60 * 24 * 7, // 7日
+      })
+      setCookie(c,'sb-refresh-token',session.refresh_token,{
+        path : '/',
+        httpOnly : true,
+        secure : c.env.ENVIRONMENT === 'production',
+        sameSite : c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
+        maxAge : 60 * 60 * 24 * 7, // 7日
+      })
+  
       return c.json({
         message : 'ログインに成功しました。'
       }, 200);
