@@ -152,26 +152,26 @@ export const userApp = new Hono<{ Bindings: Bindings }>()
         .from('profiles')
         .select(
           `
-                name,
-                icon,
-                user_id,
-                likes (
-                    store : stores (
+            name,
+            icon,
+            user_id,
+            likes (
+                store : stores (
+                    id,
+                    name,
+                    address,
+                    photo,
+                    posts (
                         id,
                         name,
-                        address,
+                        price,
                         photo,
-                        posts (
-                            id,
-                            name,
-                            price,
-                            photo,
-                            description
-                        ),
-                        likes (count),
-                        comments (count)
-                    )
+                        description
+                    ),
+                    likes (count),
+                    comments (count)
                 )
+            )
             `
         )
         .eq('user_id', user.id)
@@ -339,7 +339,7 @@ export const userApp = new Hono<{ Bindings: Bindings }>()
     }
   })
   .post(
-    'reset-password',
+    '/reset-password',
     zValidator('json', resetPasswordSchema, async (result, c: Context) => {
       try {
         if (!result.success) {

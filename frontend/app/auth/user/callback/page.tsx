@@ -29,7 +29,7 @@ export default function UserCallbackPage() {
     async function callbackUser() {
       try {
         const res = await client.api.auth.user.callback.$post(
-          {}, // 第二引数は必須。リクエストボディ。これがわかるのに2時間かかった。くそ
+          {},
           {
             headers: {
               authorization: `Bearer ${code}`,

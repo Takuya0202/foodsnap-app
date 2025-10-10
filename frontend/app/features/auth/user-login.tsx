@@ -42,6 +42,7 @@ export default function UserLogin() {
       });
       if (res.status === 200) {
         reset();
+        open("ログインしました。", "success");
         router.push("/stores/top");
       } else {
         const data = await res.json();

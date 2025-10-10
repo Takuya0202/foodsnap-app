@@ -3,6 +3,7 @@ import { getSupabase } from '../middleware/supabase';
 import { supabaseAuthErrorCode } from '../utils/supabaseMessage';
 import { AdminReponse } from '../types/adminReponse';
 import { serverError , authError } from '../utils/setting';
+import { setCookie } from 'hono/cookie';
 // OAuthやcallbackなどに関するエンドポイント
 export const authApp = new Hono()
   .get('/google', async (c: Context) => {
@@ -92,23 +93,34 @@ export const authApp = new Hono()
 
     if (!code) {
       console.log('code is null');
-      return c.json(
-        authError,
-        400
-      );
+      return c.json(authError, 400);
     }
+    
     try {
       const supabase = getSupabase(c);
       const {
-        data: { user },
+        data: { user, session },
         error: getUserError,
       } = await supabase.auth.exchangeCodeForSession(code);
       if (!user || getUserError) {
-        return c.json(
-          authError,
-          400
-        );
+        return c.json(authError, 400);
       }
+
+      // 自前でcookieを保存
+      setCookie(c , 'sb-access-token', session.access_token , {
+        path : '/',
+        httpOnly : true,
+        secure : c.env.ENVIRONMENT === 'production',
+        sameSite : c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
+        maxAge : 60 * 60 * 24 * 7, // 7日
+      })
+      setCookie(c , 'sb-refresh-token', session.refresh_token , {
+        path : '/',
+        httpOnly : true,
+        secure : c.env.ENVIRONMENT === 'production',
+        sameSite : c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
+        maxAge : 60 * 60 * 24 * 7, // 7日
+      })
 
       // profileテーブルにユーザー情報を確立。アイコンはnull
       const { data: insertData, error: insertError } = await supabase
@@ -142,10 +154,7 @@ export const authApp = new Hono()
         200
       );
     } catch (error) {
-      return c.json(
-        serverError,
-        500
-      );
+      return c.json(serverError, 500);
     }
   })
   // 管理者のcallback
