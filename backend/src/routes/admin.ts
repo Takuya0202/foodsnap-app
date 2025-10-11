@@ -5,7 +5,7 @@ import { getValidationErrorResponnse, uploadImage, Bindings } from '../utils/set
 import { ZodError } from 'zod';
 import { getSupabase } from '../middleware/supabase';
 import { AdminDetailReponse, AdminReponse } from '../types/adminReponse';
-import { serverError , authError } from '../utils/setting';
+import { serverError , authError , roleError } from '../utils/setting';
 import { setCookie } from 'hono/cookie';
 
 export const adminApp = new Hono<{ Bindings: Bindings }>()
@@ -178,6 +178,12 @@ export const adminApp = new Hono<{ Bindings: Bindings }>()
         } , 400);
       }
 
+      const { data : profile , error : profileError } = await supabase.from('profiles').select('role').eq('user_id', user.id).single();
+      // 管理者権限がない
+      if (profileError || !profile || profile.role !== "admin") {
+        return c.json(roleError , 403);
+      }
+
       setCookie(c,'sb-access-token',session.access_token,{
         path : '/',
         httpOnly : true,
@@ -209,6 +215,13 @@ export const adminApp = new Hono<{ Bindings: Bindings }>()
       if (!user || getUserError ) {
         return c.json(authError , 401);
       }
+
+      const { data : profile , error : profileError } = await supabase.from('profiles').select('role').eq('user_id', user.id).single();
+      // 管理者権限がない
+      if (profileError || !profile || profile.role !== "admin") {
+        return c.json(roleError , 403);
+      }
+
 
       const { data : admin , error : adminError } = await supabase
         .from('stores')
@@ -281,6 +294,11 @@ export const adminApp = new Hono<{ Bindings: Bindings }>()
 
       if (!user || userError ) {
         return c.json(authError , 401);
+      }
+
+      const role = user.app_metadata.role;
+      if (role !== 'admin') {
+        return c.json(roleError , 403);
       }
 
       const { data : admin , error : adminError } = await supabase

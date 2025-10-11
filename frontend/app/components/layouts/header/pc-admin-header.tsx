@@ -1,10 +1,8 @@
 "use client";
-
 import UserLogout from "@/app/features/auth/logout";
 import { useDashboard } from "@/app/zustand/dashboard";
 import { Settings } from "@mui/icons-material";
 import Link from "next/link";
-
 export default function PcAdminHeader() {
   const { name } = useDashboard();
   return (
@@ -16,7 +14,7 @@ export default function PcAdminHeader() {
         </Link>
       </div>
 
-      <div className="flex items-center justify-between space-x-4">
+      <div className="flex items-center justify-between space-x-4 h-full">
         <p className="text-white text-[16px] font-bold">{name}</p>
         <button className="bg-[#908b8b] flex items-center px-4 py-1.5 space-x-2 h-[44px] whitespace-nowrap">
           <Settings sx={{ color: "#fff", width: "24px", height: "24px" }} />

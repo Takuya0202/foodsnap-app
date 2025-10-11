@@ -21,6 +21,10 @@ export const authError = {
   message : 'unAuthorized',
   error : '認証に失敗しました。再度ログインをお試しください。',
 }
+export const roleError = {
+  message : 'not admin',
+  error : '権限がありません。'
+}
 // バリデーションエラーのレスポンスするフィールドを返却する関数
 export const getValidationErrorResponnse = (ze: ZodError): Record<string, string> => {
   const errors: Record<string, string> = {}; // エラーはフィールドごとにまとめる
