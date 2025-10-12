@@ -24,14 +24,24 @@ export function PostCardSkeleton() {
 }
 export function PostCardContetnt({ id, name, price, photo }: props) {
   return (
-    <div className="bg-[#1e1e1e] w-[400px] h-[440px] rounded-2xl flex flex-col space-y-4">
-      <Image src={photo} alt={name} width={360} height={240} className="object-cover" />
-      <div className="flex items-center justify-between px-6">
-        <p className="text-white text-[16px] font-bold">{name}</p>
-        <p className="text-white text-[16px] font-bold">{price}</p>
+    <div className="bg-[#1e1e1e] w-[400px] rounded-2xl flex flex-col h-[440px]">
+      <div className="relative h-[200px] mx-6 my-6">
+        <Image src={photo} alt={name} fill className="object-cover" />
       </div>
-      <div className="w-full mx-auto">
-        <button className="bg-[#FF833C] py-2 px-[60px] text-white" onClick={() => handleEdit(id)}>
+
+      <div className="flex items-center justify-between px-6 py-4">
+        <p className="text-white text-[36px]">{name}</p>
+        <p className="text-white text-[36px]">
+          {price}
+          <span className="pl-2">円</span>
+        </p>
+      </div>
+
+      <div className="flex justify-center pb-6 flex-1 items-end">
+        <button
+          className="bg-[#FF833C] py-2 px-[60px] text-white rounded-lg hover:bg-[#FF9D5C] transition-colors h-[40px]"
+          onClick={() => handleEdit(id)}
+        >
           編集する
         </button>
       </div>

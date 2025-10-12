@@ -11,6 +11,7 @@ import {
   CommentCardContent,
   CommentCardSkeleton,
 } from "@/app/components/elements/others/CommentCard";
+import Link from "next/link";
 // スケルトンUI。promiseの間(fetchが完了するまで)に表示するUI
 function DashboardSkeleton() {
   return (
@@ -89,7 +90,12 @@ async function DashboardContent() {
         <div className="flex items-start flex-col space-y-8">
           <div className="flex items-center justify-between w-full">
             <h2 className="text-3xl text-white">投稿一覧</h2>
-            <button className="py-4 px-28 bg-[#898989] text-white rounded-sm">新規投稿</button>
+            <Link
+              className="py-4 px-28 bg-[#898989] text-white rounded-sm"
+              href="/admin/post/create"
+            >
+              新規投稿
+            </Link>
           </div>
           <div className="flex items-center space-x-8 w-full overflow-x-scroll">
             {data.posts?.map((post) => (

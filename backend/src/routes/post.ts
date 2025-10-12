@@ -8,6 +8,89 @@ import cuid from "cuid";
 import { serverError , authError } from "../utils/setting";
 
 export const postApp = new Hono()
+.post('/create' , zValidator('form' , createAndUpdatePostSchema , async(result , c : Context ) => {
+  if (!result.success) {
+     const errors = getValidationErrorResponnse(result.error as ZodError);
+     return c.json({
+      message : 'validation error',
+      error : errors,
+    } , 400);
+  }
+}),
+async (c) => {
+  try {
+    const { name , price , photo , description } : CreateAndUpdatePostRequest= c.req.valid('form');
+    const supabase = getSupabase(c);
+    const { data : { user } , error : getUserError } = await supabase.auth.getUser();
+    if (!user || getUserError) {
+      return c.json(authError , 401);
+    }
+
+    // 店舗idの取得
+    const { data : storeData , error : storeError } = await supabase
+      .from('stores')
+      .select('id')
+      .eq('user_id' , user.id)
+      .single();
+
+    if (!storeData || storeError) {
+      return c.json({
+        message : 'fail to get store',
+        error : '店舗の取得に失敗しました。',
+      } , 400);
+    }
+    
+    // 写真をupload
+    let path = null;
+    if (photo) {
+      try {
+        path = await uploadImage(supabase , user.id , photo , 'post');
+      } catch (error) {
+        return c.json({
+          message : 'fail to upload photo',
+          error : '写真のアップロードに失敗しました。',
+        } , 400);
+      }
+    }
+
+    if (!path) {
+      return c.json({
+        message : 'fail to upload photo',
+        error : '写真のアップロードに失敗しました。',
+      } , 400);
+    }
+    // 投稿を作成
+    const { data : postData , error : postError } = await supabase
+      .from('posts')
+      .insert({
+        id : cuid(),
+        store_id : storeData.id,
+        name ,
+        price ,
+        photo : path,
+        description : description,
+        created_at : new Date().toISOString(),
+        updated_at : new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (!postData || postError) {
+      return c.json({
+        message : 'fail to create post',
+        error : '投稿に失敗しました。',
+      } , 400);
+    }
+
+    return c.json({
+      message : '投稿に成功しました。',
+    } , 200);
+
+  } catch (error) {
+      return c.json(serverError , 500);
+  }
+}
+)
   // メニュー投稿詳細取得
   .get('/:postId' , async (c : Context ) => {
     try {
@@ -53,87 +136,6 @@ export const postApp = new Hono()
         return c.json(serverError , 500);
     }
   })
-  .post('/create' , zValidator('form' , createAndUpdatePostSchema , async(result , c : Context ) => {
-    if (!result.success) {
-       const errors = getValidationErrorResponnse(result.error as ZodError);
-       return c.json({
-        message : 'validation error',
-        errors : errors,
-      } , 400);
-    }
-
-    try {
-      const { name , price , photo , description } : CreateAndUpdatePostRequest= result.data;
-      const supabase = getSupabase(c);
-      const { data : { user } , error : getUserError } = await supabase.auth.getUser();
-      if (!user || getUserError) {
-        return c.json(authError , 401);
-      }
-
-      // 店舗idの取得
-      const { data : storeData , error : storeError } = await supabase
-        .from('stores')
-        .select('id')
-        .eq('user_id' , user.id)
-        .single();
-
-      if (!storeData || storeError) {
-        return c.json({
-          message : 'fail to get store',
-          error : '店舗の取得に失敗しました。',
-        } , 400);
-      }
-      
-      // 写真をupload
-      let path = null;
-      if (photo) {
-        try {
-          path = await uploadImage(supabase , user.id , photo , 'post');
-        } catch (error) {
-          return c.json({
-            message : 'fail to upload photo',
-            error : '写真のアップロードに失敗しました。',
-          } , 400);
-        }
-      }
-
-      if (!path) {
-        return c.json({
-          message : 'fail to upload photo',
-          error : '写真のアップロードに失敗しました。',
-        } , 400);
-      }
-      // 投稿を作成
-      const { data : postData , error : postError } = await supabase
-        .from('posts')
-        .insert({
-          id : cuid(),
-          store_id : storeData.id,
-          name ,
-          price ,
-          photo : path,
-          description : description,
-          created_at : new Date().toISOString(),
-          updated_at : new Date().toISOString(),
-        })
-        .select()
-        .single();
-
-      if (!postData || postError) {
-        return c.json({
-          message : 'fail to create post',
-          error : '投稿に失敗しました。',
-        } , 400);
-      }
-
-      return c.json({
-        message : '投稿に成功しました。',
-      } , 200);
-
-    } catch (error) {
-        return c.json(serverError , 500);
-    }
-  }))
   .put('/:postId/update' , zValidator('form' , createAndUpdatePostSchema , async(result , c : Context) => {
     if (!result.success) {
       const errors = getValidationErrorResponnse(result.error as ZodError);
