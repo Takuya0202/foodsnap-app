@@ -1,10 +1,23 @@
 "use client";
 import UserLogout from "@/app/features/auth/logout";
-import { useDashboard } from "@/app/zustand/dashboard";
 import { Settings } from "@mui/icons-material";
 import Link from "next/link";
-export default function PcAdminHeader() {
-  const { name } = useDashboard();
+type props = {
+  name: string;
+}
+
+export function PcAdminHeaderSkeleton() {
+  return (
+    <header className="w-full h-[100px] flex items-center justify-between bg-[#181818] px-10">
+      <div>
+        <Link href={"/admin/dashboard"} className="text-white text-[24px] font-bold">
+          FoodSnap
+        </Link>
+      </div>
+    </header>
+  );
+}
+export function PcAdminHeader({ name }: props) {
   return (
     <header className="w-full h-[100px] flex items-center justify-between bg-[#181818] px-10">
       {/* ロゴ */}

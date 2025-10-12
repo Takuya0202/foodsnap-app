@@ -1,3 +1,4 @@
+"use client";
 import { Comment, Favorite } from "@mui/icons-material";
 
 type props = {

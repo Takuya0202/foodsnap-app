@@ -1,5 +1,6 @@
 import { hc } from "hono/client";
 import { AppType } from "../../backend/src";
+
 // APIのURLを取得する関数
 export function getApiUrl() {
   if (process.env.NODE_ENV === "production") {
