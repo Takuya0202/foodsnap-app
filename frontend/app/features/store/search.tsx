@@ -29,12 +29,7 @@ export default function Search({ setIsOpen }: props) {
     prefectureIds: null,
     tagIds: null,
   };
-  const {
-    handleSubmit,
-    formState: { errors },
-    watch,
-    setValue,
-  } = useForm<SearchStoreQueryRequest>({
+  const { handleSubmit, watch, setValue } = useForm<SearchStoreQueryRequest>({
     defaultValues,
     resolver: zodResolver(searchStoreQuerySchema),
     mode: "onChange",

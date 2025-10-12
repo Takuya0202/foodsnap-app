@@ -1,11 +1,14 @@
 "use client";
-
-import { CreatePostRequest, createPostSchema } from "@/schema/post";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { useState } from "react";
+import { UpdatePostRequest } from "@/schema/post";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { updatePostSchema } from "@/schema/post";
+import { client } from "@/utils/setting";
 import { useToaster } from "@/app/zustand/toaster";
 import { useRouter } from "next/navigation";
+import CircularProgress from '@mui/material/CircularProgress';
 import FieldStatusButton from "@/app/components/elements/buttons/fieldStatus-button";
 import FieldError from "@/app/components/elements/errors/field-error";
 import Image from "next/image";
@@ -13,27 +16,61 @@ import { Add } from "@mui/icons-material";
 import InputText from "@/app/components/elements/input/input-text";
 import SubmitButton from "@/app/components/elements/buttons/submit-button";
 import LinkButton from "@/app/components/elements/buttons/link-button";
-import { client } from "@/utils/setting";
 
-export default function CreateMenu() {
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [previewPhoto, setPreviewPhoto] = useState<string | undefined>(undefined);
+
+export default function EditMenu() {
+  const params = useParams();
+  const id = params.id;
   const { open } = useToaster();
   const router = useRouter();
-
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
     formState: { errors },
-    setError,
     setValue,
+    setError,
     reset,
-  } = useForm<CreatePostRequest>({
+  } = useForm<UpdatePostRequest>({
     mode: "onBlur",
-    resolver: zodResolver(createPostSchema),
+    resolver: zodResolver(updatePostSchema),
   });
 
-  // ファイルプレビュー表示
+  // セットされている投稿を取得
+  useEffect(() => {
+    if (!id || typeof id !== "string") {
+      router.push("/admin/dashboard");
+      return;
+    }
+    const getPost = async () => {
+      setIsLoading(true);
+      try {
+        const res = await client.api.post[":postId"].$get({ param: { postId: id } });
+        if (res.status === 200) {
+          const data = await res.json();
+          setValue("name", data.name);
+          setValue("price", data.price.toString());
+          setPreviewPhoto(data.photo);
+          setValue("photo", undefined);
+          setValue("description", data.description || "");
+        } else {
+          const data = await res.json();
+          open(data.error, "error");
+          router.push("/admin/dashboard");
+        }
+      } catch {
+        open("サーバーエラーが発生しました。もう一度お試しください。", "error");
+        router.push("/admin/dashboard");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    getPost();
+  } , [id , router , open ,setValue]);
+
+  // 写真変更
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -42,19 +79,21 @@ export default function CreateMenu() {
     }
   };
 
-  const onsubmit = async (req: CreatePostRequest) => {
+  // フォーム送信
+  const onsubmit = async (req : UpdatePostRequest) => {
     setIsSubmitting(true);
     try {
-      const res = await client.api.post.create.$post({
-        form: {
-          name: req.name,
-          price: req.price.toString(), // 数値を文字列に変換
-          photo: req.photo,
-          description: req.description,
-        },
+      if (!id || typeof id !== "string") return;
+      const res = await client.api.post[":postId"].update.$put({
+        param : { postId : id }, // paransは配列で受け取るので
+        form : req.photo !== undefined ? req : {
+          name : req.name,
+          price : req.price,
+          description : req.description,
+        }
       });
       if (res.status === 200) {
-        open("投稿に成功しました。", "success");
+        open("投稿を更新しました。", "success");
         reset();
         router.push("/admin/dashboard");
       } else {
@@ -67,6 +106,7 @@ export default function CreateMenu() {
           setError("description", { message: errors.description });
         } else {
           open(data.error, "error");
+          router.push("/admin/dashboard");
         }
       }
     } catch {
@@ -74,15 +114,26 @@ export default function CreateMenu() {
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }
 
+  if (isLoading) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <CircularProgress 
+          size={40}
+          color="primary"
+          className="animate-spin"
+        />
+      </div>
+    )
+  }
   return (
     <form className="flex flex-col space-y-10 w-full mx-4" onSubmit={handleSubmit(onsubmit)}>
       {/* メニュー者品 */}
       <div className="flex flex-col space-y-4">
         <div className="flex space-x-6">
           <p className="text-white text-[20px] font">料理写真</p>
-          <FieldStatusButton status="req" />
+          <FieldStatusButton status="opt" />
           {errors.photo && <FieldError>{errors.photo.message}</FieldError>}
         </div>
         <div className="flex justify-center items-center">

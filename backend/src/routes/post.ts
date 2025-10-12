@@ -1,14 +1,14 @@
 import { Context, Hono } from "hono";
 import { getSupabase } from "../middleware/supabase";
 import { zValidator } from "@hono/zod-validator";
-import { CreateAndUpdatePostRequest, createAndUpdatePostSchema } from "../schema/post";
+import { CreatePostRequest, createPostSchema , updatePostSchema , UpdatePostRequest } from "../schema/post";
 import { getValidationErrorResponnse, uploadImage } from "../utils/setting";
 import { ZodError } from "zod";
 import cuid from "cuid";
 import { serverError , authError } from "../utils/setting";
 
 export const postApp = new Hono()
-.post('/create' , zValidator('form' , createAndUpdatePostSchema , async(result , c : Context ) => {
+.post('/create' , zValidator('form' , createPostSchema , async(result , c : Context ) => {
   if (!result.success) {
      const errors = getValidationErrorResponnse(result.error as ZodError);
      return c.json({
@@ -19,7 +19,7 @@ export const postApp = new Hono()
 }),
 async (c) => {
   try {
-    const { name , price , photo , description } : CreateAndUpdatePostRequest= c.req.valid('form');
+    const { name , price , photo , description } : CreatePostRequest= c.req.valid('form');
     const supabase = getSupabase(c);
     const { data : { user } , error : getUserError } = await supabase.auth.getUser();
     if (!user || getUserError) {
@@ -132,21 +132,24 @@ async (c) => {
             error : '投稿の取得に失敗しました。',
           } , 400);
         }
+
+      return c.json(postData , 200);
     } catch (error) {
         return c.json(serverError , 500);
     }
   })
-  .put('/:postId/update' , zValidator('form' , createAndUpdatePostSchema , async(result , c : Context) => {
+  .put('/:postId/update' , zValidator('form' , updatePostSchema , async(result , c : Context) => {
     if (!result.success) {
       const errors = getValidationErrorResponnse(result.error as ZodError);
       return c.json({
         message : 'validation error',
-        errors : errors,
+        error : errors,
       } , 400);
     }
-
+  }),
+  async (c) => {
     try {
-      const { name , price , photo , description } : CreateAndUpdatePostRequest = result.data;
+      const { name , price , photo , description } : UpdatePostRequest = c.req.valid('form');
       const supabase = getSupabase(c);
       const { data : { user } , error : getUserError } = await supabase.auth.getUser();
       if (!user || getUserError) {
@@ -191,7 +194,7 @@ async (c) => {
       }
       
       // 写真をupload
-      let path = null;
+      let path = existData.photo;
       if (photo) {
         try {
           path = await uploadImage(supabase , user.id , photo , 'post' , existData.photo);
@@ -237,7 +240,7 @@ async (c) => {
     } catch (error) {
       return c.json(serverError , 500);
     }
-  }))
+  })
   .delete('/:postId/delete' , async (c : Context ) => {
     try {
       const supabase = getSupabase(c);

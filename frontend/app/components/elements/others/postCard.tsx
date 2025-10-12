@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 type props = {
   id: string;
@@ -8,9 +9,6 @@ type props = {
   photo: string;
 };
 
-const handleEdit = (id: string) => {
-  // 編集処理
-};
 export function PostCardSkeleton() {
   return (
     <div className="bg-[#1e1e1e] w-[400px] h-[440px] rounded-2xl flex flex-col">
@@ -23,6 +21,10 @@ export function PostCardSkeleton() {
   );
 }
 export function PostCardContetnt({ id, name, price, photo }: props) {
+  const router = useRouter();
+  const handleEdit = (id: string) => {
+    router.push(`/admin/post/${id}/edit`);
+  };
   return (
     <div className="bg-[#1e1e1e] w-[400px] rounded-2xl flex flex-col h-[440px]">
       <div className="relative h-[200px] mx-6 my-6">
