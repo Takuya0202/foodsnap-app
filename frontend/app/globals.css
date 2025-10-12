@@ -7,6 +7,30 @@
   .modal-background {
     background: linear-gradient(to right, rgba(0, 0, 0, 0.6), #979797);
   }
+  .bg-skLoading {
+    background: linear-gradient(
+      135deg,
+      #1e1e1e 0%,
+      #2a2a2a 25%,
+      #3a3a3a 50%,
+      #2a2a2a 75%,
+      #1e1e1e 100%
+    );
+    background-size: 200% 200%;
+    animation: skeletonLoading 1.5s ease-in-out infinite;
+  }
+}
+
+@keyframes skeletonLoading {
+  0% {
+    background-position: 100% 100%;
+  }
+  50% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 100% 100%;
+  }
 }
 
 /* Webkitスクロールバー無効化 */

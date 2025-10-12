@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Toaster from "./components/layouts/toaster/toaster";
+import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,8 +27,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#3d3d3d]`}>
-        {children}
-        <Toaster />
+        {/* muiのhydrationエラーを回避するため */}
+        <AppRouterCacheProvider>
+          {children}
+          <Toaster />
+        </AppRouterCacheProvider>
       </body>
     </html>
   );
