@@ -60,7 +60,7 @@ export default function EditProfile() {
           setValue("endAt", data.endAt || undefined);
           setValue("prefectureId", String(data.prefectureId));
           setValue("genreId", data.genreId !== null ? String(data.genreId) : undefined);
-          setValue("tags", data.tags?.map((arr: { id: number }) => Number(arr.id)) || undefined);
+          setValue("tags", data.tags?.map((arr: { id: number }) => arr.id) || undefined);
           setPreviewPhoto(data.photo || null);
         } else {
           const data = await adminRes.json();
@@ -89,6 +89,18 @@ export default function EditProfile() {
     };
     fetchData();
   }, [open, router, setValue, setGenres, setPrefectures, setTags]);
+
+  const selectedTags = watch("tags") || [];
+  const handleSelectTag = (tagId: number) => {
+    if (selectedTags.includes(tagId)) {
+      setValue(
+        "tags",
+        selectedTags.filter((tag) => tag !== tagId)
+      );
+    } else {
+      setValue("tags", [...selectedTags, tagId]);
+    }
+  };
 
   return (
     <div>
