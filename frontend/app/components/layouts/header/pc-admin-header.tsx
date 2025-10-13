@@ -39,7 +39,9 @@ export function PcAdminHeader({ name }: props) {
         <p className="text-white text-[16px] font-bold whitespace-nowrap">{name}</p>
         <button className="bg-[#908b8b] flex items-center px-4 py-1.5 space-x-2 h-[44px] whitespace-nowrap">
           <Settings sx={{ color: "#fff", width: "24px", height: "24px" }} />
-          <p className="text-white font-bold">管理者情報の編集</p>
+          <p className="text-white font-bold">
+            <Link href="/admin/edit">管理者情報の編集</Link>
+          </p>
         </button>
         <UserLogout path="admin" />
       </div>

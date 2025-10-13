@@ -229,73 +229,10 @@ export const authApp = new Hono()
         sameSite : c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
         maxAge : 60 * 60 * 24 * 7, // 7日
       })
-      // 登録成功
-      const { data: selectData, error: selectError } = await supabase
-        .from('stores')
-        .select(
-          `
-          id,
-          name,
-          likes (count),
-          posts (
-            id,
-            name,
-            price,
-            photo,
-            description,
-            updated_at
-          ),
-          comments (
-            id,
-            content,
-            user_id,
-            profiles!user_id (
-              name,
-              icon
-            ),
-            created_at
-          )
-        `
-        )
-        .eq('user_id', user.id)
-        .single();
 
-      if (!selectData || selectError) {
-        return c.json(
-          {
-            message: 'fail for select store',
-            error: '管理者情報の取得に失敗しました。もう一度ログインしてください。',
-          },
-          400
-        );
-      }
-
-      const res: AdminReponse = {
-        id: selectData.id,
-        name: selectData.name,
-        likeCount: selectData.likes[0]?.count,
-        commentCount: selectData.comments?.length || 0,
-        posts:
-          selectData.posts.map(post => ({
-            id: post.id,
-            name: post.name,
-            price: post.price,
-            photo: post.photo,
-            description: post?.description,
-            updatedAt: post.updated_at,
-          })) || null,
-        comments:
-          selectData.comments.map(comment => ({
-            id: comment.id,
-            content: comment.content,
-            userId: comment.user_id,
-            userName: comment.profiles.name,
-            userIcon: comment.profiles?.icon,
-            createdAt: comment.created_at,
-          })) || null,
-      };
-
-      return c.json(res, 200);
+      return c.json({
+        message: 'success for admin auth',
+      }, 200);
     } catch (error) {
       console.log(error);
       return c.json(

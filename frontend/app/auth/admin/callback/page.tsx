@@ -1,6 +1,5 @@
 "use client";
 import EmailCallback from "@/app/features/auth/email-callback";
-import { useDashboard } from "@/app/zustand/dashboard";
 import { useToaster } from "@/app/zustand/toaster";
 import { client } from "@/utils/setting";
 import { useRouter } from "next/navigation";
@@ -9,7 +8,6 @@ export default function AdminCallback() {
   const { open } = useToaster();
   const router = useRouter();
   const [code, setCode] = useState<string | null>(null);
-  const { setData } = useDashboard();
 
   useEffect(() => {
     // パラメータの取得
@@ -39,15 +37,6 @@ export default function AdminCallback() {
           }
         );
         if (res.status === 200) {
-          const data = await res.json();
-          setData(
-            data.id,
-            data.name,
-            data.likeCount,
-            data.commentCount,
-            data.posts || [],
-            data.comments || []
-          );
           open("管理者本登録が完了しました", "success");
           window.location.href = "/admin/dashboard";
         } else {
@@ -60,7 +49,7 @@ export default function AdminCallback() {
       }
     }
     callbackAdmin();
-  }, [code, open, router, setData]);
+  }, [code, open, router]);
 
   return (
     <div className="h-screen flex justify-center items-center">
