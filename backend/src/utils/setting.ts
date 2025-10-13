@@ -85,3 +85,24 @@ export async function uploadImage(
     throw error;
   }
 }
+
+// ストレージ画像を削除する関数
+export async function deleteImage(
+  supabase : SupabaseClient<Database>,
+  backet : string,
+  existUrl : string,
+) {
+  try {
+    const bucketPath = existUrl.split('/').slice(-2).join('/');
+    if (!bucketPath) {
+      throw new Error('画像の削除に失敗しました。');
+    }
+
+    const { data , error } = await supabase.storage.from(backet).remove([bucketPath]);
+    if (!data || error) {
+      throw new Error('画像の削除に失敗しました。');
+    }
+  } catch (error) {
+    throw error;
+  }
+}

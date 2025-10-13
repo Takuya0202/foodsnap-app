@@ -1,4 +1,5 @@
 "use client";
+import DeleteMenu from "@/app/features/post/delete-menu";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
@@ -40,12 +41,15 @@ export function PostCardContetnt({ id, name, price, photo }: props) {
       </div>
 
       <div className="flex justify-center pb-6 flex-1 items-end">
-        <button
-          className="bg-[#FF833C] py-2 px-[60px] text-white rounded-lg hover:bg-[#FF9D5C] transition-colors h-[40px]"
-          onClick={() => handleEdit(id)}
-        >
-          編集する
-        </button>
+        <div className="flex items-center space-x-6">
+          <DeleteMenu id={id} />
+          <button
+            className="bg-[#FF833C] py-2 px-[60px] text-white rounded-lg hover:bg-[#FF9D5C] transition-colors h-[40px]"
+            onClick={() => handleEdit(id)}
+          >
+            編集する
+          </button>
+        </div>
       </div>
     </div>
   );

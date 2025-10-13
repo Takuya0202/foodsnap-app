@@ -2,7 +2,7 @@ import { Context, Hono } from "hono";
 import { getSupabase } from "../middleware/supabase";
 import { zValidator } from "@hono/zod-validator";
 import { CreatePostRequest, createPostSchema , updatePostSchema , UpdatePostRequest } from "../schema/post";
-import { getValidationErrorResponnse, uploadImage } from "../utils/setting";
+import { deleteImage, getValidationErrorResponnse, uploadImage } from "../utils/setting";
 import { ZodError } from "zod";
 import cuid from "cuid";
 import { serverError , authError } from "../utils/setting";
@@ -72,7 +72,7 @@ async (c) => {
         created_at : new Date().toISOString(),
         updated_at : new Date().toISOString(),
       })
-      .select()
+      .select('id')
       .single();
 
     if (!postData || postError) {
@@ -107,23 +107,16 @@ async (c) => {
       if (!user || getUserError) {
         return c.json(authError , 401);
       }
-      // 実行してるユーザーの店舗idを取得
-      const { data : storeData , error : storeError } = await supabase
-        .from('stores')
-        .select('id')
-        .eq('user_id' , user.id)
-        .single();
-      if (!storeData || storeError) {
-        return c.json({
-          message : 'fail to get store',
-          error : '店舗の取得に失敗しました。',
-        } , 400);
-      }
+
+      // 実行してる店舗の対象の投稿を取得
       const { data : postData , error : postError } = await supabase
         .from('posts')
-        .select('*')
+        .select(`
+          id, store_id, name, price, photo, description, created_at, updated_at,
+          stores!inner(id, user_id)
+        `)
         .eq('id' , postId)
-        .eq('store_id' , storeData.id)
+        .eq('stores.user_id' , user.id)
         .single();
       
         if (!postData || postError) {
@@ -164,26 +157,12 @@ async (c) => {
         } , 400);
       }
       
-      // 店舗idの取得
-      const { data : storeData , error : storeError } = await supabase
-        .from('stores')
-        .select('id')
-        .eq('user_id' , user.id)
-        .single();
-
-      if (!storeData || storeError) {
-        return c.json({
-          message : 'fail to get store',
-          error : '店舗の取得に失敗しました。',
-        } , 400);
-      }
-
       // 既存データの取得
       const { data : existData , error : existError } = await supabase
         .from('posts')
-        .select(`id , photo`)
+        .select(`id, store_id, photo, stores!inner(id, user_id)`)
         .eq('id' , postId)
-        .eq('store_id' , storeData.id)
+        .eq('stores.user_id' , user.id)
         .single();
 
       if (!existData || existError) {
@@ -223,8 +202,8 @@ async (c) => {
           updated_at : new Date().toISOString(),
         })
         .eq('id' , postId)
-        .eq('store_id' , storeData.id)
-        .select()
+        .eq('store_id' , existData.store_id)
+        .select('id')
         .single();
 
       if (!updateData || updateError) {
@@ -256,18 +235,31 @@ async (c) => {
         } , 400);
       }
 
-      // 店舗idの取得
-      const { data : storeData , error : storeError } = await supabase
-        .from('stores')
-        .select('id')
-        .eq('user_id' , user.id)
+      // 既存データの取得
+      const { data : existData , error : existError } = await supabase
+        .from('posts')
+        .select('id, store_id, photo, stores!inner(id, user_id)')
+        .eq('id' , postId)
+        .eq('stores.user_id' , user.id)
         .single();
 
-      if (!storeData || storeError ) {
+      if (!existData || existError) {
         return c.json({
-          message : 'fail to get store',
-          error : '店舗の取得に失敗しました。',
+          message : 'fail to get exist data',
+          error : '既存データの取得に失敗しました。',
         } , 400);
+      }
+
+      if (existData.photo) {
+        try {
+          await deleteImage(supabase,'post',existData.photo);
+        } catch (error) {
+          console.warn(error);
+          return c.json({
+            message : 'fail to delete photo',
+            error : '料理画像の削除に失敗しました。',
+          } , 400);
+        }
       }
 
       // 投稿を削除
@@ -275,8 +267,8 @@ async (c) => {
         .from('posts')
         .delete()
         .eq('id' , postId)
-        .eq('store_id' , storeData.id)
-        .select()
+        .eq('store_id' , existData.store_id)
+        .select('id')
         .single();
     
       if (!deleteData || deleteError) {

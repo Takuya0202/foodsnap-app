@@ -8,9 +8,7 @@ const basePostSchema = z.object({
     .string()
     .min(1, { message: "メニュー名は必須です。" })
     .max(20, { message: "メニュー名は20文字以内にしてください。" }),
-  price: z
-    .string()
-    .min(1, { message: "メニューの価格は必須です。" }),
+  price: z.string().min(1, { message: "メニューの価格は必須です。" }),
   description: z
     .string()
     .max(100, { message: "メニューの説明は100文字以内にしてください。" })

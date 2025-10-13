@@ -8,7 +8,7 @@ import { updatePostSchema } from "@/schema/post";
 import { client } from "@/utils/setting";
 import { useToaster } from "@/app/zustand/toaster";
 import { useRouter } from "next/navigation";
-import CircularProgress from '@mui/material/CircularProgress';
+import CircularProgress from "@mui/material/CircularProgress";
 import FieldStatusButton from "@/app/components/elements/buttons/fieldStatus-button";
 import FieldError from "@/app/components/elements/errors/field-error";
 import Image from "next/image";
@@ -16,7 +16,6 @@ import { Add } from "@mui/icons-material";
 import InputText from "@/app/components/elements/input/input-text";
 import SubmitButton from "@/app/components/elements/buttons/submit-button";
 import LinkButton from "@/app/components/elements/buttons/link-button";
-
 
 export default function EditMenu() {
   const params = useParams();
@@ -68,7 +67,7 @@ export default function EditMenu() {
       }
     };
     getPost();
-  } , [id , router , open ,setValue]);
+  }, [id, router, open, setValue]);
 
   // 写真変更
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -80,17 +79,20 @@ export default function EditMenu() {
   };
 
   // フォーム送信
-  const onsubmit = async (req : UpdatePostRequest) => {
+  const onsubmit = async (req: UpdatePostRequest) => {
     setIsSubmitting(true);
     try {
       if (!id || typeof id !== "string") return;
       const res = await client.api.post[":postId"].update.$put({
-        param : { postId : id }, // paransは配列で受け取るので
-        form : req.photo !== undefined ? req : {
-          name : req.name,
-          price : req.price,
-          description : req.description,
-        }
+        param: { postId: id }, // paransは配列で受け取るので
+        form:
+          req.photo !== undefined
+            ? req
+            : {
+                name: req.name,
+                price: req.price,
+                description: req.description,
+              },
       });
       if (res.status === 200) {
         open("投稿を更新しました。", "success");
@@ -114,18 +116,14 @@ export default function EditMenu() {
     } finally {
       setIsSubmitting(false);
     }
-  }
+  };
 
   if (isLoading) {
     return (
       <div className="w-full h-full flex items-center justify-center">
-        <CircularProgress 
-          size={40}
-          color="primary"
-          className="animate-spin"
-        />
+        <CircularProgress size={40} color="primary" className="animate-spin" />
       </div>
-    )
+    );
   }
   return (
     <form className="flex flex-col space-y-10 w-full mx-4" onSubmit={handleSubmit(onsubmit)}>
