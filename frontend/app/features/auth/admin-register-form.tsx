@@ -130,7 +130,7 @@ export default function AdminRegisterForm({ onEmailSent }: Props) {
           if (errors.latitude) setError("latitude", { message: errors.latitude });
           if (errors.longitude) setError("longitude", { message: errors.longitude });
         } else {
-          open(data.error || "エラーが発生しました。", "error");
+          open(data.error, "error");
         }
       }
     } catch {

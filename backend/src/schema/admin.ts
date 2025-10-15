@@ -64,7 +64,15 @@ const baseAdminSchema = z.object({
 });
 
 export const createAdminSchema = baseAdminSchema.omit({ photo: true });
-export const updateAdminSchema = baseAdminSchema.omit({ password: true, email: true });
+export const updateAdminSchema = baseAdminSchema.omit({ password: true, email: true })
+  // stringで送られるのでnumberに変換
+.extend({
+  latitude: z.coerce.number().min(-90, { message: '不正な経度です。' }).max(90, { message: '不正な経度です。' }),
+  longitude: z.coerce.number().min(-180, { message: '不正な経度です。' }).max(180, { message: '不正な経度です。' }),
+  prefectureId: z.coerce.number().min(1, { message: '都道府県は必須です。' }),
+  genreId: z.coerce.number().optional(),
+  tags: z.array(z.coerce.number()).max(3, { message: 'タグは3つまでです。' }).optional(),
+});
 export const loginAdminSchema = baseAdminSchema.pick({ email: true, password: true });
 
 export type CreateAdminRequest = z.infer<typeof createAdminSchema>;

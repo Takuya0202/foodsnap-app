@@ -1,3 +1,5 @@
+import EditProfile from "@/app/features/admin/edit-profile";
+
 export default function AdminEdit() {
   return (
     <div className="w-full flex justify-center items-center min-h-screen">
@@ -6,6 +8,7 @@ export default function AdminEdit() {
       flex flex-col items-center space-y-4 my-10"
       >
         <h1 className="my-8 text-white text-[32px]">店舗情報編集</h1>
+        <EditProfile />
       </div>
     </div>
   );

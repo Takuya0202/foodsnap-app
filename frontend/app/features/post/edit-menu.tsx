@@ -33,7 +33,7 @@ export default function EditMenu() {
     setError,
     reset,
   } = useForm<UpdatePostRequest>({
-    mode: "onBlur",
+    mode: "onSubmit",
     resolver: zodResolver(updatePostSchema),
   });
 
@@ -52,7 +52,6 @@ export default function EditMenu() {
           setValue("name", data.name);
           setValue("price", data.price.toString());
           setPreviewPhoto(data.photo);
-          setValue("photo", undefined);
           setValue("description", data.description || "");
         } else {
           const data = await res.json();
@@ -74,7 +73,11 @@ export default function EditMenu() {
     const file = e.target.files?.[0];
     if (file) {
       setPreviewPhoto(URL.createObjectURL(file));
-      setValue("photo", file);
+      setValue("photo", file, { shouldValidate: true });
+    } else {
+      // ファイルが選択されなかった場合
+      setValue("photo", undefined, { shouldValidate: false });
+      setPreviewPhoto(null);
     }
   };
 
@@ -152,7 +155,6 @@ export default function EditMenu() {
             <input
               type="file"
               id="photo"
-              {...register("photo")}
               accept=".jpg,.jpeg,.png"
               className="hidden"
               onChange={handlePhotoChange}

@@ -7,6 +7,7 @@ import { getSupabase } from '../middleware/supabase';
 import { AdminDetailReponse, AdminReponse } from '../types/adminReponse';
 import { serverError , authError , roleError } from '../utils/setting';
 import { setCookie } from 'hono/cookie';
+import { createServerClient } from '@supabase/ssr';
 
 export const adminApp = new Hono<{ Bindings: Bindings }>()
 .post(
@@ -296,8 +297,9 @@ export const adminApp = new Hono<{ Bindings: Bindings }>()
         return c.json(authError , 401);
       }
 
-      const role = user.app_metadata.role;
-      if (role !== 'admin') {
+      const { data : profile , error : profileError } = await supabase.from('profiles').select('role').eq('user_id', user.id).single();
+      // 管理者権限がない
+      if (profileError || !profile || profile.role !== "admin") {
         return c.json(roleError , 403);
       }
 
@@ -362,12 +364,13 @@ export const adminApp = new Hono<{ Bindings: Bindings }>()
       const errors = getValidationErrorResponnse(result.error as ZodError);
       return c.json({
         message : 'validation error',
-        errors : errors,
+        error : errors,
       } , 400);
     }
-
+  }),
+  async (c) => {
     try {
-      const { name , phone , address , latitude , longitude , prefectureId , genreId , tags , link , startAt , endAt , photo } : UpdateAdminRequest = result.data;
+      const { name , phone , address , latitude , longitude , prefectureId , genreId , tags , link , startAt , endAt , photo } : UpdateAdminRequest = c.req.valid('form');
       const supabase =getSupabase(c);
       const { data : { user } , error : userErrorr } = await supabase.auth.getUser();
   
@@ -433,20 +436,24 @@ export const adminApp = new Hono<{ Bindings: Bindings }>()
     } catch (error) {
       return c.json(serverError , 500);
     }
-  }))
+  }
+)
   .delete('/delete' , async (c : Context ) => {
     try {
-      const supabase =getSupabase(c);
+      const supabase = getSupabase(c);
       const { data : { user } , error : userError } = await supabase.auth.getUser();
       
       if (!user || userError ){
         return c.json(authError , 401);
       } 
       // 管理者もauth.userとcascadeなので、消すだけで大丈夫なはず。
-      const { data : deleteAdmin , error : deleteAdminError } = await supabase.auth.admin.deleteUser(user.id);
-
+      const supabaseAdmin = createServerClient(
+        c.env.SUPABASE_URL,
+        c.env.SUPABASE_SERVICE_ROLE_KEY,
+        { cookies: { getAll() { return []; }, setAll() {} }}
+      );
+      const { error : deleteAdminError } = await supabaseAdmin.auth.admin.deleteUser(user.id);
       if (deleteAdminError) {
-        console.log(deleteAdminError);
         return c.json({
           message : 'fail to delete admin',
           error : '管理者の削除に失敗しました。再度お試しください。',
@@ -454,7 +461,7 @@ export const adminApp = new Hono<{ Bindings: Bindings }>()
       }
 
       return c.json({
-        message : '削除に成功しました。',
+        message : '管理者の削除に成功しました。',
       } , 200);
     } catch (error) {
       console.log(error);

@@ -1,4 +1,5 @@
 "use client";
+import AdminDelete from "@/app/features/admin/admin-delete";
 import UserLogout from "@/app/features/auth/logout";
 import { Settings } from "@mui/icons-material";
 import Link from "next/link";
@@ -44,6 +45,9 @@ export function PcAdminHeader({ name }: props) {
           </p>
         </button>
         <UserLogout path="admin" />
+        <div className="h-[44px] whitespace-nowrap">
+          <AdminDelete />
+        </div>
       </div>
     </header>
   );

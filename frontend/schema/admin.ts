@@ -60,13 +60,17 @@ const baseAdminSchema = z.object({
   prefectureId: z.string().min(1, "都道府県を選択してください"), // selectタグを使用する場合、stringになるため、stringにする
   genreId: z.union([z.string().min(1, "ジャンルを選択してください"), z.literal("")]).optional(),
   tags: z.array(z.number()).max(3, { message: "タグは3つまでです。" }).optional(),
-  photo: z
-    .custom<File>()
-    .refine((file) => file.size <= ALLOWED_IMAGE_SIZE, { message: "写真は6MB以内にしてください" })
-    .refine((file) => ALLOWED_IMAGE_TYPE.includes(file.type), {
-      message: "写真はjpeg,png,jpgのみアップロードできます。",
-    })
-    .optional(),
+  photo: z.union([
+    z
+      .custom<File>()
+      .refine((file) => !file || file.size <= ALLOWED_IMAGE_SIZE, {
+        message: "写真は6MB以内にしてください",
+      })
+      .refine((file) => !file || ALLOWED_IMAGE_TYPE.includes(file.type), {
+        message: "写真はjpeg,png,jpgのみアップロードできます。",
+      }),
+    z.undefined(),
+  ]),
 });
 
 export const createAdminSchema = baseAdminSchema.omit({ photo: true });
