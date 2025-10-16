@@ -1,12 +1,13 @@
 "use client";
 
-import { Close, Menu, Settings } from "@mui/icons-material";
+import { Close, Menu, RestartAlt, Settings } from "@mui/icons-material";
 import { useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import UserLogout from "@/app/features/auth/logout";
 import AdminDelete from "@/app/features/admin/admin-delete";
 import "./animation.css";
 import "swiper/css";
+import LinkButton from "../../elements/buttons/link-button";
 
 export default function AdminConfig() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -65,6 +66,12 @@ export default function AdminConfig() {
 
               <div>
                 <UserLogout />
+              </div>
+              <div>
+                <LinkButton href="/auth/reset-password" icon={<RestartAlt sx={{ width: "24px", height: "24px" , color: "white"}} />}
+                richMode={true} className="text-white">
+                  パスワードの変更
+                </LinkButton>
               </div>
               <div>
                 <AdminDelete />

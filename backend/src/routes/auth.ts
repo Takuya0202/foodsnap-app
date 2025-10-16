@@ -1,11 +1,14 @@
 import { Context, Hono } from 'hono';
 import { getSupabase } from '../middleware/supabase';
 import { supabaseAuthErrorCode } from '../utils/supabaseMessage';
-import { AdminReponse } from '../types/adminReponse';
-import { serverError , authError } from '../utils/setting';
+import { serverError , authError, getValidationErrorResponnse, Bindings } from '../utils/setting';
 import { setCookie } from 'hono/cookie';
+import { CreateNewPasswordRequest, createNewPasswordSchema, ResetPasswordRequest, resetPasswordSchema } from '../schema/user';
+import { zValidator } from '@hono/zod-validator';
+import { ZodError } from 'zod';
+import { createServerClient } from '@supabase/ssr';
 // OAuthやcallbackなどに関するエンドポイント
-export const authApp = new Hono()
+export const authApp = new Hono<{ Bindings: Bindings }>()
   .get('/google', async (c: Context) => {
     try {
       // supabaseクライアントを生成
@@ -280,4 +283,136 @@ export const authApp = new Hono()
         500
       );
     }
-  });
+  })
+  .post(
+    '/reset-password',
+    zValidator('json', resetPasswordSchema, async (result, c: Context) => {
+      if (!result.success) {
+        const errors = getValidationErrorResponnse(result.error as ZodError);
+        return c.json(
+          {
+            message: 'validation error',
+            error: errors,
+          },
+          400
+        );
+      }
+    }),
+    async (c) => {
+      try {
+
+        const { email }: ResetPasswordRequest = c.req.valid('json');
+        const supabase = getSupabase(c);
+
+        const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${c.env.APP_URL}/auth/reset-password/callback`,
+        });
+
+        if (!data || error) {
+          return c.json(
+            {
+              message: 'fail to reset password',
+              error: 'パスワードのリセットに失敗しました。再度お試しください。',
+            },
+            400
+          );
+        }
+
+        return c.json(
+          {
+            message: 'success to reset password',
+            email: email,
+          },
+          200
+        );
+      } catch (error) {
+        return c.json(
+          serverError,
+          500
+        );
+      }
+    })
+  .post(
+    '/reset-password/callback',
+    zValidator('json', createNewPasswordSchema, async (result, c: Context) => {
+      if (!result.success) {
+        const errors = getValidationErrorResponnse(result.error as ZodError);
+        return c.json(
+          {
+            message: 'validation error',
+            error: errors,
+          },
+          400
+        );
+      }
+    }),
+    async (c) => {
+      try {
+        // トークンの取得
+        const authHeader = c.req.header('authorization');
+        const code = authHeader?.replace('Bearer', '');
+
+        if (!code) {
+          return c.json(
+            {
+              message: 'token not found',
+              error: '予期せぬエラーが発生しました。',
+            },
+            400
+          );
+        }
+
+        const { password }: CreateNewPasswordRequest = c.req.valid('json');
+        const supabase = getSupabase(c);
+
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.exchangeCodeForSession(code);
+        if (userError || !user) {
+          return c.json(
+            {
+              message: 'code error',
+              error: '予期せぬエラーが発生しました。',
+            },
+            400
+          );
+        }
+
+        const supabaseAdmin = createServerClient(
+          c.env.SUPABASE_URL,
+          c.env.SUPABASE_SERVICE_ROLE_KEY,
+          {
+            cookies: {
+              getAll() { return []; },
+              setAll() {}
+            }
+          }
+        )
+        const { error: updateUserError } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
+          password: password,
+        });
+
+        if (updateUserError) {
+          return c.json(
+            {
+              message: 'fail to update user',
+              error: 'パスワードの更新に失敗しました。再度お試しください。',
+            },
+            400
+          );
+        }
+
+        return c.json(
+          {
+            message: 'パスワードの変更に成功しました。',
+          },
+          200
+        );
+      } catch (error) {
+        return c.json(
+          serverError,
+          500
+        );
+      }
+    })
