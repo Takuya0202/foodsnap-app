@@ -61,6 +61,15 @@ export const authApp = new Hono()
 
       // 新規ユーザーの場合、profileテーブルにユーザー情報を確立
       if (!isExist) {
+        // metadataにroleを追加
+        const { data : updateMeta , error : updateMetaError } = await supabase.auth.updateUser({
+          data : {
+            role : 'user',
+          }
+        })
+        if (updateMetaError) {
+          throw updateMetaError;
+        }
         const { data: insertData, error: insertError } = await supabase
           .from('profiles')
           .insert({

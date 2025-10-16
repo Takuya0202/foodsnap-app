@@ -53,6 +53,7 @@ export const userApp = new Hono<{ Bindings: Bindings }>()
         options: {
           data: {
             name,
+            role : 'user',
           },
           emailRedirectTo: `${c.env.APP_URL}/auth/user/callback`,
         },

@@ -15,7 +15,10 @@ export default function AdminLogin() {
         <div className="flex flex-col items-center space-y-8 h-full justify-between w-1/2">
           <h1 className="text-white text-[24px]">店舗管理者ログイン</h1>
           <AdminLoginForm />
-          <LinkButton href="/auth/admin/register">新規店舗登録はこちら</LinkButton>
+          <div className="flex flex-col items-center space-y-6">
+            <LinkButton href="/auth/admin/register">新規店舗登録はこちら</LinkButton>
+            <LinkButton href="/stores/top">ユーザー画面へ</LinkButton>
+          </div>
         </div>
       </div>
     </div>
