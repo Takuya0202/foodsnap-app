@@ -7,7 +7,7 @@ export default function AdminLogin() {
     <div className="w-full min-h-screen flex items-center justify-center">
       <div
         className="w-[70%] max-w-[640px] h-full min-h-[520px] rounded-[10px] bg-[#181818] p-6
-        flex items-center space-y-4 shadow-[6px_4px_4px_rgba(0,0,0,0.25)] justify-between"
+        flex items-center space-y-4 shadow-form justify-between"
       >
         <div className="h-full flex items-center justify-center w-1/2">
           <Logo />
