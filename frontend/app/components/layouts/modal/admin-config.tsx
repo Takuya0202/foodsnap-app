@@ -1,6 +1,6 @@
 "use client";
 
-import { Close, Menu, RestartAlt, Settings } from "@mui/icons-material";
+import { Close, Info, Menu, RestartAlt, Settings } from "@mui/icons-material";
 import { useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import UserLogout from "@/app/features/auth/logout";
@@ -65,11 +65,25 @@ export default function AdminConfig() {
               </div>
 
               <div>
+                <LinkButton
+                  href="/stores/top"
+                  icon={<Info sx={{ width: "24px", height: "24px", color: "white" }} />}
+                  richMode={true}
+                  className="text-white"
+                >
+                  アプリへ
+                </LinkButton>
+              </div>
+              <div>
                 <UserLogout />
               </div>
               <div>
-                <LinkButton href="/auth/reset-password" icon={<RestartAlt sx={{ width: "24px", height: "24px" , color: "white"}} />}
-                richMode={true} className="text-white">
+                <LinkButton
+                  href="/auth/reset-password"
+                  icon={<RestartAlt sx={{ width: "24px", height: "24px", color: "white" }} />}
+                  richMode={true}
+                  className="text-white"
+                >
                   パスワードの変更
                 </LinkButton>
               </div>

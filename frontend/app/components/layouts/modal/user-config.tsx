@@ -88,12 +88,12 @@ export default function UserConfig({ setIsOpen }: props) {
               )}
               <div>
                 <LinkButton
-                  href="/auth/admin/login"
+                  href="/admin/dashboard"
                   icon={<Store sx={{ color: "#ffffff", width: "24px", height: "24px" }} />}
                   richMode={true}
                   className="text-white"
                 >
-                  店舗登録はこちら
+                  店舗管理者画面へ
                 </LinkButton>
               </div>
             </div>

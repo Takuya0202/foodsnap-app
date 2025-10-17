@@ -350,7 +350,7 @@ export const authApp = new Hono<{ Bindings: Bindings }>()
       try {
         // トークンの取得
         const authHeader = c.req.header('authorization');
-        const code = authHeader?.replace('Bearer', '');
+        const code = authHeader?.replace('Bearer ', '').trim();
 
         if (!code) {
           return c.json(
@@ -369,6 +369,7 @@ export const authApp = new Hono<{ Bindings: Bindings }>()
           data: { user },
           error: userError,
         } = await supabase.auth.exchangeCodeForSession(code);
+
         if (userError || !user) {
           return c.json(
             {
@@ -378,20 +379,10 @@ export const authApp = new Hono<{ Bindings: Bindings }>()
             400
           );
         }
-
-        const supabaseAdmin = createServerClient(
-          c.env.SUPABASE_URL,
-          c.env.SUPABASE_SERVICE_ROLE_KEY,
-          {
-            cookies: {
-              getAll() { return []; },
-              setAll() {}
-            }
-          }
-        )
-        const { error: updateUserError } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
+        const { error: updateUserError } = await supabase.auth.updateUser({
           password: password,
         });
+    
 
         if (updateUserError) {
           return c.json(
