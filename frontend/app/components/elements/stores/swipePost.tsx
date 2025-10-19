@@ -4,9 +4,10 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/pagination";
 import Image from "next/image";
-import { Favorite, ChatBubbleOutline, Share } from "@mui/icons-material";
+import { Favorite, ChatBubbleOutline, Share, Room, Store } from "@mui/icons-material";
 import { useState } from "react";
 import Like from "@/app/features/store/like";
+import Link from "next/link";
 
 // 店舗の投稿を表示するコンポーネント。横スワイプで次の投稿に移動する。
 type props = {
@@ -28,12 +29,48 @@ type props = {
 
 export function SwipePostSkeleton() {
   return (
-    <div className="w-full">
-      <div className="w-full h-[260px] flex flex-col items-start">
-        <div className="w-full h-[260px] bg-skLoading"></div>
-        <div className="w-[80%] flex items-center justify-between">
-          <div className="w-20 h-6 bg-skLoading"></div>
-          <div className="w-20 h-6 bg-skLoading"></div>
+    <div className="w-full flex flex-col">
+      <div className="w-full h-[300px] bg-skLoading rounded-md mb-2" />
+
+      <div className="flex items-center justify-between pl-4 w-full mt-4">
+        {/* 店舗、投稿の情報*/}
+        <div className="w-[80%] flex flex-col space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="w-32 h-7 bg-skLoading rounded" />
+            <div className="w-20 h-7 bg-skLoading rounded" />
+          </div>
+
+          <div>
+            <div className="w-24 h-10 bg-skLoading rounded-2xl" />
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Store sx={{ color: "#b7b7b7", width: 24, height: 24 }} />
+            <div className="w-36 h-6 bg-skLoading rounded" />
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Room sx={{ color: "#b7b7b7", width: 24, height: 24 }} />
+            <div className="w-48 h-5 bg-skLoading rounded" />
+          </div>
+        </div>
+
+        {/* いいね、コメント、共有 */}
+        <div className="w-[20%] flex flex-col space-y-2 items-center">
+          <div className="flex flex-col items-center space-y-1">
+            <Favorite sx={{ color: "#b7b7b7", width: 36, height: 36 }} />
+            <div className="w-6 h-4 bg-skLoading rounded" />
+          </div>
+
+          <div className="flex flex-col items-center space-y-1">
+            <ChatBubbleOutline sx={{ color: "white", width: 36, height: 36 }} />
+            <div className="w-6 h-4 bg-skLoading rounded" />
+          </div>
+
+          <div className="flex flex-col items-center space-y-1">
+            <Share sx={{ color: "white", width: 36, height: 36 }} />
+            <div className="w-8 h-4 bg-skLoading rounded" />
+          </div>
         </div>
       </div>
     </div>
@@ -87,36 +124,50 @@ export function SwipePostContent({
         ))}
       </Swiper>
 
-      {/* いいね */}
-      <div className="flex items-center justify-end px-2 mb-2">
-        <Like storeId={id} likeCount={likeCount} isLiked={currentLike} />
-      </div>
+      <div className="flex items-center justify-between pl-4 w-full mt-4">
+        {/* 店舗、投稿の情報 */}
+        <div className="w-[80%] flex flex-col space-y-4">
+          {/* メニュー名、価格*/}
+          <div className="flex items-center justify-between ">
+            <div className="flex items-center w-full justify-between">
+              <h2 className="text-white text-[18px] font-semibold">{currentPost?.name}</h2>
+              <p className="text-white text-[18px] font-semibold">{currentPost?.price}円</p>
+            </div>
+          </div>
 
-      {/* メニュー名・価格・コメント */}
-      <div className="flex items-center justify-between px-2 mb-2">
-        <div className="flex items-center space-x-10">
-          <h2 className="text-white text-[18px] font-semibold">{currentPost?.name}</h2>
-          <p className="text-white text-[18px] font-semibold">{currentPost?.price}円</p>
+          {/* ジャンル */}
+          <div>
+            <span className="bg-[#2a2a2a] text-[#ccc] py-2 px-4 rounded-2xl text-base">
+              {genre}
+            </span>
+          </div>
+          {/* 店舗名 */}
+          <div className="flex items-center space-x-2">
+            <Store sx={{ color: "#b7b7b7", width: 24, height: 24 }} />
+            <Link href={`/stores/${id}`}>
+              <span className="text-white text-lg">{name}</span>
+            </Link>
+          </div>
+
+          {/* 住所 */}
+          <div className="flex items-center space-x-2">
+            <Room sx={{ color: "#b7b7b7", width: 24, height: 24 }} />
+            <p className="text-[#b7b7b7] ">{address}</p>
+          </div>
         </div>
-        <button className="flex items-center gap-1">
-          <ChatBubbleOutline sx={{ color: "#b7b7b7", fontSize: 24 }} />
-          <span className="text-white text-sm">{commentCount}</span>
-        </button>
-      </div>
 
-      {/* 店舗名・タグ */}
-      <div className="flex items-center gap-2 px-2 mb-2">
-        <span className="text-white text-sm">{name}</span>
-        <span className="px-2 py-0.5 bg-[#3d3d3d] text-white text-xs rounded">{genre}</span>
-      </div>
-
-      {/* 住所・共有 */}
-      <div className="flex items-center justify-between px-2">
-        <p className="text-[#b7b7b7] text-xs">{address}</p>
-        <button onClick={handleShare} className="flex items-center gap-1">
-          <Share sx={{ color: "#b7b7b7", fontSize: 20 }} />
-          <span className="text-[#b7b7b7] text-xs">共有</span>
-        </button>
+        {/* いいね、コメント、共有 */}
+        <div className="w-[20%] flex flex-col space-y-2 items-center">
+          <Like storeId={id} likeCount={likeCount} isLiked={currentLike} />
+          <button className="flex items-center flex-col space-y-1">
+            <ChatBubbleOutline sx={{ color: "white", width: 36, height: 36 }} />
+            <span className="text-white text-sm">{commentCount}</span>
+          </button>
+          <button onClick={handleShare} className="flex items-center flex-col space-y-1">
+            <Share sx={{ color: "white", width: 36, height: 36 }} />
+            <span className="text-white text-sm">共有</span>
+          </button>
+        </div>
       </div>
     </div>
   );

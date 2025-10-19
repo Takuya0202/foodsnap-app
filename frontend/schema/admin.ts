@@ -59,7 +59,7 @@ const baseAdminSchema = z.object({
     .optional(),
   prefectureId: z.string().min(1, "都道府県を選択してください"), // selectタグを使用する場合、stringになるため、stringにする
   genreId: z.union([z.string().min(1, "ジャンルを選択してください"), z.literal("")]).optional(),
-  tags: z.array(z.number()).max(3, { message: "タグは3つまでです。" }).optional(),
+  tags: z.array(z.number()).max(10, { message: "タグは10個までです。" }).optional(),
   photo: z.union([
     z
       .custom<File>()

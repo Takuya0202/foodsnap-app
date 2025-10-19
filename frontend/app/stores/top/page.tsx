@@ -10,7 +10,7 @@ import "swiper/css";
 function TopSkeleton() {
   return (
     <div>
-      <div className="mt-20">
+      <div className="mt-20 max-w-[480px] mx-auto">
         <SwipePostSkeleton />
       </div>
     </div>

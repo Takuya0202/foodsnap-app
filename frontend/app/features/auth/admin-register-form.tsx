@@ -103,9 +103,11 @@ export default function AdminRegisterForm({ onEmailSent }: Props) {
           prefectureId: Number(data.prefectureId),
           genreId: Number(data.genreId),
           tags: data.tags,
-          link: data.link?.trim() == "" ? undefined : data.link,
-          startAt: data.startAt?.trim() == "" ? undefined : data.startAt,
-          endAt: data.endAt?.trim() == "" ? undefined : data.endAt,
+          ...(data.link !== undefined && data.link?.trim() !== "" ? { link: data.link } : {}),
+          ...(data.startAt !== undefined && data.startAt?.trim() !== ""
+            ? { startAt: data.startAt }
+            : {}),
+          ...(data.endAt !== undefined && data.endAt?.trim() !== "" ? { endAt: data.endAt } : {}),
         },
       });
       if (res.status === 200) {
@@ -303,7 +305,7 @@ export default function AdminRegisterForm({ onEmailSent }: Props) {
             <FieldStatusButton status="opt" />
           </div>
           <div className="relative w-[calc(100%-240px)]">
-            <InputText placeholder="10:00" {...register("startAt")} />
+            <InputText placeholder="00:00" {...register("startAt")} />
             {errors.startAt && (
               <div className="absolute top-full left-0 mt-1">
                 <FieldError>{errors.startAt.message}</FieldError>
@@ -319,7 +321,7 @@ export default function AdminRegisterForm({ onEmailSent }: Props) {
             <FieldStatusButton status="opt" />
           </div>
           <div className="relative w-[calc(100%-240px)]">
-            <InputText placeholder="22:00" {...register("endAt")} />
+            <InputText placeholder="23:59" {...register("endAt")} />
             {errors.endAt && (
               <div className="absolute top-full left-0 mt-1">
                 <FieldError>{errors.endAt.message}</FieldError>

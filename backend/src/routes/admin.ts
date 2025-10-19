@@ -43,6 +43,8 @@ export const adminApp = new Hono<{ Bindings: Bindings }>()
         startAt,
         endAt,
       }: CreateAdminRequest = c.req.valid('json');
+      console.log(startAt);
+      console.log(endAt);
 
       const supabase = getSupabase(c);
 
@@ -105,13 +107,13 @@ export const adminApp = new Hono<{ Bindings: Bindings }>()
 
       // signup
       const {
-        data: { user },
+        data: { user  , session},
         error,
       } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${c.env.APP_URL}/auth/admin/callback`,
+          // emailRedirectTo: `${c.env.APP_URL}/auth/admin/callback`,
           data: {
             name,
             role : 'admin',
@@ -128,6 +130,66 @@ export const adminApp = new Hono<{ Bindings: Bindings }>()
           },
         },
       });
+
+      // // シーダー用。完璧にシーディングが終わったら削除する
+      // if (!user || !session || error) {
+      //   console.error(error);
+      //   return c.json(
+      //     {
+      //       message: 'signup error',
+      //       error: '登録に失敗しました。再度お試しください。',
+      //     },
+      //     400
+      //   );
+      // }
+      // try {
+      //   // 管理者情報の登録。rpcを使ってトランザクション
+      //   const { data : admin , error : adminError } = await supabase.rpc('create_admin_with_store' , {
+      //     _user_id : user.id,
+      //     _name : user.user_metadata.name,
+      //     _phone : user.user_metadata.phone,
+      //     _address : user.user_metadata.address,
+      //     _latitude : user.user_metadata.latitude,
+      //     _longitude : user.user_metadata.longitude,
+      //     _start_at : user.user_metadata.startAt || null,
+      //     _end_at : user.user_metadata.endAt || null,
+      //     _prefecture_id : user.user_metadata.prefectureId,
+      //     _genre_id : user.user_metadata.genreId || null,
+      //     _link : user.user_metadata.link || null,
+      //     _photo : user.user_metadata.photo || null,
+      //     _tag_ids : user.user_metadata.tags || [],
+      //   })
+        
+
+      //   if (adminError) {
+      //     throw adminError;
+      //   }
+      // } catch (error) {
+      //   return c.json(
+      //     {
+      //       message: 'insert error',
+      //       error: '登録に失敗しました。',
+      //     },
+      //     400
+      //   );
+      // }
+
+      // // 自前でcookieを保存
+      // setCookie(c , 'sb-access-token', session.access_token , {
+      //   path : '/',
+      //   httpOnly : true,
+      //   secure : c.env.ENVIRONMENT === 'production',
+      //   sameSite : c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
+      //   maxAge : 60 * 60 * 24 * 7, // 7日
+      // })
+      // setCookie(c , 'sb-refresh-token', session.refresh_token , {
+      //   path : '/',
+      //   httpOnly : true,
+      //   secure : c.env.ENVIRONMENT === 'production',
+      //   sameSite : c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
+      //   maxAge : 60 * 60 * 24 * 7, // 7日
+      // })
+      // // ここまで
 
       if (!user || !user.email || error) {
         return c.json(
