@@ -5,11 +5,11 @@ export type storeResponse = {
   address: string;
   likeCount: number;
   commentCount: number;
+  isLiked: boolean;
   photo: string | null;
   latitude: number;
   longitude: number;
   genre: string | null;
-  isLiked: boolean;
   posts: Array<{
     id: string;
     name: string;
@@ -51,29 +51,3 @@ export type storeDetailResponse = {
     name: string;
   }> | null;
 };
-
-export type commentResponse = Array<{
-  id: string;
-  userId: string;
-  userName: string;
-  userIcon: string | null;
-  content: string;
-  createdAt: string;
-}> | null;
-
-// 検索するときに表示させるレスポンス
-export type storeSearchResponse = {
-  genres : Array<{
-    id :number,
-    name : string,
-  }>;
-  prefectures : Array<{
-    id : number,
-    name : string,
-    area : string,
-  }>;
-  tags : Array<{
-    id : number,
-    name : string,
-  }>
-}

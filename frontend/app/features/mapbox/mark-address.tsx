@@ -98,7 +98,7 @@ export default function MarkAddress({
     return () => {
       map.remove();
     };
-  }, []); // 初回のみレンダリング
+  }, [currentPosition]); // 初回のみレンダリング
 
   return <div ref={mapContainer} style={{ width, height }} />;
 }

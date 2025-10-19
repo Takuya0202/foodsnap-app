@@ -4,20 +4,21 @@ import { commentResponse, storeDetailResponse, storeResponse, storeSearchRespons
 import { getCookie, setCookie } from 'hono/cookie';
 import { zValidator } from '@hono/zod-validator';
 import { CreateCommentRequest, createCommentSchema, searchStoreQuerySchema, SearchStoreQueryRequest } from '../schema/store';
-import { getValidationErrorResponnse } from '../utils/setting';
+import { getValidationErrorResponnse, Bindings } from '../utils/setting';
 import { ZodError } from 'zod';
 import cuid from 'cuid';
 import { serverError , authError } from '../utils/setting';
 
-export const storeApp = new Hono()
-  .get('/top', async (c: Context) => {
+export const storeApp = new Hono<{ Bindings: Bindings }>()
+  .get('/top', async (c) => {
     try {
       const supabase = getSupabase(c);
+      const { data : { user } } = await supabase.auth.getUser();
       const { latitude, longitude } = c.req.query();
       // 表示した店を格納
       let cookie = getCookie(c, 'showedStores');
       let showedStores: string[] = cookie ? JSON.parse(cookie) : [];
-      const isProd = c.env.NODE_ENV;
+      console.log(showedStores)
 
       // 取得するクエリ
       let query = supabase
@@ -38,7 +39,9 @@ export const storeApp = new Hono()
             photo,
             description
           ),
-          likes (count),
+          likes (
+            user_id
+          ),
           comments (count)
         `
         )
@@ -68,7 +71,6 @@ export const storeApp = new Hono()
           .limit(20);
 
         if (error) {
-          console.error('Supabase error (nearby stores):', error);
           return c.json(
             {
               message: 'fail to get stores',
@@ -84,8 +86,8 @@ export const storeApp = new Hono()
           showedStores = [...showedStores, ...data.map(store => store.id)];
           setCookie(c, 'showedStores', JSON.stringify(showedStores), {
             httpOnly: true,
-            secure: isProd,
-            sameSite: isProd ? 'none' : 'lax',
+            secure: c.env.ENVIRONMENT === 'production',
+            sameSite: c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
             maxAge: 60 * 30, // 30分
           });
 
@@ -97,7 +99,8 @@ export const storeApp = new Hono()
             longitude: store.longitude,
             photo: store?.photo,
             genre: store.genre?.name || null,
-            likeCount: store.likes[0]?.count || 0,
+            likeCount: store.likes.length || 0,
+            isLiked : store.likes.some(like => like.user_id === user?.id), 
             commentCount: store.comments[0]?.count || 0,
             posts: store.posts.map(post => ({
               id: post.id,
@@ -130,8 +133,8 @@ export const storeApp = new Hono()
       showedStores = [...showedStores, ...data.map(store => store.id)];
       setCookie(c, 'showedStores', JSON.stringify(showedStores), {
         httpOnly: true,
-        secure: isProd,
-        sameSite: isProd ? 'none' : 'lax',
+        secure: c.env.ENVIRONMENT === 'production',
+        sameSite: c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
         maxAge: 60 * 30, // 30分
       });
 
@@ -143,7 +146,8 @@ export const storeApp = new Hono()
         longitude: store.longitude,
         photo: store?.photo,
         genre: store.genre?.name || null,
-        likeCount: store.likes[0]?.count || 0,
+        likeCount: store.likes.length || 0,
+        isLiked : store.likes.some(like => like.user_id === user?.id), // 認証中のユーザーとuser_idが一致したらいいねフラグを立てる
         commentCount: store.comments[0]?.count || 0,
         posts: store.posts.map(post => ({
           id: post.id,
@@ -176,6 +180,7 @@ export const storeApp = new Hono()
     try {
       // クエリの取得
       const supabase = getSupabase(c);
+      const { data : { user } } = await supabase.auth.getUser();
       const { genreId, keyword, prefectureIds, tagIds}: SearchStoreQueryRequest = c.req.valid('query');
       // 取得するクエリ
       let query = supabase
@@ -196,7 +201,9 @@ export const storeApp = new Hono()
             photo,
             description
           ),
-          likes (count),
+          likes (
+            user_id
+          ),
           comments (count)
         `
         )
@@ -250,7 +257,8 @@ export const storeApp = new Hono()
         longitude: store.longitude,
         photo: store?.photo,
         genre: store.genre?.name || null,
-        likeCount: store.likes[0]?.count || 0,
+        likeCount: store.likes.length || 0,
+        isLiked : store.likes.some(like => like.user_id === user?.id),
         commentCount: store.comments[0]?.count || 0,
         posts: store.posts.map(post => ({
           id: post.id,
@@ -451,15 +459,15 @@ export const storeApp = new Hono()
         .select('*')
         .eq('user_id', user.id)
         .eq('store_id', storeId)
-        .single();
+        .maybeSingle();
 
       if (isLikeError) {
         return c.json(
           {
-            message: 'fail to check like',
-            error: 'いいねの確認に失敗しました。',
+            message: 'fail to refrence store',
+            error: '対象の店舗が存在しません。',
           },
-          400
+          404
         );
       }
 
@@ -487,6 +495,7 @@ export const storeApp = new Hono()
           return c.json(
             {
               message: 'いいねに成功しました。',
+              status : 'like'
             },
             200
           );
@@ -513,6 +522,7 @@ export const storeApp = new Hono()
           return c.json(
             {
               message: 'いいねを削除しました。',
+              status : 'unlike'
             },
             200
           );

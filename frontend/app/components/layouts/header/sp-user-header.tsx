@@ -3,10 +3,7 @@ import HamburgerButton from "../../elements/buttons/hamburger-button";
 export default function SpUserHeader() {
   return (
     <>
-      <div
-        className="w-full py-4 px-5 flex justify-between items-center bg-[#181818]
-        fixed top-0 z-55"
-      >
+      <div className="w-full py-4 px-5 flex justify-between items-center bg-[#181818]">
         {/* キーワード入力 */}
         <div>
           <input
@@ -18,8 +15,6 @@ export default function SpUserHeader() {
         </div>
         <HamburgerButton />
       </div>
-
-      <div className="w-full h-[64px]"></div>
     </>
   );
 }

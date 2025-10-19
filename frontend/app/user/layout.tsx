@@ -15,9 +15,11 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
   }
 
   return (
-    <div>
-      <SpUserHeader />
-      {children}
+    <div className="flex flex-col min-h-screen">
+      <div className="sticky top-0">
+        <SpUserHeader />
+      </div>
+      <div className="flex-1">{children}</div>
       <SpUser />
     </div>
   );

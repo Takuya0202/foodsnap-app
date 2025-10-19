@@ -75,7 +75,7 @@ export default function AdminConfig() {
                 </LinkButton>
               </div>
               <div>
-                <UserLogout />
+                <UserLogout path="admin" />
               </div>
               <div>
                 <LinkButton

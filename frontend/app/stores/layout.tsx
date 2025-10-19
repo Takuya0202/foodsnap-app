@@ -15,10 +15,13 @@ export default function StoresLayout({ children }: { children: React.ReactNode }
   }
 
   return (
-    <div>
+    <div className="flex flex-col h-screen overflow-hidden">
       <SpUserHeader />
-      {children}
-      <SpUser />
+
+      <main className="flex-1 overflow-hidden">{children}</main>
+      <div className="flex-shrink-0">
+        <SpUser />
+      </div>
     </div>
   );
 }
