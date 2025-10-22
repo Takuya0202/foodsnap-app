@@ -49,8 +49,9 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
 
       // 表示した店舗がある場合、表示した店舗を除外
       if (showedStores.length > 0) {
-        // 対象は文字列形式のタプルで指定する必要がある。Postgreの仕様
-        query = query.not('id', 'in', `(${showedStores.map(storeId => `'${storeId}'`).join(',')})`);
+        // PostgREST の filter 構文を使用
+        const excludeIds = showedStores.map(id => `"${id}"`).join(',');
+        query = query.filter('id', 'not.in', `(${excludeIds})`);
       }
 
       // 位置情報が取得できる場合、半径3km以内の店舗を取得する
@@ -68,7 +69,7 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
           .order('created_at', { ascending: false })
           .limit(4, { referencedTable: 'posts' })
           .order('created_at', { ascending: false, referencedTable: 'posts' })
-          .limit(20);
+          .limit(2);
 
         if (error) {
           return c.json(
@@ -88,7 +89,7 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
             httpOnly: true,
             secure: c.env.ENVIRONMENT === 'production',
             sameSite: c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
-            maxAge: 60 * 30, // 30分
+            maxAge: 60 * 5, // 5分
           });
 
           const res: storeResponse = data.map(store => ({
@@ -119,7 +120,7 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
         .order('created_at', { ascending: false })
         .limit(4, { referencedTable: 'posts' })
         .order('created_at', { ascending: false, referencedTable: 'posts' })
-        .limit(20);
+        .limit(2);
 
       if (error) {
         console.error('Supabase error (all stores):', error);
@@ -129,13 +130,20 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
         );
       }
 
+      if (data && data.length === 0) {
+        return c.json({
+          message : 'no stores',
+          error : '店舗が見つかりませんでした。'
+        }, 404)
+      }
+
       // 表示した店舗をcookieに保存
       showedStores = [...showedStores, ...data.map(store => store.id)];
       setCookie(c, 'showedStores', JSON.stringify(showedStores), {
         httpOnly: true,
         secure: c.env.ENVIRONMENT === 'production',
         sameSite: c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
-        maxAge: 60 * 30, // 30分
+        maxAge: 60 * 5, // 5分
       });
 
       const res: storeResponse = data.map(store => ({
@@ -160,7 +168,6 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
 
       return c.json(res, 200);
     } catch (error) {
-      console.error('Unexpected error in /top:', error);
       return c.json(
         serverError,
         500

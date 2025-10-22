@@ -27,7 +27,8 @@ export default function TopPage() {
   const { open } = useToaster();
   const { isOpen, closeComment } = useCommentStore();
   const swiperRef = useRef<SwiperRef | null>(null);
-
+  const [hasMore, setHasMore] = useState<boolean>(true);
+  const [reachEnd , setReachEnd] = useState<boolean>(false);
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
@@ -60,10 +61,12 @@ export default function TopPage() {
 
         if (res.status === 200) {
           const data = await res.json();
-          console.log(data);
-          setStores(data);
+          setStores(prev => [...prev, ...data]);
         } else {
           const data = await res.json();
+          if (res.status === 404) {
+            setHasMore(false);
+          }
           open(data.error, "error");
         }
       } catch {
@@ -73,7 +76,7 @@ export default function TopPage() {
       }
     };
     fetchData();
-  }, []);
+  }, [reachEnd]);
 
   useEffect(() => {
     if (isOpen) {
@@ -105,6 +108,10 @@ export default function TopPage() {
         mousewheel={{
           forceToAxis: true,
           releaseOnEdges: true,
+        }}
+        onReachEnd={() => {
+          if (!hasMore) return;
+          setReachEnd(!reachEnd); // 全てリロードしたら再度フェッチ
         }}
       >
         {stores.map((store, idx) => (

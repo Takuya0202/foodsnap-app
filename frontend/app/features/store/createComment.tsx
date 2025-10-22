@@ -1,6 +1,4 @@
 "use client";
-
-import SubmitButton from "@/app/components/elements/buttons/submit-button";
 import { useCommentStore } from "@/app/zustand/comment";
 import { useToaster } from "@/app/zustand/toaster";
 import { CreateCommentRequest } from "@/schema/store";
