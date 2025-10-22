@@ -598,6 +598,18 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
   .post(
     '/:storeId/comments',
     zValidator('json', createCommentSchema, async (result, c: Context) => {
+      if (!result.success) {
+        const errors = getValidationErrorResponnse(result.error as ZodError);
+        return c.json(
+          {
+            message: 'validation error',
+            error: errors,
+          },
+          400
+        );
+      }
+    }),
+    async (c) => {
       try {
         const { storeId } = c.req.param();
         if (!storeId) {
@@ -609,19 +621,7 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
             400
           );
         }
-
-        if (!result.success) {
-          const errors = getValidationErrorResponnse(result.error as ZodError);
-          return c.json(
-            {
-              message: 'validation error',
-              errors: errors,
-            },
-            400
-          );
-        }
-
-        const { content }: CreateCommentRequest = result.data;
+        const { content }: CreateCommentRequest = c.req.valid('json');
         const supabase = getSupabase(c);
         const {
           data: { user },
@@ -668,5 +668,5 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
           500
         );
       }
-    })
+    }
   )

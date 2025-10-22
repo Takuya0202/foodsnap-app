@@ -3,10 +3,13 @@ import { SwipePostContent, SwipePostSkeleton } from "@/app/components/elements/s
 import { useToaster } from "@/app/zustand/toaster";
 import { storeResponse } from "@/types/store";
 import { client } from "@/utils/setting";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Mousewheel } from "swiper/modules";
-import { Swiper, SwiperSlide } from "swiper/react";
+import { Swiper, SwiperRef, SwiperSlide } from "swiper/react";
 import "swiper/css";
+import CommentModal from "@/app/components/layouts/modal/commentModal";
+import { useCommentStore } from "@/app/zustand/comment";
+
 function TopSkeleton() {
   return (
     <div>
@@ -22,6 +25,8 @@ export default function TopPage() {
   const [stores, setStores] = useState<storeResponse>([]);
   const [currentStoreIndex, setCurrentStoreIndex] = useState<number>(0);
   const { open } = useToaster();
+  const { isOpen, closeComment } = useCommentStore();
+  const swiperRef = useRef<SwiperRef | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -70,20 +75,32 @@ export default function TopPage() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    if (isOpen) {
+      swiperRef.current?.swiper.disable();
+    } else {
+      swiperRef.current?.swiper.enable();
+    }
+  }, [isOpen]);
+
   if (isLoading) {
     return <TopSkeleton />;
   }
 
   return (
-    <div className="w-full h-full max-w-[480px] mx-auto">
+    <div className="w-full h-full max-h-[800px] max-w-[480px] mx-auto">
       <Swiper
         spaceBetween={10}
+        ref={swiperRef}
         direction="vertical"
         slidesPerView={1.05}
         speed={500}
         threshold={50}
         modules={[Mousewheel]}
-        onSlideChange={(swiper) => setCurrentStoreIndex(swiper.activeIndex)}
+        onSlideChange={(swiper) => {
+          setCurrentStoreIndex(swiper.activeIndex);
+          closeComment();
+        }}
         className="w-full h-full"
         mousewheel={{
           forceToAxis: true,
@@ -92,7 +109,7 @@ export default function TopPage() {
       >
         {stores.map((store, idx) => (
           <SwiperSlide key={store.id} className="h-full w-full">
-            <div className="w-full h-full">
+            <div className="w-full h-full relative">
               {/* 現在表示してるスライドは高さをもうける。全てにつけるとチラ見セができないため。 */}
               <div
                 style={{
@@ -111,6 +128,7 @@ export default function TopPage() {
                 posts={store.posts}
                 currentLike={store.isLiked}
               />
+              <CommentModal storeId={store.id} commentCount={store.commentCount} />
             </div>
           </SwiperSlide>
         ))}

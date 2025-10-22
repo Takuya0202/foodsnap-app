@@ -15,7 +15,7 @@ export default function Like({ storeId, likeCount, isLiked }: props) {
   const [like, setLike] = useState(isLiked);
   const { open } = useToaster();
   const handleLike = async () => {
-    setIsSubmitting(false);
+    setIsSubmitting(true);
     try {
       const res = await client.api.store[":storeId"].like.$post({
         param: {

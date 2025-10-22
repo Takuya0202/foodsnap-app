@@ -4,10 +4,11 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/pagination";
 import Image from "next/image";
-import { Favorite, ChatBubbleOutline, Share, Room, Store } from "@mui/icons-material";
+import { Favorite, Share, Room, Store, ChatBubbleOutline } from "@mui/icons-material";
 import { useState } from "react";
 import Like from "@/app/features/store/like";
 import Link from "next/link";
+import CommentButton from "@/app/features/store/commentButton";
 
 // 店舗の投稿を表示するコンポーネント。横スワイプで次の投稿に移動する。
 type props = {
@@ -101,7 +102,7 @@ export function SwipePostContent({
   const currentPost = posts[currentPostIndex];
 
   return (
-    <div className="w-full flex flex-col">
+    <div className="w-full flex flex-col relative">
       {/* 投稿画像。x軸でスワイプ */}
       <Swiper
         className="relative w-full h-[300px] mb-2"
@@ -126,7 +127,7 @@ export function SwipePostContent({
 
       <div className="flex items-center justify-between pl-4 w-full mt-4">
         {/* 店舗、投稿の情報 */}
-        <div className="w-[80%] flex flex-col space-y-4">
+        <div className="w-[80%] flex flex-col space-y-6">
           {/* メニュー名、価格*/}
           <div className="flex items-center justify-between ">
             <div className="flex items-center w-full justify-between">
@@ -157,12 +158,9 @@ export function SwipePostContent({
         </div>
 
         {/* いいね、コメント、共有 */}
-        <div className="w-[20%] flex flex-col space-y-2 items-center">
+        <div className="w-[20%] flex flex-col space-y-4 items-center">
           <Like storeId={id} likeCount={likeCount} isLiked={currentLike} />
-          <button className="flex items-center flex-col space-y-1">
-            <ChatBubbleOutline sx={{ color: "white", width: 36, height: 36 }} />
-            <span className="text-white text-sm">{commentCount}</span>
-          </button>
+          <CommentButton storeId={id} commentCount={commentCount} />
           <button onClick={handleShare} className="flex items-center flex-col space-y-1">
             <Share sx={{ color: "white", width: 36, height: 36 }} />
             <span className="text-white text-sm">共有</span>
