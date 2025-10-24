@@ -1,3 +1,28 @@
+// RPC用の型定義（get_random_stores関数の戻り値）
+export type RpcStoreRawResult = {
+  id: string;
+  name: string;
+  address: string;
+  photo: string | null;
+  latitude: number;
+  longitude: number;
+  genre: {
+    name: string;
+  } | null;
+  posts: Array<{
+    id: string;
+    name: string;
+    price: number;
+    photo: string;
+    description: string | null;
+  }> | null;
+  likes: Array<{
+    user_id: string;
+  }> | null;
+  comments: Array<{
+    count: number;
+  }> | null;
+};
 export type Json =
   | string
   | number
@@ -466,7 +491,37 @@ export type Database = {
       Role: "user" | "admin"
     }
     CompositeTypes: {
-      [_ in never]: never
+      store_genre_t: {
+        id: number | null
+        name: string | null
+      }
+      store_post_t: {
+        id: string | null
+        name: string | null
+        price: number | null
+        photo: string | null
+        description: string | null
+        created_at: string | null
+      }
+      store_result_t: {
+        id: string | null
+        user_id: string | null
+        name: string | null
+        address: string | null
+        phone: string | null
+        latitude: number | null
+        longitude: number | null
+        photo: string | null
+        start_at: string | null
+        end_at: string | null
+        link: string | null
+        genre: Database["public"]["CompositeTypes"]["store_genre_t"] | null
+        posts: Database["public"]["CompositeTypes"]["store_post_t"][] | null
+        likes: Json | null
+        comments: Json | null
+        created_at: string | null
+        updated_at: string | null
+      }
     }
   }
 }

@@ -28,9 +28,17 @@ export default function TopPage() {
   const { isOpen, closeComment } = useCommentStore();
   const swiperRef = useRef<SwiperRef | null>(null);
   const [hasMore, setHasMore] = useState<boolean>(true);
-  const [reachEnd , setReachEnd] = useState<boolean>(false);
+  const isFetchingRef = useRef<boolean>(false); // フェッチ中かどうかを管理
+  
+  // 初回ロード用のuseEffect
   useEffect(() => {
     const fetchData = async () => {
+      // すでにフェッチ中、またはデータがある場合はスキップ
+      if (isFetchingRef.current || stores.length > 0) {
+        return;
+      }
+      
+      isFetchingRef.current = true;
       setIsLoading(true);
 
       // 現在地を取得する関数。Promiseでラップしてあげる
@@ -61,7 +69,7 @@ export default function TopPage() {
 
         if (res.status === 200) {
           const data = await res.json();
-          setStores(prev => [...prev, ...data]);
+          setStores(data);
         } else {
           const data = await res.json();
           if (res.status === 404) {
@@ -73,10 +81,60 @@ export default function TopPage() {
         open("店舗の取得に失敗しました。", "error");
       } finally {
         setIsLoading(false);
+        isFetchingRef.current = false;
       }
     };
     fetchData();
-  }, [reachEnd]);
+  }, []); // 初回のみ実行
+
+  // 追加データのフェッチ関数
+  const fetchMoreStores = async () => {
+    if (isFetchingRef.current || !hasMore) {
+      return;
+    }
+
+    isFetchingRef.current = true;
+
+    const getPosition = (): Promise<{ latitude: number; longitude: number } | null> => {
+      return new Promise((resolve) => {
+        navigator.geolocation.getCurrentPosition(
+          (pos: GeolocationPosition) => {
+            const crd = pos.coords;
+            resolve({ latitude: crd.latitude, longitude: crd.longitude });
+          },
+          () => {
+            resolve(null);
+          }
+        );
+      });
+    };
+
+    const currentPosition = await getPosition();
+
+    try {
+      const res = await client.api.store.top.$get({
+        query: {
+          latitude: currentPosition?.latitude,
+          longitude: currentPosition?.longitude,
+        },
+      });
+
+      if (res.status === 200) {
+        const data = await res.json();
+        setStores(prev => [...prev, ...data]);
+      } else {
+        const data = await res.json();
+        if (res.status === 404) {
+          setHasMore(false);
+        }
+        open(data.error, "error");
+      }
+    } catch {
+      open("店舗の取得に失敗しました。", "error");
+    } finally {
+      isFetchingRef.current = false;
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -110,12 +168,11 @@ export default function TopPage() {
           releaseOnEdges: true,
         }}
         onReachEnd={() => {
-          if (!hasMore) return;
-          setReachEnd(!reachEnd); // 全てリロードしたら再度フェッチ
+          fetchMoreStores(); // 直接関数を呼ぶ
         }}
       >
         {stores.map((store, idx) => (
-          <SwiperSlide key={store.id} className="h-full w-full">
+          <SwiperSlide key={idx} className="h-full w-full">
             <div className="w-full h-full relative">
               {/* 現在表示してるスライドは高さをもうける。全てにつけるとチラ見セができないため。 */}
               <div

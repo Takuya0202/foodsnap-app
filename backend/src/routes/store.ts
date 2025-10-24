@@ -8,6 +8,7 @@ import { getValidationErrorResponnse, Bindings } from '../utils/setting';
 import { ZodError } from 'zod';
 import cuid from 'cuid';
 import { serverError , authError } from '../utils/setting';
+import { RpcStoreRawResult } from '../types/supabase';
 
 export const storeApp = new Hono<{ Bindings: Bindings }>()
   .get('/top', async (c) => {
@@ -20,125 +21,157 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
       let showedStores: string[] = cookie ? JSON.parse(cookie) : [];
       console.log(showedStores)
 
-      // 取得するクエリ
-      let query = supabase
-        .from('stores')
-        .select(
-          `
-          id,
-          name,
-          address,
-          photo,
-          latitude,
-          longitude,
-          genre:genres(name),
-          posts (
-            id,
-            name,
-            price,
-            photo,
-            description
-          ),
-          likes (
-            user_id
-          ),
-          comments (count)
-        `
-        )
-        .not('posts', 'is', null); // 投稿がない店舗は除外
+      const formattedLat = parseFloat(latitude);
+      const formattedLon = parseFloat(longitude);
 
-      // 表示した店舗がある場合、表示した店舗を除外
-      if (showedStores.length > 0) {
-        // PostgREST の filter 構文を使用
-        const excludeIds = showedStores.map(id => `"${id}"`).join(',');
-        query = query.filter('id', 'not.in', `(${excludeIds})`);
-      }
-
-      // 位置情報が取得できる場合、半径3km以内の店舗を取得する
-      if (latitude && longitude && !isNaN(parseFloat(latitude)) && !isNaN(parseFloat(longitude))) {
-        // 対象となる緯度、軽度について考える。1度は111kmと近似できるため、それを元に考える
-        const range = 3 / 111;
-        const lat = parseFloat(latitude);
-        const lon = parseFloat(longitude);
-
-        const { data, error } = await query
-          .gte('latitude', lat - range)
-          .lte('latitude', lat + range)
-          .gte('longitude', lon - range)
-          .lte('longitude', lon + range)
-          .order('created_at', { ascending: false })
-          .limit(4, { referencedTable: 'posts' })
-          .order('created_at', { ascending: false, referencedTable: 'posts' })
-          .limit(2);
-
-        if (error) {
-          return c.json(
-            {
-              message: 'fail to get stores',
-              error: '店舗の取得に失敗しました。',
-            },
-            400
-          );
-        }
-
-        // 取得できた場合。
-        if (data && data.length > 0) {
-          // 表示した店舗をcookieに保存
-          showedStores = [...showedStores, ...data.map(store => store.id)];
-          setCookie(c, 'showedStores', JSON.stringify(showedStores), {
-            httpOnly: true,
-            secure: c.env.ENVIRONMENT === 'production',
-            sameSite: c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
-            maxAge: 60 * 5, // 5分
-          });
-
-          const res: storeResponse = data.map(store => ({
-            id: store.id,
-            name: store.name,
-            address: store.address,
-            latitude: store.latitude,
-            longitude: store.longitude,
-            photo: store?.photo,
-            genre: store.genre?.name || null,
-            likeCount: store.likes.length || 0,
-            isLiked : store.likes.some(like => like.user_id === user?.id), 
-            commentCount: store.comments[0]?.count || 0,
-            posts: store.posts.map(post => ({
-              id: post.id,
-              name: post.name,
-              price: post.price,
-              photo: post.photo,
-              description: post?.description || null,
-            })),
-          }));
-          return c.json(res, 200);
-        }
-      }
-
-      // 位置情報がない場合、または近くに店舗がない場合、新規に20件返す
-      const { data, error } = await query
-        .order('created_at', { ascending: false })
-        .limit(4, { referencedTable: 'posts' })
-        .order('created_at', { ascending: false, referencedTable: 'posts' })
-        .limit(2);
+      const { data : rpcData , error } = await supabase.rpc('get_random_stores',{
+        result_limit : 2,
+        search_range : 3.0,
+        showed_store_ids : showedStores,
+        user_latitude : isNaN(formattedLat) ? undefined : formattedLat,
+        user_longitude : isNaN(formattedLon) ? undefined : formattedLon,
+      });
 
       if (error) {
-        console.error('Supabase error (all stores):', error);
-        return c.json(
-          serverError,
-          400
-        );
+        console.log(error);
+        return c.json({
+          message : 'fail to get stores',
+          error : '店舗の取得に失敗しました。',
+        }, 400);
       }
+
+      const data = rpcData as RpcStoreRawResult[]
+      console.log(data);
 
       if (data && data.length === 0) {
         return c.json({
           message : 'no stores',
-          error : '店舗が見つかりませんでした。'
-        }, 404)
+          error : '店舗が見つかりませんでした。',
+        }, 404);
       }
 
+      // // 取得するクエリ
+      // let query = supabase
+      //   .from('stores')
+      //   .select(
+      //     `
+      //     id,
+      //     name,
+      //     address,
+      //     photo,
+      //     latitude,
+      //     longitude,
+      //     genre:genres(name),
+      //     posts (
+      //       id,
+      //       name,
+      //       price,
+      //       photo,
+      //       description
+      //     ),
+      //     likes (
+      //       user_id
+      //     ),
+      //     comments (count)
+      //   `
+      //   )
+      //   .not('posts', 'is', null); // 投稿がない店舗は除外
+
+      // // 表示した店舗がある場合、表示した店舗を除外
+      // if (showedStores.length > 0) {
+      //   // PostgREST の filter 構文を使用
+      //   const excludeIds = showedStores.map(id => `"${id}"`).join(',');
+      //   query = query.filter('id', 'not.in', `(${excludeIds})`);
+      // }
+
+      // // 位置情報が取得できる場合、半径3km以内の店舗を取得する
+      // if (latitude && longitude && !isNaN(parseFloat(latitude)) && !isNaN(parseFloat(longitude))) {
+      //   // 対象となる緯度、軽度について考える。1度は111kmと近似できるため、それを元に考える
+      //   const range = 3 / 111;
+      //   const lat = parseFloat(latitude);
+      //   const lon = parseFloat(longitude);
+
+      //   const { data, error } = await query
+      //     .gte('latitude', lat - range)
+      //     .lte('latitude', lat + range)
+      //     .gte('longitude', lon - range)
+      //     .lte('longitude', lon + range)
+      //     .order('created_at', { ascending: false })
+      //     .limit(4, { referencedTable: 'posts' })
+      //     .order('created_at', { ascending: false, referencedTable: 'posts' })
+      //     .limit(2);
+
+      //   if (error) {
+      //     return c.json(
+      //       {
+      //         message: 'fail to get stores',
+      //         error: '店舗の取得に失敗しました。',
+      //       },
+      //       400
+      //     );
+      //   }
+
+      //   // 取得できた場合。
+      //   if (data && data.length > 0) {
+      //     // 表示した店舗をcookieに保存
+      //     showedStores = [...showedStores, ...data.map(store => store.id)];
+      //     setCookie(c, 'showedStores', JSON.stringify(showedStores), {
+      //       httpOnly: true,
+      //       secure: c.env.ENVIRONMENT === 'production',
+      //       sameSite: c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
+      //       maxAge: 60 * 5, // 5分
+      //     });
+
+      //     const res: storeResponse = data.map(store => ({
+      //       id: store.id,
+      //       name: store.name,
+      //       address: store.address,
+      //       latitude: store.latitude,
+      //       longitude: store.longitude,
+      //       photo: store?.photo,
+      //       genre: store.genre?.name || null,
+      //       likeCount: store.likes.length || 0,
+      //       isLiked : store.likes.some(like => like.user_id === user?.id), 
+      //       commentCount: store.comments[0]?.count || 0,
+      //       posts: store.posts.map(post => ({
+      //         id: post.id,
+      //         name: post.name,
+      //         price: post.price,
+      //         photo: post.photo,
+      //         description: post?.description || null,
+      //       })),
+      //     }));
+      //     return c.json(res, 200);
+      //   }
+      // }
+
+      // // 位置情報がない場合、または近くに店舗がない場合、新規に20件返す
+      // const { data, error } = await query
+      //   .order('created_at', { ascending: false })
+      //   .limit(4, { referencedTable: 'posts' })
+      //   .order('created_at', { ascending: false, referencedTable: 'posts' })
+      //   .limit(2);
+
+      // if (error) {
+      //   console.error('Supabase error (all stores):', error);
+      //   return c.json(
+      //     serverError,
+      //     400
+      //   );
+      // }
+
+      // if (data && data.length === 0) {
+      //   return c.json({
+      //     message : 'no stores',
+      //     error : '店舗が見つかりませんでした。'
+      //   }, 404)
+      // }
+
+      // 未表示(showedSroresに含まれないもののみ、cookieに追加)
+      const newAddedStores = data.filter(store => !showedStores.includes(store.id));
+
       // 表示した店舗をcookieに保存
-      showedStores = [...showedStores, ...data.map(store => store.id)];
+      showedStores = [...showedStores, ...newAddedStores.map(store => store.id)];
       setCookie(c, 'showedStores', JSON.stringify(showedStores), {
         httpOnly: true,
         secure: c.env.ENVIRONMENT === 'production',
@@ -154,16 +187,16 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
         longitude: store.longitude,
         photo: store?.photo,
         genre: store.genre?.name || null,
-        likeCount: store.likes.length || 0,
-        isLiked : store.likes.some(like => like.user_id === user?.id), // 認証中のユーザーとuser_idが一致したらいいねフラグを立てる
-        commentCount: store.comments[0]?.count || 0,
-        posts: store.posts.map(post => ({
+        likeCount: store.likes?.length || 0,
+        isLiked : store.likes?.some(like => like.user_id === user?.id) || false, // 認証中のユーザーとuser_idが一致したらいいねフラグを立てる
+        commentCount: store.comments?.[0]?.count || 0,
+        posts: store.posts?.map(post => ({
           id: post.id,
           name: post.name,
           price: post.price,
           photo: post.photo,
           description: post?.description || null,
-        })),
+        })) || [],
       }));
 
       return c.json(res, 200);
