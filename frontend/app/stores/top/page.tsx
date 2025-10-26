@@ -27,18 +27,11 @@ export default function TopPage() {
   const { open } = useToaster();
   const { isOpen, closeComment } = useCommentStore();
   const swiperRef = useRef<SwiperRef | null>(null);
-  const [hasMore, setHasMore] = useState<boolean>(true);
-  const isFetchingRef = useRef<boolean>(false); // フェッチ中かどうかを管理
+
   
   // 初回ロード用のuseEffect
   useEffect(() => {
     const fetchData = async () => {
-      // すでにフェッチ中、またはデータがある場合はスキップ
-      if (isFetchingRef.current || stores.length > 0) {
-        return;
-      }
-      
-      isFetchingRef.current = true;
       setIsLoading(true);
 
       // 現在地を取得する関数。Promiseでラップしてあげる
@@ -72,16 +65,12 @@ export default function TopPage() {
           setStores(data);
         } else {
           const data = await res.json();
-          if (res.status === 404) {
-            setHasMore(false);
-          }
           open(data.error, "error");
         }
       } catch {
         open("店舗の取得に失敗しました。", "error");
       } finally {
         setIsLoading(false);
-        isFetchingRef.current = false;
       }
     };
     fetchData();
@@ -89,12 +78,6 @@ export default function TopPage() {
 
   // 追加データのフェッチ関数
   const fetchMoreStores = async () => {
-    if (isFetchingRef.current || !hasMore) {
-      return;
-    }
-
-    isFetchingRef.current = true;
-
     const getPosition = (): Promise<{ latitude: number; longitude: number } | null> => {
       return new Promise((resolve) => {
         navigator.geolocation.getCurrentPosition(
@@ -124,18 +107,14 @@ export default function TopPage() {
         setStores(prev => [...prev, ...data]);
       } else {
         const data = await res.json();
-        if (res.status === 404) {
-          setHasMore(false);
-        }
         open(data.error, "error");
       }
     } catch {
       open("店舗の取得に失敗しました。", "error");
-    } finally {
-      isFetchingRef.current = false;
     }
   };
 
+  // コメント表示中のスワイプを制御する
   useEffect(() => {
     if (isOpen) {
       swiperRef.current?.swiper.disable();
@@ -168,7 +147,7 @@ export default function TopPage() {
           releaseOnEdges: true,
         }}
         onReachEnd={() => {
-          fetchMoreStores(); // 直接関数を呼ぶ
+          fetchMoreStores(); // 追加で取得
         }}
       >
         {stores.map((store, idx) => (

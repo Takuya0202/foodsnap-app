@@ -1,4 +1,4 @@
-import z from 'zod';
+import z, { number } from 'zod';
 
 // コメントのスキーマ
 const CommentSchema = z.object({
@@ -27,3 +27,42 @@ export const searchStoreQuerySchema = z.object({
 })
 
 export type SearchStoreQueryRequest = z.infer<typeof searchStoreQuerySchema>;
+
+// topのRPCスキーマ
+export const getRandomStoresSchema = z.array(
+  z.object({
+    id : z.string(),
+    name : z.string(),
+    address : z.string(),
+    photo : z.string().nullable(),
+    latitude : z.number(),
+    longitude : z.number(),
+    genre : z.object({
+      id : z.number(),
+      name : z.string(),
+    }),
+    posts : z.array(
+      z.object({
+        id : z.string(),
+        name : z.string(),
+        price : z.number(),
+        photo : z.string(),
+        description : z.string().nullable(),
+      })
+    ),
+    likes : z.array(
+      z.object({
+        user_id : z.string(),
+      })
+    ),
+    comments : z.object({
+      count : z.number(),
+    }),
+    created_at : z.string(),
+    updated_at : z.string(),
+    is_shown : z.boolean(), // 既に表示されたかどうか
+    priority_rank : z.number(), // 優先度
+  })
+)
+
+export type GetRandomStoresResponse = z.infer<typeof getRandomStoresSchema>;

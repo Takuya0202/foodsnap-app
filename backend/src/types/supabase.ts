@@ -19,9 +19,9 @@ export type RpcStoreRawResult = {
   likes: Array<{
     user_id: string;
   }> | null;
-  comments: Array<{
-    count: number;
-  }> | null;
+  comments : {
+    count : number;
+  }
 };
 export type Json =
   | string
