@@ -56,7 +56,7 @@ async function StoreContent({ params }: props) {
       </div>
 
       {/* タグ */}
-      <div className="w-full overflow-x-scroll flex items-center space-x-2 whitespace-nowrap py-4">
+      <div className="w-full flex items-center space-x-2 whitespace-nowrap overflow-x-scroll" >
         {data.tags?.map((tag) => (
           <BelongFeature key={tag.id}>
             {tag.name}
@@ -115,9 +115,11 @@ async function StoreContent({ params }: props) {
       </div>
 
       {/* 位置情報 */}
-      <div className="w-full h-[400px] flex flex-col space-y-4">
+      <div className="w-full flex flex-col space-y-4">
         <span className="text-white text-2xl border-b border-white pb-2 w-[50%]">address</span>
-        <ShowAddress latitude={data.latitude} longitude={data.longitude} />
+        <div className="w-full h-[400px]">
+          <ShowAddress latitude={data.latitude} longitude={data.longitude} />
+        </div>
       </div>
     </div>
   );
