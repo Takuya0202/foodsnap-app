@@ -9,6 +9,8 @@ import { useState } from "react";
 import Like from "@/app/features/store/like";
 import Link from "next/link";
 import CommentButton from "@/app/features/store/commentButton";
+import ShareButton from "@/app/features/store/shareButton";
+import BelongFeature from "./belongFeature";
 
 // 店舗の投稿を表示するコンポーネント。横スワイプで次の投稿に移動する。
 type props = {
@@ -90,15 +92,6 @@ export function SwipePostContent({
 }: props) {
   const [currentPostIndex, setCurrentPostIndex] = useState(0); // 現在表示している投稿のインデックス
 
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: posts[currentPostIndex]?.name,
-        url: window.location.href,
-      });
-    }
-  };
-
   const currentPost = posts[currentPostIndex];
 
   return (
@@ -138,9 +131,7 @@ export function SwipePostContent({
 
           {/* ジャンル */}
           <div>
-            <span className="bg-[#2a2a2a] text-[#ccc] py-2 px-4 rounded-2xl text-base">
-              {genre}
-            </span>
+            <BelongFeature>{genre}</BelongFeature>
           </div>
           {/* 店舗名 */}
           <div className="flex items-center space-x-2">
@@ -161,10 +152,7 @@ export function SwipePostContent({
         <div className="w-[20%] flex flex-col space-y-4 items-center">
           <Like storeId={id} likeCount={likeCount} isLiked={currentLike} />
           <CommentButton storeId={id} commentCount={commentCount} />
-          <button onClick={handleShare} className="flex items-center flex-col space-y-1">
-            <Share sx={{ color: "white", width: 36, height: 36 }} />
-            <span className="text-white text-sm">共有</span>
-          </button>
+          <ShareButton name={currentPost?.name} id={id} />
         </div>
       </div>
     </div>

@@ -28,7 +28,6 @@ export default function TopPage() {
   const { isOpen, closeComment } = useCommentStore();
   const swiperRef = useRef<SwiperRef | null>(null);
 
-  
   // 初回ロード用のuseEffect
   useEffect(() => {
     const fetchData = async () => {
@@ -104,7 +103,7 @@ export default function TopPage() {
 
       if (res.status === 200) {
         const data = await res.json();
-        setStores(prev => [...prev, ...data]);
+        setStores((prev) => [...prev, ...data]);
       } else {
         const data = await res.json();
         open(data.error, "error");

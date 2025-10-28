@@ -32,12 +32,10 @@ export function CommentCardContent({ userName, userIcon, content, createdAt }: p
           className="rounded-full object-contain"
         />
         <p className="text-white text-[16px] font-bold">{userName}</p>
+        <span className="text-white text-[12px]">{new Date(createdAt).toLocaleString()}</span>
       </div>
       <div className="mx-6">
         <p className="text-white text-[16px]">{content}</p>
-      </div>
-      <div className="justify-end">
-        <p className="text-white text-[12px]">{createdAt}</p>
       </div>
     </div>
   );

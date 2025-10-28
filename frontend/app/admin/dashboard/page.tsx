@@ -1,4 +1,4 @@
-import Accessibility from "@/app/components/elements/others/accessibility";
+import Accessibility from "@/app/components/elements/dashboard/accessibility";
 import {
   PcAdminHeader,
   PcAdminHeaderSkeleton,
@@ -6,11 +6,11 @@ import {
 import { serverClient } from "@/utils/serverClient";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { PostCardContetnt, PostCardSkeleton } from "@/app/components/elements/others/postCard";
+import { PostCardContetnt, PostCardSkeleton } from "@/app/components/elements/dashboard/postCard";
 import {
   CommentCardContent,
   CommentCardSkeleton,
-} from "@/app/components/elements/others/CommentCard";
+} from "@/app/components/elements/dashboard/CommentCard";
 import Link from "next/link";
 // スケルトンUI。promiseの間(fetchが完了するまで)に表示するUI
 function DashboardSkeleton() {
