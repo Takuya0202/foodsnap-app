@@ -61,15 +61,20 @@ function DashboardSkeleton() {
 }
 async function DashboardContent() {
   const fetchData = async () => {
-    const client = await serverClient();
-    const res = await client.api.admin.dashboard.$get();
-    if (res.status === 200) {
-      const data = await res.json();
-      return data;
-    } else {
-      const data = await res.json();
-      console.log(data.error);
-      return redirect("/auth/admin/login");
+    try {
+      const client = await serverClient();
+      const res = await client.api.admin.dashboard.$get();
+      if (res.status === 200) {
+        const data = await res.json();
+        return data;
+      } else if (res.status === 401) {
+        return redirect("/auth/admin/login");
+      } else {
+        const data = await res.json();
+        throw new Error(data.error);
+      }
+    } catch (error) {
+      throw error;
     }
   };
   const data = await fetchData();

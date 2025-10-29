@@ -27,6 +27,8 @@ export default function TopPage() {
   const { open } = useToaster();
   const { isOpen, closeComment } = useCommentStore();
   const swiperRef = useRef<SwiperRef | null>(null);
+  // 読み込み時にonReachEndによりapiが2回呼ばれてしまうのを防ぐ。
+  const isFirstLoad = useRef<boolean>(true);
 
   // 初回ロード用のuseEffect
   useEffect(() => {
@@ -70,6 +72,7 @@ export default function TopPage() {
         open("店舗の取得に失敗しました。", "error");
       } finally {
         setIsLoading(false);
+        isFirstLoad.current = false;
       }
     };
     fetchData();
@@ -77,6 +80,8 @@ export default function TopPage() {
 
   // 追加データのフェッチ関数
   const fetchMoreStores = async () => {
+    // 初回リロードならfetxhしない
+    if (isFirstLoad.current) return;
     const getPosition = (): Promise<{ latitude: number; longitude: number } | null> => {
       return new Promise((resolve) => {
         navigator.geolocation.getCurrentPosition(

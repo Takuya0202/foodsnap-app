@@ -61,9 +61,9 @@ export default function UserConfig({ setIsOpen }: props) {
               </div>
               {isAuthenticated ? (
                 <>
-                  <div className="flex items-center space-x-10">
+                  <div className="flex items-center space-x-8">
                     <UserIcon />
-                    <p className="text-white text-lg">{name}</p>
+                    <p className="text-white text-lg flex-1">{name}</p>
                   </div>
 
                   <div>

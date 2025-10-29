@@ -1,13 +1,13 @@
 import LinkButton from "@/app/components/elements/buttons/link-button";
-import { SearchOff, Home, ArrowBack } from "@mui/icons-material";
+import { ErrorOutline, Home, Search } from "@mui/icons-material";
 
 export default function NotFound() {
   return (
-    <div className="w-full h-full max-w-[480px] mx-auto flex flex-col items-center justify-center p-8 space-y-8">
+    <div className="w-full h-screen max-w-[480px] mx-auto flex flex-col items-center justify-center p-8 space-y-8">
       <div className="relative">
         {/* 背景 */}
         <div className="absolute inset-0 bg-[#3d91ff] opacity-20 blur-3xl rounded-full animate-pulse"></div>
-        <SearchOff
+        <ErrorOutline
           sx={{
             color: "#3d91ff",
             width: 120,
@@ -23,9 +23,9 @@ export default function NotFound() {
       </div>
 
       <div className="text-center space-y-3">
-        <p className="text-white text-xl font-semibold">店舗が見つかりませんでした</p>
+        <p className="text-white text-xl font-semibold">ページが見つかりませんでした</p>
         <p className="text-[#ccc] text-sm">
-          お探しの店舗は削除されたか、
+          お探しのページは存在しないか、
           <br />
           URLが間違っている可能性があります
         </p>
@@ -43,9 +43,9 @@ export default function NotFound() {
         <LinkButton
           href="/stores/index"
           className="w-full bg-[#202020] text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center space-x-2 shadow-lg"
-          icon={<ArrowBack sx={{ width: 20, height: 20 }} />}
+          icon={<Search sx={{ width: 20, height: 20 }} />}
         >
-          店舗一覧へ戻る
+          店舗を探す
         </LinkButton>
       </div>
     </div>

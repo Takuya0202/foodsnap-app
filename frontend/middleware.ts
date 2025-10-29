@@ -29,6 +29,9 @@ export async function middleware(req: NextRequest) {
   );
 
   const pathname = req.nextUrl.pathname;
+  if (pathname === "/") {
+    return NextResponse.redirect(new URL("/stores/top", req.url));
+  }
   // ユーザー情報の取得
   const {
     data: { user },
@@ -56,5 +59,5 @@ export async function middleware(req: NextRequest) {
 
 // 以下ミドルウェアを適用するパス
 export const config = {
-  matcher: ["/admin/:path*", "/user/:path*"],
+  matcher: ["/", "/admin/:path*", "/user/:path*"],
 };
