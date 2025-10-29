@@ -43,6 +43,6 @@ export default function ShowAddress({ latitude, longitude }: props) {
     return () => {
       map.remove();
     };
-  }, [latitude,longitude]);
+  }, [latitude, longitude]);
   return <div ref={mapContainer} className="w-full h-full"></div>;
 }
