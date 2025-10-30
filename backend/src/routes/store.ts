@@ -5,11 +5,9 @@ import { getCookie, setCookie } from 'hono/cookie';
 import { zValidator } from '@hono/zod-validator';
 import { CreateCommentRequest, createCommentSchema, searchStoreQuerySchema, SearchStoreQueryRequest, GetRandomStoresResponse, getRandomStoresSchema } from '../schema/store';
 import { getValidationErrorResponnse, Bindings } from '../utils/setting';
-import z, { ZodError } from 'zod';
+import  { ZodError } from 'zod';
 import cuid from 'cuid';
 import { serverError , authError } from '../utils/setting';
-import { RpcStoreRawResult } from '../types/supabase';
-
 export const storeApp = new Hono<{ Bindings: Bindings }>()
   .get('/top', async (c) => {
     try {
@@ -97,7 +95,8 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
       );
     }
   })
-  .get('/index', 
+  // なぜかindexにするとうまくルーティングされない。なのでlistに変更
+  .get('/list', 
     zValidator('query', searchStoreQuerySchema, async (result, c: Context) => {
       if (!result.success) {
         return c.json({
@@ -112,6 +111,7 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
       const supabase = getSupabase(c);
       const { data : { user } } = await supabase.auth.getUser();
       const { genreId, keyword, prefectureIds, tagIds}: SearchStoreQueryRequest = c.req.valid('query');
+      console.log(genreId, keyword, prefectureIds, tagIds);
       // 取得するクエリ
       let query = supabase
         .from('stores')
@@ -131,10 +131,17 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
             photo,
             description
           ),
+          prefectures (
+            id,
+            name
+          ),
           likes (
             user_id
           ),
-          comments (count)
+          comments (count),
+          store_tags (
+            tag_id
+          )
         `
         )
         .not('posts', 'is', null);
@@ -151,7 +158,7 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
 
       // タグ検索
       if (tagIds && tagIds.length > 0) {
-        query = query.in('tags.id', tagIds.map(Number));
+        query = query.in('store_tags.tag_id', tagIds.map(Number));
       }
 
       // キーワード検索
@@ -168,6 +175,7 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
         .limit(4, { referencedTable: 'posts' })
         .order('created_at', { ascending: false, referencedTable: 'posts' })
         .limit(20);
+
 
       if (error) {
         return c.json(
@@ -198,7 +206,7 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
           description: post?.description || null,
         })),
       }));
-
+      
       return c.json(res, 200);
     } catch (error) {
       return c.json(
@@ -207,7 +215,7 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
       );
     }
   })
-  // 検索の取得 honoは動的ルーティングのidとtopやstoreのidの区別ができないので、先にやる。
+  // 検索の取得
   .get('/search' , async (c : Context) => {
     try {
       const supabase = getSupabase(c);

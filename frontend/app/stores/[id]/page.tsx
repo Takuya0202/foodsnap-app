@@ -12,9 +12,9 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 type props = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 function StoreSkeleton() {
   return (
