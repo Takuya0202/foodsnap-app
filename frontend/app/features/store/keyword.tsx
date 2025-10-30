@@ -5,15 +5,15 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function Keyword() {
-  const [keyword , setKeyword ] = useState("");
+  const [keyword, setKeyword] = useState("");
   const router = useRouter();
-  const handleSubmit = (e : React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (keyword.trim() === "") {
       return;
     }
     router.push(`/stores/index?keyword=${keyword}`);
-  }
+  };
   return (
     <form onSubmit={handleSubmit} className="w-full flex items-center justify-between">
       <input
@@ -24,7 +24,10 @@ export default function Keyword() {
         value={keyword}
         onChange={(e) => setKeyword(e.target.value)}
       />
-      <button type="submit" className="bg-[#3d3d3d] p-2 w-[32px] h-[32px] flex items-center justify-center">
+      <button
+        type="submit"
+        className="bg-[#3d3d3d] p-2 w-[32px] h-[32px] flex items-center justify-center"
+      >
         <Search sx={{ color: "white", width: 24, height: 24 }} />
       </button>
     </form>

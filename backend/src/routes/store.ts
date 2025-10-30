@@ -111,7 +111,6 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
       const supabase = getSupabase(c);
       const { data : { user } } = await supabase.auth.getUser();
       const { genreId, keyword, prefectureIds, tagIds}: SearchStoreQueryRequest = c.req.valid('query');
-      console.log(genreId, keyword, prefectureIds, tagIds);
       // 取得するクエリ
       let query = supabase
         .from('stores')
