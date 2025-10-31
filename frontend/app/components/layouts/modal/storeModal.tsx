@@ -8,6 +8,7 @@ import { ChevronLeft } from "@mui/icons-material";
 import CommentModal from "./commentModal";
 import { useCommentStore } from "@/app/zustand/comment";
 import "swiper/css";
+import SpUserFooter from "../footer/sp-user-footer";
 
 export default function StoreModal() {
   const { isOpen, currentStoreId, stores, closeModal } = useStoreModal();
@@ -40,16 +41,16 @@ export default function StoreModal() {
   if (!isOpen || stores.length === 0) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#3d3d3d] w-full ">
+    <div className="fixed inset-0 z-50 bg-[#3d3d3d] w-full h-full flex flex-col">
       {/* 閉じるボタン */}
-      <div className="w-[90%] mx-auto justify-start mt-10">
+      <div className="w-[90%] mx-auto justify-start mt-10 flex-shrink-0">
         <button onClick={closeModal} className="flex items-center space-x-2">
           <ChevronLeft sx={{color : "white" , width : 24 , height : 24 }} />
           <span className="text-white text-2xl font-semibold">戻る</span>
         </button>
       </div>
 
-      <div className="w-full h-full max-h-[800px] max-w-[480px] mx-auto">
+      <div className="w-full max-w-[480px] mx-auto flex-1 min-h-0">
         <Swiper
           spaceBetween={10}
           ref={swiperRef}
@@ -95,6 +96,10 @@ export default function StoreModal() {
             </SwiperSlide>
           ))}
         </Swiper>
+      </div>
+
+      <div className="flex-shrink-0">
+        <SpUserFooter />
       </div>
     </div>
   );

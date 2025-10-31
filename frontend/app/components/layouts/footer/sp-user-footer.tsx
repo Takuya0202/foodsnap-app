@@ -5,7 +5,7 @@ import { useState } from "react";
 import UserConfig from "../modal/user-config";
 
 // スマホサイズでのユーザー画面のフッター
-export default function SpUser() {
+export default function SpUserFooter() {
   const path = usePathname();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState<boolean>(false);
