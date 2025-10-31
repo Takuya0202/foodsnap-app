@@ -14,13 +14,14 @@ export default function StoreCard({ stores }: props) {
   useEffect(() => {
     setStores(stores);
   }, [stores , setStores]);
-  console.log(stores);
+
+
   return (
     <div className="w-full grid grid-cols-2 gap-4">
       {stores.map((store) => (
         <div 
           className="w-full flex flex-col items-start space-y-2 cursor-pointer 
-                     transition-transform duration-200 hover:scale-105 active:scale-95" 
+                     transition-transform duration-200 hover:scale-105" 
           key={store.id} 
           onClick={() => openModal(store.id)}
         >

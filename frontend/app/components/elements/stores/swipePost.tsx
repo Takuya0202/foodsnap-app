@@ -106,7 +106,7 @@ export function SwipePostContent({
         threshold={50}
         resistanceRatio={0.85}
         pagination={{ clickable: true }}
-        modules={[Pagination]}
+        modules={[Pagination ]}
         onSlideChange={(swiper) => setCurrentPostIndex(swiper.activeIndex)}
       >
         {posts.map((post) => (

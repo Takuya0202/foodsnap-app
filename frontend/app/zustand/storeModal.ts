@@ -14,7 +14,7 @@ type StoreModalState = {
 export const useStoreModal = create<StoreModalState>((set) => ({
   isOpen: false,
   currentStoreId: null,
-  openModal: (storeId) => set({ isOpen: true, currentStoreId: storeId }),
+  openModal: (storeId : string ) => set({ isOpen: true, currentStoreId: storeId }),
   closeModal: () => set({ isOpen: false, currentStoreId: null }),
   stores: [],
   setStores: (stores) => set({ stores }),

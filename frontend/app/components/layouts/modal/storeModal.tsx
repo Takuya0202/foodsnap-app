@@ -15,9 +15,9 @@ export default function StoreModal() {
   const { isOpen: isCommentOpen, closeComment } = useCommentStore();
   const swiperRef = useRef<SwiperRef | null>(null);
 
-  // currentStoreIdから初期インデックスを取得
   useEffect(() => {
     if (isOpen && currentStoreId && stores.length > 0) {
+      // タップされた投稿のインデックス番号を取得
       const index = stores.findIndex((store) => store.id === currentStoreId);
       if (index !== -1) {
         setCurrentStoreIndex(index);
