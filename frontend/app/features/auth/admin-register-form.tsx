@@ -238,7 +238,7 @@ export default function AdminRegisterForm({ onEmailSent }: Props) {
             <FieldStatusButton status="req" />
           </div>
           <div className="relative w-[calc(100%-240px)]">
-            <InputText placeholder="東京都千代田区永田町1-7-1" {...register("address")} />
+            <InputText placeholder="市町村名、番地、建物名など" {...register("address")} />
             {errors.address && (
               <div className="absolute top-full left-0 mt-1">
                 <FieldError>{errors.address.message}</FieldError>

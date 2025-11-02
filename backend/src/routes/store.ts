@@ -70,6 +70,7 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
         id: store.id,
         name: store.name,
         address: store.address,
+        prefectureName: store.prefecture?.name || null,
         latitude: store.latitude,
         longitude: store.longitude,
         photo: store?.photo,
@@ -187,6 +188,7 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
       const res: storeResponse = data.map(store => ({
         id: store.id,
         name: store.name,
+        prefectureName: store.prefectures?.name || null,
         address: store.address,
         latitude: store.latitude,
         longitude: store.longitude,
@@ -282,6 +284,7 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
           start_at,
           end_at,
           genres (name),
+          prefectures (name),
           comments (
             id,
             user_id,
@@ -324,6 +327,7 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
         id: data.id,
         name: data.name,
         address: data.address,
+        prefectureName: data.prefectures?.name || null,
         genre: data.genres?.name || null,
         photo: data?.photo,
         phone: data.phone,

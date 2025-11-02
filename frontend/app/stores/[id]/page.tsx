@@ -189,7 +189,11 @@ async function StoreContent({ params }: props) {
               <Room sx={{ color: "white", width: 24, height: 24 }} />
               <span className="text-sm text-white">住所</span>
             </div>
-            <span className="text-sm text-white">{data.address}</span>
+            <div>
+              <span className="text-sm text-white">
+                {data.prefectureName ? `${data.prefectureName} ${data.address}` : data.address}
+              </span>
+            </div>
           </div>
           {/* 電話番号。絶対ある */}
           <div className="flex items-center space-x-2 w-full justify-between">

@@ -2,6 +2,7 @@
 export type storeResponse = {
   id: string;
   name: string;
+  prefectureName: string | null;
   address: string;
   likeCount: number;
   commentCount: number;
@@ -22,6 +23,7 @@ export type storeResponse = {
 export type storeDetailResponse = {
   id: string;
   name: string;
+  prefectureName: string | null;
   address: string;
   genre: string | null;
   photo: string | null;

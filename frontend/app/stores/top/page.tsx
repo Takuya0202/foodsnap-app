@@ -168,6 +168,7 @@ export default function TopPage() {
               <SwipePostContent
                 id={store.id}
                 name={store.name}
+                prefectureName={store.prefectureName}
                 address={store.address}
                 genre={store.genre}
                 likeCount={store.likeCount}

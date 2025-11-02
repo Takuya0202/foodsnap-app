@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 type props = {
   id: string;
   name: string;
+  prefectureName: string | null;
   address: string;
   genre: string | null;
   likeCount: number;
@@ -84,6 +85,7 @@ export function SwipePostSkeleton() {
 export function SwipePostContent({
   id,
   name,
+  prefectureName,
   address,
   genre,
   likeCount,
@@ -152,7 +154,9 @@ export function SwipePostContent({
           {/* 住所 */}
           <div className="flex items-center space-x-2">
             <Room sx={{ color: "#b7b7b7", width: 24, height: 24 }} />
-            <p className="text-[#b7b7b7] ">{address}</p>
+            <p className="text-[#b7b7b7]">
+              {prefectureName ? `${prefectureName} ${address}` : address}
+            </p>
           </div>
         </div>
 

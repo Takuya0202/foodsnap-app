@@ -44,10 +44,19 @@ export const getRandomStoresSchema = z.array(
     photo : z.string().nullable(),
     latitude : z.number(),
     longitude : z.number(),
-    genre : z.object({
-      id : z.number(),
-      name : z.string(),
-    }),
+    genre : z.union([
+      z.object({
+        id : z.number(),
+        name : z.string(),
+      }),
+      z.null(),
+    ]),
+    prefecture : z.union([
+      z.object({
+        name : z.string(),
+      }),
+      z.null(),
+    ]),
     posts : z.array(
       z.object({
         id : z.string(),

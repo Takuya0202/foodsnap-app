@@ -49,9 +49,7 @@ export function MenuCardContent({ name, price, photo, description }: props) {
 
       {/* 説明。あったら表示 */}
       <div className="w-full h-[64px] overflow-y-auto">
-        {description && (
-          <p className="text-base text-white">{description}</p>
-        )}
+        {description && <p className="text-base text-white">{description}</p>}
       </div>
     </div>
   );

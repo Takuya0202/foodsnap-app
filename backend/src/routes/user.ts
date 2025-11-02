@@ -184,6 +184,9 @@ export const userApp = new Hono<{ Bindings: Bindings }>()
                   photo,
                   latitude,
                   longitude,
+                  prefectures (
+                    name
+                  ),
                   genres (
                     name
                   ),
@@ -221,6 +224,7 @@ export const userApp = new Hono<{ Bindings: Bindings }>()
         likeStores: userDetail.likes.map(like => ({
           id: like.store.id,
           name: like.store.name,
+          prefectureName: like.store.prefectures?.name || null,
           address: like.store.address,
           likeCount: like.store.likes[0]?.count || 0,
           commentCount: like.store.comments[0]?.count || 0,
