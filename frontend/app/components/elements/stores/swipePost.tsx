@@ -7,10 +7,11 @@ import Image from "next/image";
 import { Favorite, Share, Room, Store, ChatBubbleOutline } from "@mui/icons-material";
 import { useState } from "react";
 import Like from "@/app/features/store/like";
-import Link from "next/link";
 import CommentButton from "@/app/features/store/commentButton";
 import ShareButton from "@/app/features/store/shareButton";
 import BelongFeature from "./belongFeature";
+import { useStoreModal } from "@/app/zustand/storeModal";
+import { useRouter } from "next/navigation";
 
 // 店舗の投稿を表示するコンポーネント。横スワイプで次の投稿に移動する。
 type props = {
@@ -91,9 +92,16 @@ export function SwipePostContent({
   currentLike,
 }: props) {
   const [currentPostIndex, setCurrentPostIndex] = useState(0); // 現在表示している投稿のインデックス
-
   const currentPost = posts[currentPostIndex];
-
+  const { closeModal } = useStoreModal();
+  const router = useRouter()
+  const handleDetail = (id: string) => {
+    router.push(`/stores/${id}`);
+    // 詳細ページに飛ぶとき、モーダルを閉じる。
+    setTimeout(() => {
+      closeModal();
+    }, 200);
+  }
   return (
     <div className="w-full flex flex-col relative">
       {/* 投稿画像。x軸でスワイプ */}
@@ -136,9 +144,9 @@ export function SwipePostContent({
           {/* 店舗名 */}
           <div className="flex items-center space-x-2">
             <Store sx={{ color: "#b7b7b7", width: 24, height: 24 }} />
-            <Link href={`/stores/${id}`}>
+            <button onClick={() => handleDetail(id)}>
               <span className="text-white text-lg">{name}</span>
-            </Link>
+            </button>
           </div>
 
           {/* 住所 */}

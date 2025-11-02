@@ -1,5 +1,5 @@
 import BelongFeature from "@/app/components/elements/stores/belongFeature";
-import StoreCard from "@/app/components/elements/stores/storeCard";
+import StoreIndex, { StoreIndexItemSkeleton } from "@/app/components/elements/stores/storeIndex";
 import { serverClient } from "@/utils/serverClient";
 import { Suspense } from "react";
 import StoreModal from "@/app/components/layouts/modal/storeModal";
@@ -13,8 +13,26 @@ type props = {
 };
 function StoresIndexSkeleton() {
   return (
-    <div>
-      <h1>StoresIndexSkeleton</h1>
+    <div
+      className="w-full h-full max-w-[480px] mx-auto
+      flex flex-col items-start space-y-4 p-4 overflow-y-scroll"
+    >
+      {/* 検索結果部分 */}
+      <div className="w-full flex flex-col space-y-3.5">
+        <div className="w-[180px] h-[24px] bg-skLoading"></div>
+        <div className="w-full flex items-center space-x-2 overflow-x-auto">
+          <div className="w-[80px] h-[32px] bg-skLoading whitespace-nowrap shrink-0"></div>
+          <div className="w-[80px] h-[32px] bg-skLoading whitespace-nowrap shrink-0"></div>
+          <div className="w-[80px] h-[32px] bg-skLoading whitespace-nowrap shrink-0"></div>
+        </div>
+      </div>
+
+      {/* コンテンツ 8県*/}
+      <div className="w-full grid grid-cols-2 gap-4">
+        {Array.from({ length: 8 }).map((_, index) => (
+          <StoreIndexItemSkeleton key={index} />
+        ))}
+      </div>
     </div>
   );
 }
@@ -34,7 +52,6 @@ async function StoresIndexContent({ searchParams }: props) {
           keyword: keyword,
         },
       });
-      console.log(res);
       if (res.status === 200) {
         const data = await res.json();
         return data;
@@ -69,8 +86,6 @@ async function StoresIndexContent({ searchParams }: props) {
   const arrayPrefectureIds =
     prefectureIds && !Array.isArray(prefectureIds) && prefectureIds.split(",").map(Number);
   const arrayTagIds = tagIds && !Array.isArray(tagIds) && tagIds.split(",").map(Number);
-
-  console.log(data);
   return (
     <>
       <div
@@ -107,7 +122,7 @@ async function StoresIndexContent({ searchParams }: props) {
             <p className="text-white font-semibold">店舗が見つかりませんでした</p>
           </div>
         ) : (
-          <StoreCard stores={data} />
+          <StoreIndex stores={data} />
         )}
       </div>
       

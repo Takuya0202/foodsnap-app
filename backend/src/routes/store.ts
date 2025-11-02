@@ -111,7 +111,7 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
       const supabase = getSupabase(c);
       const { data : { user } } = await supabase.auth.getUser();
       const { genreId, keyword, prefectureIds, tagIds}: SearchStoreQueryRequest = c.req.valid('query');
-      // 取得するクエリ
+      // 取得するクエリ store_tagsは内部結合で取得
       let query = supabase
         .from('stores')
         .select(
@@ -123,14 +123,14 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
           latitude,
           longitude,
           genre:genres(name),
-          posts (
+          posts!inner(
             id,
             name,
             price,
             photo,
             description
           ),
-          prefectures (
+          prefectures!inner(
             id,
             name
           ),
@@ -138,8 +138,11 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
             user_id
           ),
           comments (count),
-          store_tags (
-            tag_id
+          store_tags!inner(
+            tag_id,
+            tags(
+              name
+            )
           )
         `
         )
@@ -162,11 +165,8 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
 
       // キーワード検索
       if (keyword) {
-        query = query
-          .ilike('address', `%${keyword}%`)
-          .ilike('prefectures.name', `%${keyword}%`)
-          .ilike('genres.name', `%${keyword}%`)
-          .ilike('posts.name', `%${keyword}%`);
+        // ネストされたテーブルはor条件できない。
+        query = query.or(`name.ilike.%${keyword}%,address.ilike.%${keyword}%`);
       }
 
       const { data, error } = await query
@@ -174,6 +174,7 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
         .limit(4, { referencedTable: 'posts' })
         .order('created_at', { ascending: false, referencedTable: 'posts' })
         .limit(20);
+      console.log(error);
 
 
       if (error) {

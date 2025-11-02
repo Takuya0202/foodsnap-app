@@ -18,7 +18,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "FoodSnap",
   description:
-    "FoodSnapは、料理メニューを中心にアプローチし、料理の魅力を直感的に伝えるアプリです。",
+    "FoodSnapは、料理メニューを中心にアプローチし、料理の魅力を直感的に伝えるアプリです。直感的なデザインと操作性で、食べたいと思える飲食店を見つけられます。",
+  keywords : ["FoodSnap", "飲食店", "料理", "メニュー", "直感的なデザイン", "操作性", "食べたいと思える飲食店", "直感的な操作性" , "近くの飲食店"],
+  creator : "takuya0202"
 };
 
 export default function RootLayout({

@@ -8,6 +8,7 @@ import { MenuCardContent, MenuCardSkeleton } from "@/app/components/elements/sto
 import ShowAddress from "@/app/features/mapbox/show-address";
 import { serverClient } from "@/utils/serverClient";
 import { AccessTime, ChevronLeft, Link, Phone, Room } from "@mui/icons-material";
+import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
@@ -16,6 +17,45 @@ type props = {
     id: string;
   }>;
 };
+// 店舗詳細を取得する関数
+const fetchData = async (id: string) => {
+  // サーバー用クライアントを作成
+  const client = await serverClient();
+  try {
+    const res = await client.api.store[":storeId"].$get({
+      param: {
+        storeId: id,
+      },
+    });
+    if (res.status === 200) {
+      const data = await res.json();
+      return data;
+    } else if (res.status === 404) {
+      notFound();
+    } else {
+      const data = await res.json();
+      throw new Error(data.error);
+    }
+  } catch (error) {
+    throw error; // error.tsxに飛ばす
+  }
+};
+
+// メタタグ生成
+export async function generateMetadata({ params } : props) : Promise<Metadata> {
+  const { id } = await params;
+  const data = await fetchData(id);
+  return {
+    title: data.name,
+    description : `${data.name}の詳細情報。`,
+    keywords : [
+      data.name,
+      data?.genre || "",
+      ...(data.tags?.map((tag) => tag.name) || []).join(","),
+      data.address,
+    ]
+  };
+}
 function StoreSkeleton() {
   return (
     <div
@@ -108,28 +148,6 @@ function StoreSkeleton() {
 }
 
 async function StoreContent({ params }: props) {
-  const fetchData = async (id: string) => {
-    // サーバー用クライアントを作成
-    const client = await serverClient();
-    try {
-      const res = await client.api.store[":storeId"].$get({
-        param: {
-          storeId: id,
-        },
-      });
-      if (res.status === 200) {
-        const data = await res.json();
-        return data;
-      } else if (res.status === 404) {
-        notFound();
-      } else {
-        const data = await res.json();
-        throw new Error(data.error);
-      }
-    } catch (error) {
-      throw error; // error.tsxに飛ばす
-    }
-  };
   // params.idではなくいったんawait paramsでawaitしてから分割代入する。
   const { id } = await params;
   // 店舗の詳細情報を取得

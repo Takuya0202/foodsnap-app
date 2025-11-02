@@ -176,11 +176,17 @@ export const userApp = new Hono<{ Bindings: Bindings }>()
             icon,
             user_id,
             likes (
+              user_id,
               store : stores (
                   id,
                   name,
                   address,
                   photo,
+                  latitude,
+                  longitude,
+                  genres (
+                    name
+                  ),
                   posts (
                       id,
                       name,
@@ -188,8 +194,8 @@ export const userApp = new Hono<{ Bindings: Bindings }>()
                       photo,
                       description
                   ),
-                  likes (count),
-                  comments (count)
+                  comments (count),
+                  likes (count)
               )
             )
             `
@@ -216,9 +222,13 @@ export const userApp = new Hono<{ Bindings: Bindings }>()
           id: like.store.id,
           name: like.store.name,
           address: like.store.address,
+          likeCount: like.store.likes[0]?.count || 0,
+          commentCount: like.store.comments[0]?.count || 0,
           photo: like.store?.photo,
-          likeCount: like.store.likes[0]?.count,
-          commentCount: like.store.comments[0]?.count,
+          latitude: like.store.latitude,
+          longitude: like.store.longitude,
+          genre: like.store.genres?.name || null,
+          isLiked: true,  // いいね済み店舗なので常にtrue
           posts: like.store.posts.map(post => ({
             id: post.id,
             name: post.name,

@@ -8,7 +8,6 @@ import { ChevronLeft } from "@mui/icons-material";
 import CommentModal from "./commentModal";
 import { useCommentStore } from "@/app/zustand/comment";
 import "swiper/css";
-import SpUserFooter from "../footer/sp-user-footer";
 
 export default function StoreModal() {
   const { isOpen, currentStoreId, stores, closeModal } = useStoreModal();
@@ -22,6 +21,7 @@ export default function StoreModal() {
       const index = stores.findIndex((store) => store.id === currentStoreId);
       if (index !== -1) {
         setCurrentStoreIndex(index);
+        // 即座に実行するとマウントされる前にswiperが描画されてしまうため、0ms後に実行する。
         setTimeout(() => {
           swiperRef.current?.swiper.slideTo(index, 0);
         }, 0);
@@ -96,10 +96,6 @@ export default function StoreModal() {
             </SwiperSlide>
           ))}
         </Swiper>
-      </div>
-
-      <div className="flex-shrink-0">
-        <SpUserFooter />
       </div>
     </div>
   );

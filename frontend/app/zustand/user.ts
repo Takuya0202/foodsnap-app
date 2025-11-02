@@ -1,3 +1,4 @@
+import { storeResponse } from "@/types/store";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -8,38 +9,12 @@ type UserState = {
   id: string;
   name: string;
   icon: string;
-  likeStores: {
-    id: string;
-    name: string;
-    photo: string | null;
-    likeCount: number;
-    commentCount: number;
-    posts: {
-      id: string;
-      name: string;
-      price: number;
-      photo: string;
-      description: string | null;
-    }[];
-  }[];
+  likeStores : storeResponse
   setUser: (
     id: string,
     name: string,
     icon: string,
-    likeStores: {
-      id: string;
-      name: string;
-      photo: string | null;
-      likeCount: number;
-      commentCount: number;
-      posts: {
-        id: string;
-        name: string;
-        price: number;
-        photo: string;
-        description: string | null;
-      }[];
-    }[]
+    likeStores: storeResponse
   ) => void;
   setAuthFailed: () => void; // ゲストユーザー。認証失敗時
   setChecked: () => void;

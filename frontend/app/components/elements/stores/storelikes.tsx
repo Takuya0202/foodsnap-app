@@ -1,24 +1,21 @@
 "use client";
+
 import { useStoreModal } from "@/app/zustand/storeModal";
-import { storeResponse } from "@/types/store";
-import Image from "next/image";
+import { useUser } from "@/app/zustand/user";
 import { useEffect } from "react";
+import Image from "next/image";
 
-// 一覧ページやいいねなど、概要を表時。タップすることでtopと同じモーダルを表示する
-type props = {
-  stores: storeResponse;
-};
-
-export default function StoreCard({ stores }: props) {
-  const { setStores, openModal } = useStoreModal();
+// いいねした店舗一覧を表示するコンポーネント
+export default function StoreLikes() {
+  const { openModal , setStores } = useStoreModal();
+  const { likeStores } = useUser();
   useEffect(() => {
-    setStores(stores);
-  }, [stores , setStores]);
-
+    setStores(likeStores);
+  }, [likeStores , setStores]);
 
   return (
     <div className="w-full grid grid-cols-2 gap-4">
-      {stores.map((store) => (
+      {likeStores.map((store) => (
         <div 
           className="w-full flex flex-col items-start space-y-2 cursor-pointer 
                      transition-transform duration-200 hover:scale-105" 
@@ -27,8 +24,8 @@ export default function StoreCard({ stores }: props) {
         >
           <div className="relative w-[160px] h-[120px] rounded-md overflow-hidden shadow-lg">
             <Image
-              src={store.photo || "/default-photo.jpg"}
-              alt={store.name}
+              src={store.photo || store.posts[0].photo || "/default-photo.jpg"}
+              alt={store.name || store.posts[0].name || "店舗名"}
               fill
               className="object-cover w-full h-full"
             />
@@ -39,5 +36,5 @@ export default function StoreCard({ stores }: props) {
         </div>
       ))}
     </div>
-  );
+  )
 }

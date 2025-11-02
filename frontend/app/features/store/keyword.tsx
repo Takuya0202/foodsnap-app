@@ -1,24 +1,29 @@
 "use client";
 
 import { Search } from "@mui/icons-material";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function Keyword() {
-  const [keyword, setKeyword] = useState("");
+  const searchParams = useSearchParams();
+  const keyQuery = searchParams.get("keyword") || "";
+  const [keyword, setKeyword] = useState<string>("");
   const router = useRouter();
+
+  useEffect(() => {
+    setKeyword(keyQuery);
+  }, [keyQuery]);
+  
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (keyword.trim() === "") {
-      return;
-    }
     router.push(`/stores/index?keyword=${keyword}`);
+    setKeyword("");
   };
   return (
     <form onSubmit={handleSubmit} className="w-full flex items-center justify-between">
       <input
         type="text"
-        className="w-full h-[32px] bg-[#3d3d3d] py-2 pl-8
+        className="w-full h-[32px] bg-[#3d3d3d] py-2 pl-8 focus:outline-none
         placeholder:text-white placeholder:text-[12px] text-white text-[12px]"
         placeholder="キーワードを入力"
         value={keyword}
