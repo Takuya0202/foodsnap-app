@@ -140,9 +140,7 @@ export function SwipePostContent({
           </div>
 
           {/* ジャンル */}
-          <div>
-            <BelongFeature>{genre}</BelongFeature>
-          </div>
+          <div>{genre && <BelongFeature>{genre}</BelongFeature>}</div>
           {/* 店舗名 */}
           <div className="flex items-center space-x-2">
             <Store sx={{ color: "#b7b7b7", width: 24, height: 24 }} />

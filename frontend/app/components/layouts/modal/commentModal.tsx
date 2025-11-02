@@ -14,14 +14,17 @@ type Props = {
 
 export default function CommentModal({ storeId, commentCount }: Props) {
   const { isOpen, isLoading, comments, currentStoreId, closeComment } = useCommentStore();
-  const [isClose, setIsClose] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
 
   const handleClose = () => {
-    setIsClose(true);
-    setTimeout(() => {
-      setIsClose(false);
+    setIsClosing(true);
+  };
+
+  const handleAnimationEnd = () => {
+    if (isClosing) {
+      setIsClosing(false);
       closeComment();
-    }, 300);
+    }
   };
 
   // このストアのモーダルかどうか
@@ -33,7 +36,8 @@ export default function CommentModal({ storeId, commentCount }: Props) {
     <div className="absolute bottom-0 left-0 w-full h-[65%] z-[200]">
       <div
         className={`w-full h-full bg-[#181818] rounded-tl-3xl rounded-tr-3xl flex flex-col
-        ${isClose ? "animate-[slideOutBottom_0.3s_ease-in-out]" : "animate-[slideInBottom_0.3s_ease-in-out]"}`}
+        ${isClosing ? "animate-[slideOutBottom_0.3s_ease-in-out]" : "animate-[slideInBottom_0.3s_ease-in-out]"}`}
+        onAnimationEnd={handleAnimationEnd}
       >
         {/* ヘッダー部分 */}
         <div className="flex items-center justify-center space-x-10 py-3 border-b border-[#2a2a2a]">
