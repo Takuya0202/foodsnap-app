@@ -94,14 +94,14 @@ export function SwipePostContent({
   const [currentPostIndex, setCurrentPostIndex] = useState(0); // 現在表示している投稿のインデックス
   const currentPost = posts[currentPostIndex];
   const { closeModal } = useStoreModal();
-  const router = useRouter()
+  const router = useRouter();
   const handleDetail = (id: string) => {
     router.push(`/stores/${id}`);
     // 詳細ページに飛ぶとき、モーダルを閉じる。
     setTimeout(() => {
       closeModal();
     }, 200);
-  }
+  };
   return (
     <div className="w-full flex flex-col relative">
       {/* 投稿画像。x軸でスワイプ */}
@@ -114,7 +114,7 @@ export function SwipePostContent({
         threshold={50}
         resistanceRatio={0.85}
         pagination={{ clickable: true }}
-        modules={[Pagination ]}
+        modules={[Pagination]}
         onSlideChange={(swiper) => setCurrentPostIndex(swiper.activeIndex)}
       >
         {posts.map((post) => (

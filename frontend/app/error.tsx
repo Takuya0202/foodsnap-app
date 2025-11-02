@@ -1,38 +1,40 @@
 "use client";
 
 import LinkButton from "@/app/components/elements/buttons/link-button";
-import { ReportProblem, Home, Refresh } from "@mui/icons-material";
+import { ErrorOutline, Home, Refresh } from "@mui/icons-material";
 
 export default function Error({ error, reset }: { error: Error; reset: () => void }) {
   return (
     <div className="w-full h-screen max-w-[480px] mx-auto flex flex-col items-center justify-center p-8 space-y-8">
       <div className="relative">
         {/* 背景 */}
-        <div className="absolute inset-0 bg-[#ff3d3d] opacity-20 blur-3xl rounded-full animate-pulse"></div>
-        <ReportProblem
+        <div className="absolute inset-0 bg-[#6b7280] opacity-15 blur-3xl rounded-full"></div>
+        <ErrorOutline
           sx={{
-            color: "#ff3d3d",
-            width: 120,
-            height: 120,
+            color: "#6b7280",
+            width: 100,
+            height: 100,
           }}
         />
       </div>
 
       <div className="text-center space-y-4">
-        <h1 className="text-[48px] font-bold text-white tracking-wider leading-none">ERROR</h1>
+        <h1 className="text-[32px] font-medium text-white tracking-wide">問題が発生しました</h1>
         {/* ボーダー */}
-        <div className="w-full h-[2px] bg-gradient-to-r from-transparent via-[#ff3d3d] to-transparent"></div>
+        <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-[#6b7280] to-transparent opacity-50"></div>
       </div>
 
       <div className="text-center space-y-3">
-        <p className="text-white text-xl font-semibold">エラーが発生しました</p>
-        <p className="text-[#ccc] text-sm">{error.message || "予期しないエラーが発生しました"}</p>
+        <p className="text-[#e5e7eb] text-base">申し訳ございません</p>
+        <p className="text-[#9ca3af] text-sm leading-relaxed max-w-[280px]">
+          {error.message || "一時的な問題が発生しました。\n再度お試しください。"}
+        </p>
       </div>
 
       <div className="flex flex-col space-y-3 w-full max-w-[320px]">
         <button
           onClick={reset}
-          className="w-full bg-[#ff3d3d] text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center space-x-2 shadow-lg"
+          className="w-full bg-[#4b5563] hover:bg-[#6b7280] transition-colors text-white font-medium py-3 px-6 rounded-lg flex items-center justify-center space-x-2 shadow-md"
         >
           <Refresh sx={{ width: 20, height: 20 }} />
           <span>再読み込み</span>
@@ -40,7 +42,7 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
 
         <LinkButton
           href="/stores/top"
-          className="w-full bg-[#202020] text-white font-semibold py-3 px-6 rounded-lg flex items-center justify-center space-x-2 shadow-lg"
+          className="w-full bg-[#202020] hover:bg-[#303030] transition-colors text-white font-medium py-3 px-6 rounded-lg flex items-center justify-center space-x-2 shadow-md border border-[#404040]"
           icon={<Home sx={{ width: 20, height: 20 }} />}
         >
           トップページへ

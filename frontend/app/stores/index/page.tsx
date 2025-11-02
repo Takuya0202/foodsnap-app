@@ -125,7 +125,7 @@ async function StoresIndexContent({ searchParams }: props) {
           <StoreIndex stores={data} />
         )}
       </div>
-      
+
       {/* モーダル */}
       <StoreModal />
     </>

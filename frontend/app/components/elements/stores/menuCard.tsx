@@ -7,7 +7,6 @@ type props = {
   description: string | null;
 };
 
-// スケルトン表示用
 export function MenuCardSkeleton() {
   return (
     <div className="w-[256px] flex flex-col items-start space-y-4 shrink-0">
@@ -28,7 +27,6 @@ export function MenuCardSkeleton() {
   );
 }
 
-// コンテンツ表示用
 export function MenuCardContent({ name, price, photo, description }: props) {
   return (
     <div className="w-[256px] flex flex-col items-start space-y-4 shrink-0">
@@ -43,18 +41,18 @@ export function MenuCardContent({ name, price, photo, description }: props) {
       text-white text-xl font-semibold"
       >
         <p>{name}</p>
-        <p>
-          {price}
+        <p className="flex items-center">
+          <span>{price}</span>
           <span className="ml-1.5">円</span>
         </p>
       </div>
 
       {/* 説明。あったら表示 */}
-      {description && (
-        <div className="w-full">
+      <div className="w-full h-[64px] overflow-y-auto">
+        {description && (
           <p className="text-base text-white">{description}</p>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

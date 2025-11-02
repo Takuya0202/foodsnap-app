@@ -25,16 +25,15 @@ export default function StoreIndex({ stores }: props) {
   const { setStores, openModal } = useStoreModal();
   useEffect(() => {
     setStores(stores);
-  }, [stores , setStores]);
-
+  }, [stores, setStores]);
 
   return (
     <div className="w-full grid grid-cols-2 gap-4">
       {stores.map((store) => (
-        <div 
+        <div
           className="w-full flex flex-col items-start space-y-2 cursor-pointer 
-                     transition-transform duration-200 hover:scale-105" 
-          key={store.id} 
+                     transition-transform duration-200 hover:scale-105"
+          key={store.id}
           onClick={() => openModal(store.id)}
         >
           <div className="relative w-[160px] h-[120px] rounded-md overflow-hidden shadow-lg">

@@ -2,7 +2,7 @@
 import { useToaster } from "@/app/zustand/toaster";
 import { client } from "@/utils/setting";
 import { Favorite } from "@mui/icons-material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type props = {
   storeId: string;
@@ -13,6 +13,13 @@ export default function Like({ storeId, likeCount, isLiked }: props) {
   const [count, setCount] = useState(likeCount);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [like, setLike] = useState(isLiked);
+
+  // いいねの状態が変わったら更新
+  useEffect(() => {
+    setCount(likeCount);
+    setLike(isLiked);
+  }, [likeCount, isLiked]);
+
   const { open } = useToaster();
   const handleLike = async () => {
     setIsSubmitting(true);

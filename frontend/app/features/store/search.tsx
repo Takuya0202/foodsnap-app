@@ -131,7 +131,7 @@ export default function Search({ setIsOpen }: props) {
     { value: "北海道" },
     { value: "東北" },
     { value: "関東" },
-    { value: "中部" },
+    { value: "東海" },
     { value: "近畿" },
     { value: "中国" },
     { value: "四国" },

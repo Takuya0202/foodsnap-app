@@ -45,7 +45,7 @@ export default function StoreModal() {
       {/* 閉じるボタン */}
       <div className="w-[90%] mx-auto justify-start mt-10 flex-shrink-0">
         <button onClick={closeModal} className="flex items-center space-x-2">
-          <ChevronLeft sx={{color : "white" , width : 24 , height : 24 }} />
+          <ChevronLeft sx={{ color: "white", width: 24, height: 24 }} />
           <span className="text-white text-2xl font-semibold">戻る</span>
         </button>
       </div>

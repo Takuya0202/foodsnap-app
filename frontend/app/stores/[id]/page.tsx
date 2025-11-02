@@ -42,18 +42,18 @@ const fetchData = async (id: string) => {
 };
 
 // メタタグ生成
-export async function generateMetadata({ params } : props) : Promise<Metadata> {
+export async function generateMetadata({ params }: props): Promise<Metadata> {
   const { id } = await params;
   const data = await fetchData(id);
   return {
     title: data.name,
-    description : `${data.name}の詳細情報。`,
-    keywords : [
+    description: `${data.name}の詳細情報。`,
+    keywords: [
       data.name,
       data?.genre || "",
       ...(data.tags?.map((tag) => tag.name) || []).join(","),
       data.address,
-    ]
+    ],
   };
 }
 function StoreSkeleton() {

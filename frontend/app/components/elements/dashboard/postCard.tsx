@@ -33,11 +33,11 @@ export function PostCardContetnt({ id, name, price, photo }: props) {
       </div>
 
       <div className="flex items-center justify-between px-6 py-4">
-        <p className="text-white text-[36px]">{name}</p>
-        <p className="text-white text-[36px]">
-          {price}
-          <span className="pl-2">円</span>
-        </p>
+        <p className="text-white text-[24px] w-[80%]">{name}</p>
+        <div className="flex items-center">
+          <span className="text-white text-[24px]">{price}</span>
+          <span className="ml-2 text-white text-[24px]">円</span>
+        </div>
       </div>
 
       <div className="flex justify-center pb-6 flex-1 items-end">

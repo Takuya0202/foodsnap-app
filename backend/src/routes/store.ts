@@ -31,7 +31,6 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
       });
 
       if (error) {
-        console.log(error);
         return c.json({
           message : 'fail to get stores',
           error : '店舗の取得に失敗しました。',
@@ -174,8 +173,6 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
         .limit(4, { referencedTable: 'posts' })
         .order('created_at', { ascending: false, referencedTable: 'posts' })
         .limit(20);
-      console.log(error);
-
 
       if (error) {
         return c.json(
