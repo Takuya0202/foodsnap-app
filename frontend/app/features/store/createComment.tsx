@@ -29,6 +29,8 @@ export default function CreateComment({ storeId }: props) {
         setContent("");
         open(data.message, "success");
         closeComment();
+      } else if (res.status === 401) {
+        open("コメントを投稿するにはログインが必要です", "error");
       } else {
         const data = await res.json();
         if (data.message === "validation error") {

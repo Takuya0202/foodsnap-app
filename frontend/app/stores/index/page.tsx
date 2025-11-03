@@ -35,7 +35,7 @@ function StoresIndexSkeleton() {
           ))}
         </div>
       </div>
-      
+
       {/* ページネーション（固定） */}
       <div className="shrink-0 border-t border-gray-700">
         {/* スケルトン用のページネーション表示 */}
@@ -96,7 +96,10 @@ async function StoresIndexContent({ searchParams }: props) {
     prefectureIds && !Array.isArray(prefectureIds) && prefectureIds.split(",").map(Number);
   const arrayTagIds = tagIds && !Array.isArray(tagIds) && tagIds.split(",").map(Number);
   // 表示中の検索件数。最大値はtargetまたはoffset * 20 + 20の小さい方。
-  const displayedCount = data.total !== 0 ? `${data.offset * 5 + 1} ~ ${Math.min(data.offset * 5 + 5, data.total)}` : '0';
+  const displayedCount =
+    data.total !== 0
+      ? `${data.offset * data.limit + 1} ~ ${Math.min(data.offset * data.limit + data.limit, data.total)}`
+      : "0";
   return (
     <>
       <div className="w-full h-full max-w-[480px] mx-auto flex flex-col">
@@ -133,25 +136,27 @@ async function StoresIndexContent({ searchParams }: props) {
               <span>件中</span>
             </div>
           </div>
-          
+
           {/* 店舗情報を表示 */}
           {data.content.length === 0 ? (
             <div className="w-full h-full flex items-center justify-center">
               <p className="text-white font-semibold">店舗が見つかりませんでした</p>
             </div>
           ) : (
-            <StoreIndex stores={data.content} />
+            <>
+              <StoreIndex stores={data.content} />
+              <div className="shrink-0">
+                <Pagination
+                  currentOffset={data.offset}
+                  totalItems={data.total}
+                  itemsPerPage={data.limit}
+                />
+              </div>
+            </>
           )}
         </div>
 
         {/* ページネーション（下部固定） */}
-        <div className="shrink-0 border-t border-gray-700 bg-black/50 backdrop-blur-sm">
-          <Pagination
-            currentOffset={data.offset}
-            totalItems={data.total}
-            itemsPerPage={5}
-          />
-        </div>
       </div>
 
       {/* モーダル */}

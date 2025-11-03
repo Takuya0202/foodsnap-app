@@ -113,7 +113,7 @@ export const adminApp = new Hono<{ Bindings: Bindings }>()
         email,
         password,
         options: {
-          // emailRedirectTo: `${c.env.APP_URL}/auth/admin/callback`,
+          emailRedirectTo: `${c.env.APP_URL}/auth/admin/callback`,
           data: {
             name,
             role : 'admin',

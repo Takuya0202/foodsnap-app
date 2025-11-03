@@ -157,9 +157,10 @@ async function StoreContent({ params }: props) {
       className="w-full h-full max-w-[480px] mx-auto
     flex flex-col items-start space-y-4 p-4 overflow-y-scroll"
     >
-      <div className="flex items-center space-x-2">
-        <ChevronLeft sx={{ color: "white", width: 24, height: 24 }} />
-        <BackButton className="text-white font-semibold text-[20px]">戻る</BackButton>
+      <div>
+        <BackButton className="text-white font-semibold text-[32px]">
+          <ChevronLeft sx={{ color: "white", width: 50, height: 50 }} />
+        </BackButton>
       </div>
 
       <div className="flex items-center w-full justify-between px-4">

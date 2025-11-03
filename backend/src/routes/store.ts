@@ -111,9 +111,61 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
       const supabase = getSupabase(c);
       const { data : { user } } = await supabase.auth.getUser();
       const { genreId, keyword, prefectureIds, tagIds , offset }: SearchStoreQueryRequest = c.req.valid('query');
+      // 取得する件数
+      const limit = 20;
       
       // 取得するクエリ store_tagsは内部結合で取得
       let query = supabase
+        .from('stores')
+        .select(
+          `
+          id,
+          name,
+          address,
+          photo,
+          latitude,
+          longitude,
+          genre:genres(name),
+          posts!inner(
+            id,
+            name,
+            price,
+            photo,
+            description
+          ),
+          prefectures!inner(
+            id,
+            name
+          ),
+          likes (
+            user_id
+          ),
+          comments (count),
+          store_tags(
+            tag_id,
+            tags(
+              name
+            )
+          )
+        `,
+        { count: 'exact' }  // 全体の件数を取得
+        )
+        .not('posts', 'is', null);
+
+      // ジャンル検索
+      if (genreId) {
+        query = query.eq('genre_id', genreId);
+      }
+
+      // 都道府県検索
+      if (prefectureIds && prefectureIds.length > 0) {
+        query = query.in('prefecture_id', prefectureIds.map(Number));
+      }
+
+      // タグ検索
+      if (tagIds && tagIds.length > 0) {
+        // タグ検索は内部結合にしないとできないのでクエリを別に作成
+        query = supabase
         .from('stores')
         .select(
           `
@@ -146,22 +198,9 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
             )
           )
         `,
-        { count: 'exact' }  // ← 全体の件数を取得
+        { count: 'exact' }  // 全体の件数を取得
         )
         .not('posts', 'is', null);
-
-      // ジャンル検索
-      if (genreId) {
-        query = query.eq('genre_id', genreId);
-      }
-
-      // 都道府県検索
-      if (prefectureIds && prefectureIds.length > 0) {
-        query = query.in('prefecture_id', prefectureIds.map(Number));
-      }
-
-      // タグ検索
-      if (tagIds && tagIds.length > 0) {
         query = query.in('store_tags.tag_id', tagIds.map(Number));
       }
 
@@ -175,7 +214,7 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
         .order('created_at', { ascending: false })
         .limit(4, { referencedTable: 'posts' })
         .order('created_at', { ascending: false, referencedTable: 'posts' })
-        .range(offset * 5 , (offset + 1) * 5 - 1);
+        .range(offset * limit, (offset + 1) * limit - 1);
 
       if (error) {
         return c.json(
@@ -212,6 +251,7 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
         content : res,
         total : count || 0, 
         offset : offset,
+        limit : limit,
       } , 200);
     } catch (error) {
       return c.json(
