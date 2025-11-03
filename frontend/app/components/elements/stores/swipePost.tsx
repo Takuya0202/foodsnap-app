@@ -108,7 +108,7 @@ export function SwipePostContent({
     <div className="w-full flex flex-col relative">
       {/* 投稿画像。x軸でスワイプ */}
       <Swiper
-        className="relative w-full h-[300px] mb-2"
+        className="relative w-[90%] h-[200px] mb-2"
         slidesPerView={1.1}
         centeredSlides={true}
         spaceBetween={10}
@@ -130,7 +130,7 @@ export function SwipePostContent({
 
       <div className="flex items-center justify-between pl-4 w-full mt-4">
         {/* 店舗、投稿の情報 */}
-        <div className="w-[80%] flex flex-col space-y-6">
+        <div className="w-[80%] flex flex-col space-y-4">
           {/* メニュー名、価格*/}
           <div className="flex items-center justify-between ">
             <div className="flex items-center w-full justify-between">
