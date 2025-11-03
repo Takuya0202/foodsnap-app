@@ -29,7 +29,7 @@ export default function UserCallbackPage() {
     async function callbackUser() {
       try {
         const res = await client.api.auth.user.callback.$post(
-          {}, // 第二引数は必須。リクエストボディ。これがわかるのに2時間かかった。くそ
+          {},
           {
             headers: {
               authorization: `Bearer ${code}`,
@@ -39,12 +39,12 @@ export default function UserCallbackPage() {
 
         if (res.status === 200) {
           open("ユーザー登録が完了しました", "success");
-          router.push("/stores/top");
+          window.location.href = "/stores/top"; // routerにすると即時cookieが反映されてない可能性ある
         } else {
           const data = await res.json();
           open(data.error, "error");
         }
-      } catch (e) {
+      } catch {
         open("ネットワークエラーが発生しました", "error");
         router.push("/auth/user/login");
       }

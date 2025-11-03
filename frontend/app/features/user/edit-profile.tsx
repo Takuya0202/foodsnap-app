@@ -36,7 +36,6 @@ export default function EditProfile() {
 
   useEffect(() => {
     setValue("name", name);
-    setValue("icon", undefined);
   }, [name, setValue]);
 
   // ファイル変更時
@@ -44,7 +43,11 @@ export default function EditProfile() {
     const file = e.target.files?.[0];
     if (file) {
       setPreviewIcon(URL.createObjectURL(file));
-      setValue("icon", file);
+      setValue("icon", file, { shouldValidate: true });
+    } else {
+      // ファイルが選択されなかった場合
+      setValue("icon", undefined, { shouldValidate: false });
+      setPreviewIcon(undefined);
     }
   };
 
@@ -101,7 +104,6 @@ export default function EditProfile() {
               <input
                 type="file"
                 id="icon"
-                {...register("icon")}
                 accept=".jpg,.jpeg,.png"
                 className="hidden"
                 onChange={handleIconChange}

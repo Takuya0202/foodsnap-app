@@ -5,7 +5,9 @@ import { getValidationErrorResponnse, uploadImage, Bindings } from '../utils/set
 import { ZodError } from 'zod';
 import { getSupabase } from '../middleware/supabase';
 import { AdminDetailReponse, AdminReponse } from '../types/adminReponse';
-import { serverError , authError } from '../utils/setting';
+import { serverError , authError , roleError } from '../utils/setting';
+import { setCookie } from 'hono/cookie';
+import { createServerClient } from '@supabase/ssr';
 
 export const adminApp = new Hono<{ Bindings: Bindings }>()
 .post(
@@ -16,7 +18,7 @@ export const adminApp = new Hono<{ Bindings: Bindings }>()
       return c.json(
         {
           message: 'validation error',
-          errors: errors,
+          error: errors,
         },
         400
       );
@@ -41,6 +43,8 @@ export const adminApp = new Hono<{ Bindings: Bindings }>()
         startAt,
         endAt,
       }: CreateAdminRequest = c.req.valid('json');
+      console.log(startAt);
+      console.log(endAt);
 
       const supabase = getSupabase(c);
 
@@ -103,15 +107,16 @@ export const adminApp = new Hono<{ Bindings: Bindings }>()
 
       // signup
       const {
-        data: { user },
+        data: { user  , session},
         error,
       } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${c.env.APP_URL}/admin/auth/callback`,
+          emailRedirectTo: `${c.env.APP_URL}/auth/admin/callback`,
           data: {
             name,
+            role : 'admin',
             phone,
             address,
             latitude,
@@ -155,29 +160,76 @@ export const adminApp = new Hono<{ Bindings: Bindings }>()
       const errors = getValidationErrorResponnse(result.error as ZodError);
       return c.json({
         message : 'validation error',
-        errors : errors,
-      });
-    }
-
-    const { email , password } : LoginAdminRequest = result.data;
-    const supabase = getSupabase(c);
-
-    const { data : { user } , error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-
-    if (!user || error ) {
-      return c.json({
-        message : 'fail for login',
-        error : 'メールアドレスまたはパスワードが正しくありません。',
+        error : errors,
       } , 400);
     }
+  }),
+  async(c) => {
+    try {
 
-    // 管理者の情報を取得
-    const { data :  admin  , error : adminError } = await supabase
-      .from('stores')
-      .select(`
+      const { email , password } : LoginAdminRequest = c.req.valid('json');
+      const supabase = getSupabase(c);
+  
+      const { data : { user , session } , error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (!user || error ) {
+        return c.json({
+          message : 'fail for login',
+          error : 'メールアドレスまたはパスワードが正しくありません。',
+        } , 400);
+      }
+
+      const { data : profile , error : profileError } = await supabase.from('profiles').select('role').eq('user_id', user.id).single();
+      // 管理者権限がない
+      if (profileError || !profile || profile.role !== "admin") {
+        return c.json(roleError , 403);
+      }
+
+      setCookie(c,'sb-access-token',session.access_token,{
+        path : '/',
+        httpOnly : true,
+        secure : c.env.ENVIRONMENT === 'production',
+        sameSite : c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
+        maxAge : 60 * 60 * 24 * 7, // 7日
+      })
+      setCookie(c,'sb-refresh-token',session.refresh_token,{
+        path : '/',
+        httpOnly : true,
+        secure : c.env.ENVIRONMENT === 'production',
+        sameSite : c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
+        maxAge : 60 * 60 * 24 * 7, // 7日
+      })
+  
+      return c.json({
+        message : 'ログインに成功しました。'
+      }, 200);
+    } catch (error) {
+      return c.json(serverError , 500);
+    }
+  }
+)
+  // dashboardで表示する情報を取得する
+  .get('/dashboard' , async (c : Context) => {
+    try {
+      const supabase = getSupabase(c);
+      const { data : { user } , error : getUserError } = await supabase.auth.getUser();
+      if (!user || getUserError ) {
+        return c.json(authError , 401);
+      }
+
+      const { data : profile , error : profileError } = await supabase.from('profiles').select('role').eq('user_id', user.id).single();
+      // 管理者権限がない
+      if (profileError || !profile || profile.role !== "admin") {
+        return c.json(roleError , 403);
+      }
+
+
+      const { data : admin , error : adminError } = await supabase
+        .from('stores')
+        .select(`
           id,
           name,
           likes (count),
@@ -190,7 +242,6 @@ export const adminApp = new Hono<{ Bindings: Bindings }>()
             updated_at
           ),
           comments (
-            count,
             id,
             content,
             user_id,
@@ -200,43 +251,46 @@ export const adminApp = new Hono<{ Bindings: Bindings }>()
             ),
             created_at
           )
-      `)
-      .eq('user_id' , user.id)
-      .single();
+        `)
+        .eq('user_id' , user.id)
+        .single();
 
-    if (!admin || adminError) {
-      return c.json({
-        message : 'fail to get admin',
-        error : '管理者の情報の取得に失敗しました。再度ログインをお試しください。',
-      } , 400);
+      if (!admin || adminError ) {
+        return c.json({
+          message : 'fail to get admin',
+          error : '管理者の情報の取得に失敗しました。再度ログインをお試しください。',
+        } , 400);
+      }
+      
+      const res : AdminReponse = {
+        id : admin.id,
+        name : admin.name,
+        likeCount : admin.likes[0]?.count,
+        commentCount : admin.comments?.length || 0,
+        posts : admin.posts.map(post => ({
+          id : post.id,
+          name : post.name,
+          price : post.price,
+          photo : post.photo,
+          description : post.description,
+          updatedAt : post.updated_at,
+        })) || null,
+        comments : admin.comments.map(comment => ({
+          id : comment.id,
+          content : comment.content,
+          userId : comment.user_id,
+          userName : comment.profiles.name,
+          userIcon : comment.profiles.icon,
+          createdAt : comment.created_at,
+        })) || null,
+      }
+
+      return c.json(res , 200);
+    } catch (error) {
+      return c.json(serverError , 500);
     }
-
-
-    const res : AdminReponse = {
-      id : admin.id,
-      name : admin.name,
-      likeCount : admin.likes[0]?.count,
-      commentCount : admin.comments[0]?.count,
-      posts : admin.posts.map(post => ({
-        id : post.id,
-        name : post.name,
-        price : post.price,
-        photo : post.photo,
-        description : post.description,
-        updatedAt : post.updated_at,
-      })) || null,
-      comments : admin.comments.map(comment => ({
-        id : comment.id,
-        content : comment.content,
-        userId : comment.user_id,
-        userName : comment.profiles.name,
-        userIcon : comment.profiles.icon,
-        createdAt : comment.created_at,
-      })) || null,
-    }
-
-    return c.json(res , 200);
-  }))
+  })
+  // 編集する時にセットするデータ
   .get('/detail' , async (c : Context) => {
     try {
       const supabase = getSupabase(c);
@@ -244,6 +298,12 @@ export const adminApp = new Hono<{ Bindings: Bindings }>()
 
       if (!user || userError ) {
         return c.json(authError , 401);
+      }
+
+      const { data : profile , error : profileError } = await supabase.from('profiles').select('role').eq('user_id', user.id).single();
+      // 管理者権限がない
+      if (profileError || !profile || profile.role !== "admin") {
+        return c.json(roleError , 403);
       }
 
       const { data : admin , error : adminError } = await supabase
@@ -307,12 +367,13 @@ export const adminApp = new Hono<{ Bindings: Bindings }>()
       const errors = getValidationErrorResponnse(result.error as ZodError);
       return c.json({
         message : 'validation error',
-        errors : errors,
+        error : errors,
       } , 400);
     }
-
+  }),
+  async (c) => {
     try {
-      const { name , phone , address , latitude , longitude , prefectureId , genreId , tags , link , startAt , endAt , photo } : UpdateAdminRequest = result.data;
+      const { name , phone , address , latitude , longitude , prefectureId , genreId , tags , link , startAt , endAt , photo } : UpdateAdminRequest = c.req.valid('form');
       const supabase =getSupabase(c);
       const { data : { user } , error : userErrorr } = await supabase.auth.getUser();
   
@@ -378,20 +439,24 @@ export const adminApp = new Hono<{ Bindings: Bindings }>()
     } catch (error) {
       return c.json(serverError , 500);
     }
-  }))
+  }
+)
   .delete('/delete' , async (c : Context ) => {
     try {
-      const supabase =getSupabase(c);
+      const supabase = getSupabase(c);
       const { data : { user } , error : userError } = await supabase.auth.getUser();
       
       if (!user || userError ){
         return c.json(authError , 401);
       } 
       // 管理者もauth.userとcascadeなので、消すだけで大丈夫なはず。
-      const { data : deleteAdmin , error : deleteAdminError } = await supabase.auth.admin.deleteUser(user.id);
-
+      const supabaseAdmin = createServerClient(
+        c.env.SUPABASE_URL,
+        c.env.SUPABASE_SERVICE_ROLE_KEY,
+        { cookies: { getAll() { return []; }, setAll() {} }}
+      );
+      const { error : deleteAdminError } = await supabaseAdmin.auth.admin.deleteUser(user.id);
       if (deleteAdminError) {
-        console.log(deleteAdminError);
         return c.json({
           message : 'fail to delete admin',
           error : '管理者の削除に失敗しました。再度お試しください。',
@@ -399,7 +464,7 @@ export const adminApp = new Hono<{ Bindings: Bindings }>()
       }
 
       return c.json({
-        message : '削除に成功しました。',
+        message : '管理者の削除に成功しました。',
       } , 200);
     } catch (error) {
       console.log(error);

@@ -3,167 +3,100 @@ import { getSupabase } from '../middleware/supabase';
 import { commentResponse, storeDetailResponse, storeResponse, storeSearchResponse } from '../types/storeResponse';
 import { getCookie, setCookie } from 'hono/cookie';
 import { zValidator } from '@hono/zod-validator';
-import { CreateCommentRequest, createCommentSchema, searchStoreQuerySchema, SearchStoreQueryRequest } from '../schema/store';
-import { getValidationErrorResponnse } from '../utils/setting';
-import { ZodError } from 'zod';
+import { CreateCommentRequest, createCommentSchema, searchStoreQuerySchema, SearchStoreQueryRequest, GetRandomStoresResponse, getRandomStoresSchema } from '../schema/store';
+import { getValidationErrorResponnse, Bindings } from '../utils/setting';
+import  { ZodError } from 'zod';
 import cuid from 'cuid';
 import { serverError , authError } from '../utils/setting';
-
-export const storeApp = new Hono()
-  .get('/top', async (c: Context) => {
+export const storeApp = new Hono<{ Bindings: Bindings }>()
+  .get('/top', async (c) => {
     try {
       const supabase = getSupabase(c);
+      const { data : { user } } = await supabase.auth.getUser();
       const { latitude, longitude } = c.req.query();
       // 表示した店を格納
       let cookie = getCookie(c, 'showedStores');
       let showedStores: string[] = cookie ? JSON.parse(cookie) : [];
-      const isProd = c.env.NODE_ENV;
 
-      // 取得するクエリ
-      let query = supabase
-        .from('stores')
-        .select(
-          `
-          id,
-          name,
-          address,
-          photo,
-          latitude,
-          longitude,
-          genre:genres(name),
-          posts (
-            id,
-            name,
-            price,
-            photo,
-            description
-          ),
-          likes (count),
-          comments (count)
-        `
-        )
-        .not('posts', 'is', null); // 投稿がない店舗は除外
+      const formattedLat = parseFloat(latitude);
+      const formattedLon = parseFloat(longitude);
 
-      // 表示した店舗がある場合、表示した店舗を除外
-      if (showedStores.length > 0) {
-        // 対象は文字列形式のタプルで指定する必要がある。Postgreの仕様
-        query = query.not('id', 'in', `(${showedStores.map(storeId => `'${storeId}'`).join(',')})`);
-      }
-
-      // 位置情報が取得できる場合、半径3km以内の店舗を取得する
-      if (latitude && longitude && !isNaN(parseFloat(latitude)) && !isNaN(parseFloat(longitude))) {
-        // 対象となる緯度、軽度について考える。1度は111kmと近似できるため、それを元に考える
-        const range = 3 / 111;
-        const lat = parseFloat(latitude);
-        const lon = parseFloat(longitude);
-
-        const { data, error } = await query
-          .gte('latitude', lat - range)
-          .lte('latitude', lat + range)
-          .gte('longitude', lon - range)
-          .lte('longitude', lon + range)
-          .order('created_at', { ascending: false })
-          .limit(4, { referencedTable: 'posts' })
-          .order('created_at', { ascending: false, referencedTable: 'posts' })
-          .limit(20);
-
-        if (error) {
-          console.error('Supabase error (nearby stores):', error);
-          return c.json(
-            {
-              message: 'fail to get stores',
-              error: '店舗の取得に失敗しました。',
-            },
-            400
-          );
-        }
-
-        // 取得できた場合。
-        if (data && data.length > 0) {
-          // 表示した店舗をcookieに保存
-          showedStores = [...showedStores, ...data.map(store => store.id)];
-          setCookie(c, 'showedStores', JSON.stringify(showedStores), {
-            httpOnly: true,
-            secure: isProd,
-            sameSite: isProd ? 'none' : 'lax',
-            maxAge: 60 * 30, // 30分
-          });
-
-          const res: storeResponse = data.map(store => ({
-            id: store.id,
-            name: store.name,
-            address: store.address,
-            latitude: store.latitude,
-            longitude: store.longitude,
-            photo: store?.photo,
-            genre: store.genre?.name || null,
-            likeCount: store.likes[0]?.count || 0,
-            commentCount: store.comments[0]?.count || 0,
-            posts: store.posts.map(post => ({
-              id: post.id,
-              name: post.name,
-              price: post.price,
-              photo: post.photo,
-              description: post?.description || null,
-            })),
-          }));
-          return c.json(res, 200);
-        }
-      }
-
-      // 位置情報がない場合、または近くに店舗がない場合、新規に20件返す
-      const { data, error } = await query
-        .order('created_at', { ascending: false })
-        .limit(4, { referencedTable: 'posts' })
-        .order('created_at', { ascending: false, referencedTable: 'posts' })
-        .limit(20);
+      // おすすめ店舗を取得するRPCを呼び出す
+      const { data : rpcData , error } = await supabase.rpc('get_random_stores',{
+        result_limit : 20,
+        search_range : 3.0, // 半径3km以内の店舗
+        showed_store_ids : showedStores,
+        user_latitude : isNaN(formattedLat) ? undefined : formattedLat,
+        user_longitude : isNaN(formattedLon) ? undefined : formattedLon,
+      });
 
       if (error) {
-        console.error('Supabase error (all stores):', error);
-        return c.json(
-          serverError,
-          400
-        );
+        return c.json({
+          message : 'fail to get stores',
+          error : '店舗の取得に失敗しました。',
+        }, 400);
       }
 
+      // RPCはJson型でレスポンスするため、zodでパージ
+      const result = getRandomStoresSchema.safeParse(rpcData);
+      if (!result.success) {
+        return c.json({
+          message : 'fail to parse stores',
+          error : '予期せぬエラーが発生しました。'
+        }, 400);
+      }
+      const data = result.data;
+
+      if (data && data.length === 0) {
+        return c.json({
+          message : 'no stores',
+          error : '店舗が見つかりませんでした。',
+        }, 404);
+      }
+
+      // 未表示(showedSroresに含まれないもののみ、cookieに追加)
+      const newAddedStores = data.filter(store => !showedStores.includes(store.id));
+
       // 表示した店舗をcookieに保存
-      showedStores = [...showedStores, ...data.map(store => store.id)];
+      showedStores = [...showedStores, ...newAddedStores.map(store => store.id)];
       setCookie(c, 'showedStores', JSON.stringify(showedStores), {
         httpOnly: true,
-        secure: isProd,
-        sameSite: isProd ? 'none' : 'lax',
-        maxAge: 60 * 30, // 30分
+        secure: c.env.ENVIRONMENT === 'production',
+        sameSite: c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
+        maxAge: 60 * 5, // 5分
       });
 
       const res: storeResponse = data.map(store => ({
         id: store.id,
         name: store.name,
         address: store.address,
+        prefectureName: store.prefecture?.name || null,
         latitude: store.latitude,
         longitude: store.longitude,
         photo: store?.photo,
         genre: store.genre?.name || null,
-        likeCount: store.likes[0]?.count || 0,
-        commentCount: store.comments[0]?.count || 0,
-        posts: store.posts.map(post => ({
+        likeCount: store.likes?.length || 0,
+        isLiked : store.likes?.some(like => like.user_id === user?.id) || false, // 認証中のユーザーとuser_idが一致したらいいねフラグを立てる
+        commentCount: store.comments.count || 0,
+        posts: store.posts?.map(post => ({
           id: post.id,
           name: post.name,
           price: post.price,
           photo: post.photo,
           description: post?.description || null,
-        })),
+        })) || [],
       }));
 
       return c.json(res, 200);
     } catch (error) {
-      console.error('Unexpected error in /top:', error);
       return c.json(
         serverError,
         500
       );
     }
   })
-  .get('/index', 
+  // なぜかindexにするとうまくルーティングされない。なのでlistに変更
+  .get('/list', 
     zValidator('query', searchStoreQuerySchema, async (result, c: Context) => {
       if (!result.success) {
         return c.json({
@@ -176,8 +109,12 @@ export const storeApp = new Hono()
     try {
       // クエリの取得
       const supabase = getSupabase(c);
-      const { genreId, keyword, prefectureIds, tagIds}: SearchStoreQueryRequest = c.req.valid('query');
-      // 取得するクエリ
+      const { data : { user } } = await supabase.auth.getUser();
+      const { genreId, keyword, prefectureIds, tagIds , offset }: SearchStoreQueryRequest = c.req.valid('query');
+      // 取得する件数
+      const limit = 20;
+      
+      // 取得するクエリ store_tagsは内部結合で取得
       let query = supabase
         .from('stores')
         .select(
@@ -189,16 +126,29 @@ export const storeApp = new Hono()
           latitude,
           longitude,
           genre:genres(name),
-          posts (
+          posts!inner(
             id,
             name,
             price,
             photo,
             description
           ),
-          likes (count),
-          comments (count)
-        `
+          prefectures!inner(
+            id,
+            name
+          ),
+          likes (
+            user_id
+          ),
+          comments (count),
+          store_tags(
+            tag_id,
+            tags(
+              name
+            )
+          )
+        `,
+        { count: 'exact' }  // 全体の件数を取得
         )
         .not('posts', 'is', null);
 
@@ -214,23 +164,57 @@ export const storeApp = new Hono()
 
       // タグ検索
       if (tagIds && tagIds.length > 0) {
-        query = query.in('tags.id', tagIds.map(Number));
+        // タグ検索は内部結合にしないとできないのでクエリを別に作成
+        query = supabase
+        .from('stores')
+        .select(
+          `
+          id,
+          name,
+          address,
+          photo,
+          latitude,
+          longitude,
+          genre:genres(name),
+          posts!inner(
+            id,
+            name,
+            price,
+            photo,
+            description
+          ),
+          prefectures!inner(
+            id,
+            name
+          ),
+          likes (
+            user_id
+          ),
+          comments (count),
+          store_tags!inner(
+            tag_id,
+            tags(
+              name
+            )
+          )
+        `,
+        { count: 'exact' }  // 全体の件数を取得
+        )
+        .not('posts', 'is', null);
+        query = query.in('store_tags.tag_id', tagIds.map(Number));
       }
 
       // キーワード検索
       if (keyword) {
-        query = query
-          .ilike('address', `%${keyword}%`)
-          .ilike('prefectures.name', `%${keyword}%`)
-          .ilike('genres.name', `%${keyword}%`)
-          .ilike('posts.name', `%${keyword}%`);
+        // ネストされたテーブルはor条件できない。
+        query = query.or(`name.ilike.%${keyword}%,address.ilike.%${keyword}%`);
       }
 
-      const { data, error } = await query
+      const { data, error, count } = await query
         .order('created_at', { ascending: false })
         .limit(4, { referencedTable: 'posts' })
         .order('created_at', { ascending: false, referencedTable: 'posts' })
-        .limit(20);
+        .range(offset * limit, (offset + 1) * limit - 1);
 
       if (error) {
         return c.json(
@@ -245,12 +229,14 @@ export const storeApp = new Hono()
       const res: storeResponse = data.map(store => ({
         id: store.id,
         name: store.name,
+        prefectureName: store.prefectures?.name || null,
         address: store.address,
         latitude: store.latitude,
         longitude: store.longitude,
         photo: store?.photo,
         genre: store.genre?.name || null,
-        likeCount: store.likes[0]?.count || 0,
+        likeCount: store.likes.length || 0,
+        isLiked : store.likes.some(like => like.user_id === user?.id),
         commentCount: store.comments[0]?.count || 0,
         posts: store.posts.map(post => ({
           id: post.id,
@@ -261,7 +247,12 @@ export const storeApp = new Hono()
         })),
       }));
 
-      return c.json(res, 200);
+      return c.json({
+        content : res,
+        total : count || 0, 
+        offset : offset,
+        limit : limit,
+      } , 200);
     } catch (error) {
       return c.json(
         serverError,
@@ -269,7 +260,7 @@ export const storeApp = new Hono()
       );
     }
   })
-  // 検索の取得 honoは動的ルーティングのidとtopやstoreのidの区別ができないので、先にやる。
+  // 検索の取得
   .get('/search' , async (c : Context) => {
     try {
       const supabase = getSupabase(c);
@@ -339,6 +330,7 @@ export const storeApp = new Hono()
           start_at,
           end_at,
           genres (name),
+          prefectures (name),
           comments (
             id,
             user_id,
@@ -381,6 +373,7 @@ export const storeApp = new Hono()
         id: data.id,
         name: data.name,
         address: data.address,
+        prefectureName: data.prefectures?.name || null,
         genre: data.genres?.name || null,
         photo: data?.photo,
         phone: data.phone,
@@ -451,15 +444,15 @@ export const storeApp = new Hono()
         .select('*')
         .eq('user_id', user.id)
         .eq('store_id', storeId)
-        .single();
+        .maybeSingle();
 
       if (isLikeError) {
         return c.json(
           {
-            message: 'fail to check like',
-            error: 'いいねの確認に失敗しました。',
+            message: 'fail to refrence store',
+            error: '対象の店舗が存在しません。',
           },
-          400
+          404
         );
       }
 
@@ -487,6 +480,7 @@ export const storeApp = new Hono()
           return c.json(
             {
               message: 'いいねに成功しました。',
+              status : 'like'
             },
             200
           );
@@ -513,6 +507,7 @@ export const storeApp = new Hono()
           return c.json(
             {
               message: 'いいねを削除しました。',
+              status : 'unlike'
             },
             200
           );
@@ -588,6 +583,18 @@ export const storeApp = new Hono()
   .post(
     '/:storeId/comments',
     zValidator('json', createCommentSchema, async (result, c: Context) => {
+      if (!result.success) {
+        const errors = getValidationErrorResponnse(result.error as ZodError);
+        return c.json(
+          {
+            message: 'validation error',
+            error: errors,
+          },
+          400
+        );
+      }
+    }),
+    async (c) => {
       try {
         const { storeId } = c.req.param();
         if (!storeId) {
@@ -599,19 +606,7 @@ export const storeApp = new Hono()
             400
           );
         }
-
-        if (!result.success) {
-          const errors = getValidationErrorResponnse(result.error as ZodError);
-          return c.json(
-            {
-              message: 'validation error',
-              errors: errors,
-            },
-            400
-          );
-        }
-
-        const { content }: CreateCommentRequest = result.data;
+        const { content }: CreateCommentRequest = c.req.valid('json');
         const supabase = getSupabase(c);
         const {
           data: { user },
@@ -658,5 +653,5 @@ export const storeApp = new Hono()
           500
         );
       }
-    })
+    }
   )

@@ -53,7 +53,7 @@ const baseAdminSchema = z.object({
     .optional(),
   prefectureId: z.number().min(1, { message: '都道府県は必須です。' }),
   genreId: z.number().optional(),
-  tags: z.array(z.number()).max(3, { message: 'タグは3つまでです。' }).optional(),
+  tags: z.array(z.number()).max(10, { message: 'タグは10個までです。' }).optional(),
   photo: z
     .custom<File>()
     .refine(file => file.size <= ALLOWED_IMAGE_SIZE, { message: '写真は6MB以内にしてください' })
@@ -64,7 +64,15 @@ const baseAdminSchema = z.object({
 });
 
 export const createAdminSchema = baseAdminSchema.omit({ photo: true });
-export const updateAdminSchema = baseAdminSchema.omit({ password: true, email: true });
+export const updateAdminSchema = baseAdminSchema.omit({ password: true, email: true })
+  // stringで送られるのでnumberに変換
+.extend({
+  latitude: z.coerce.number().min(-90, { message: '不正な経度です。' }).max(90, { message: '不正な経度です。' }),
+  longitude: z.coerce.number().min(-180, { message: '不正な経度です。' }).max(180, { message: '不正な経度です。' }),
+  prefectureId: z.coerce.number().min(1, { message: '都道府県は必須です。' }),
+  genreId: z.coerce.number().optional(),
+  tags: z.array(z.coerce.number()).max(10, { message: 'タグは10個までです。' }).optional(),
+});
 export const loginAdminSchema = baseAdminSchema.pick({ email: true, password: true });
 
 export type CreateAdminRequest = z.infer<typeof createAdminSchema>;

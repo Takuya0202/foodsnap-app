@@ -8,39 +8,7 @@ type UserState = {
   id: string;
   name: string;
   icon: string;
-  likeStores: {
-    id: string;
-    name: string;
-    photo: string | null;
-    likeCount: number;
-    commentCount: number;
-    posts: {
-      id: string;
-      name: string;
-      price: number;
-      photo: string;
-      description: string | null;
-    }[];
-  }[];
-  setUser: (
-    id: string,
-    name: string,
-    icon: string,
-    likeStores: {
-      id: string;
-      name: string;
-      photo: string | null;
-      likeCount: number;
-      commentCount: number;
-      posts: {
-        id: string;
-        name: string;
-        price: number;
-        photo: string;
-        description: string | null;
-      }[];
-    }[]
-  ) => void;
+  setUser: (id: string, name: string, icon: string) => void;
   setAuthFailed: () => void; // ゲストユーザー。認証失敗時
   setChecked: () => void;
   clearUser: () => void;
@@ -55,15 +23,13 @@ export const useUser = create<UserState>()(
       id: "",
       name: "",
       icon: "",
-      likeStores: [],
-      setUser: (id, name, icon, likeStores) =>
+      setUser: (id, name, icon) =>
         set({
           isAuthenticated: true,
           isChecked: false,
           id,
           name,
           icon,
-          likeStores,
         }),
       setAuthFailed: () =>
         set({
@@ -81,7 +47,6 @@ export const useUser = create<UserState>()(
           id: "",
           name: "",
           icon: "",
-          likeStores: [],
         }),
     }),
     {

@@ -1,10 +1,14 @@
 import { Context, Hono } from 'hono';
 import { getSupabase } from '../middleware/supabase';
 import { supabaseAuthErrorCode } from '../utils/supabaseMessage';
-import { AdminReponse } from '../types/adminReponse';
-import { serverError , authError } from '../utils/setting';
+import { serverError , authError, getValidationErrorResponnse, Bindings } from '../utils/setting';
+import { setCookie } from 'hono/cookie';
+import { CreateNewPasswordRequest, createNewPasswordSchema, ResetPasswordRequest, resetPasswordSchema } from '../schema/user';
+import { zValidator } from '@hono/zod-validator';
+import { ZodError } from 'zod';
+import { createServerClient } from '@supabase/ssr';
 // OAuthやcallbackなどに関するエンドポイント
-export const authApp = new Hono()
+export const authApp = new Hono<{ Bindings: Bindings }>()
   .get('/google', async (c: Context) => {
     try {
       // supabaseクライアントを生成
@@ -60,6 +64,15 @@ export const authApp = new Hono()
 
       // 新規ユーザーの場合、profileテーブルにユーザー情報を確立
       if (!isExist) {
+        // metadataにroleを追加
+        const { data : updateMeta , error : updateMetaError } = await supabase.auth.updateUser({
+          data : {
+            role : 'user',
+          }
+        })
+        if (updateMetaError) {
+          throw updateMetaError;
+        }
         const { data: insertData, error: insertError } = await supabase
           .from('profiles')
           .insert({
@@ -88,27 +101,21 @@ export const authApp = new Hono()
   .post('user/callback', async (c: Context) => {
     // フロントからのトークン取得
     const authHeader = c.req.header('authorization');
-    console.log(authHeader);
     const code = authHeader?.replace('Bearer ', '').trim();
 
     if (!code) {
       console.log('code is null');
-      return c.json(
-        authError,
-        400
-      );
+      return c.json(authError, 400);
     }
+    
     try {
       const supabase = getSupabase(c);
       const {
-        data: { user },
+        data: { user, session },
         error: getUserError,
       } = await supabase.auth.exchangeCodeForSession(code);
       if (!user || getUserError) {
-        return c.json(
-          authError,
-          400
-        );
+        return c.json(authError, 400);
       }
 
       // profileテーブルにユーザー情報を確立。アイコンはnull
@@ -135,6 +142,22 @@ export const authApp = new Hono()
         );
       }
 
+      // 自前でcookieを保存
+      setCookie(c , 'sb-access-token', session.access_token , {
+        path : '/',
+        httpOnly : true,
+        secure : c.env.ENVIRONMENT === 'production',
+        sameSite : c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
+        maxAge : 60 * 60 * 24 * 7, // 7日
+      })
+      setCookie(c , 'sb-refresh-token', session.refresh_token , {
+        path : '/',
+        httpOnly : true,
+        secure : c.env.ENVIRONMENT === 'production',
+        sameSite : c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
+        maxAge : 60 * 60 * 24 * 7, // 7日
+      })
+
       // 登録成功
       return c.json(
         {
@@ -143,35 +166,32 @@ export const authApp = new Hono()
         200
       );
     } catch (error) {
-      return c.json(
-        serverError,
-        500
-      );
+      return c.json(serverError, 500);
     }
   })
   // 管理者のcallback
   .post('/admin/callback', async (c: Context) => {
-    const authHeader = c.req.header('Authorization');
-    const accessToken = authHeader?.replace('Bearer', '');
+    const authHeader = c.req.header('authorization');
+    const code = authHeader?.replace('Bearer ', '').trim();
 
-    if (!accessToken) {
+    if (!code) {
       return c.json(
         authError,
-        400
+        401
       );
     }
 
     try {
       const supabase = getSupabase(c);
       const {
-        data: { user },
+        data: { user, session },
         error: getUserError,
-      } = await supabase.auth.getUser(accessToken);
+      } = await supabase.auth.exchangeCodeForSession(code);
 
       if (!user || getUserError) {
         return c.json(
           authError,
-          400
+          401
         );
       }
 
@@ -186,18 +206,17 @@ export const authApp = new Hono()
           _longitude : user.user_metadata.longitude,
           _start_at : user.user_metadata.start_at || null,
           _end_at : user.user_metadata.end_at || null,
-          _prefecture_id : user.user_metadata.prefecture_id,
-          _genre_id : user.user_metadata.genre_id || null,
+          _prefecture_id : user.user_metadata.prefectureId,
+          _genre_id : user.user_metadata.genreId || null,
           _link : user.user_metadata.link || null,
           _photo : user.user_metadata.photo || null,
-          _tag_ids : user.user_metadata.tag_ids || [],
+          _tag_ids : user.user_metadata.tags || [],
         })
 
         if (adminError) {
           throw adminError;
         }
       } catch (error) {
-        console.log(error);
         return c.json(
           {
             message: 'insert error',
@@ -206,74 +225,26 @@ export const authApp = new Hono()
           400
         );
       }
-      // 登録成功
-      const { data: selectData, error: selectError } = await supabase
-        .from('stores')
-        .select(
-          `
-          id,
-          name,
-          likes (count),
-          posts (
-            id,
-            name,
-            price,
-            photo,
-            description,
-            updated_at
-          ),
-          comments (
-            count,
-            id,
-            content,
-            user_id,
-            profiles!user_id (
-              name,
-              icon
-            ),
-            created_at
-          )
-        `
-        )
-        .eq('user_id', user.id)
-        .single();
 
-      if (!selectData || selectError) {
-        return c.json(
-          {
-            message: 'fail for select store',
-            error: '管理者情報の取得に失敗しました。もう一度ログインしてください。',
-          },
-          400
-        );
-      }
+      // 自前でcookieを保存
+      setCookie(c , 'sb-access-token', session.access_token , {
+        path : '/',
+        httpOnly : true,
+        secure : c.env.ENVIRONMENT === 'production',
+        sameSite : c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
+        maxAge : 60 * 60 * 24 * 7, // 7日
+      })
+      setCookie(c , 'sb-refresh-token', session.refresh_token , {
+        path : '/',
+        httpOnly : true,
+        secure : c.env.ENVIRONMENT === 'production',
+        sameSite : c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
+        maxAge : 60 * 60 * 24 * 7, // 7日
+      })
 
-      const res: AdminReponse = {
-        id: selectData.id,
-        name: selectData.name,
-        likeCount: selectData.likes[0]?.count,
-        commentCount: selectData.comments[0]?.count,
-        posts:
-          selectData.posts.map(post => ({
-            id: post.id,
-            name: post.name,
-            price: post.price,
-            photo: post.photo,
-            description: post?.description,
-            updatedAt: post.updated_at,
-          })) || null,
-        comments:
-          selectData.comments.map(comment => ({
-            id: comment.id,
-            content: comment.content,
-            userId: comment.user_id,
-            userName: comment.profiles.name,
-            userIcon: comment.profiles?.icon,
-            createdAt: comment.created_at,
-          })) || null,
-      };
-
-      return c.json(res, 200);
+      return c.json({
+        message: 'success for admin auth',
+      }, 200);
     } catch (error) {
       console.log(error);
       return c.json(
@@ -312,4 +283,127 @@ export const authApp = new Hono()
         500
       );
     }
-  });
+  })
+  .post(
+    '/reset-password',
+    zValidator('json', resetPasswordSchema, async (result, c: Context) => {
+      if (!result.success) {
+        const errors = getValidationErrorResponnse(result.error as ZodError);
+        return c.json(
+          {
+            message: 'validation error',
+            error: errors,
+          },
+          400
+        );
+      }
+    }),
+    async (c) => {
+      try {
+
+        const { email }: ResetPasswordRequest = c.req.valid('json');
+        const supabase = getSupabase(c);
+
+        const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${c.env.APP_URL}/auth/reset-password/callback`,
+        });
+
+        if (!data || error) {
+          return c.json(
+            {
+              message: 'fail to reset password',
+              error: 'パスワードのリセットに失敗しました。再度お試しください。',
+            },
+            400
+          );
+        }
+
+        return c.json(
+          {
+            message: 'success to reset password',
+            email: email,
+          },
+          200
+        );
+      } catch (error) {
+        return c.json(
+          serverError,
+          500
+        );
+      }
+    })
+  .post(
+    '/reset-password/callback',
+    zValidator('json', createNewPasswordSchema, async (result, c: Context) => {
+      if (!result.success) {
+        const errors = getValidationErrorResponnse(result.error as ZodError);
+        return c.json(
+          {
+            message: 'validation error',
+            error: errors,
+          },
+          400
+        );
+      }
+    }),
+    async (c) => {
+      try {
+        // トークンの取得
+        const authHeader = c.req.header('authorization');
+        const code = authHeader?.replace('Bearer ', '').trim();
+
+        if (!code) {
+          return c.json(
+            {
+              message: 'token not found',
+              error: '予期せぬエラーが発生しました。',
+            },
+            400
+          );
+        }
+
+        const { password }: CreateNewPasswordRequest = c.req.valid('json');
+        const supabase = getSupabase(c);
+
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.exchangeCodeForSession(code);
+
+        if (userError || !user) {
+          return c.json(
+            {
+              message: 'code error',
+              error: '予期せぬエラーが発生しました。',
+            },
+            400
+          );
+        }
+        const { error: updateUserError } = await supabase.auth.updateUser({
+          password: password,
+        });
+    
+
+        if (updateUserError) {
+          return c.json(
+            {
+              message: 'fail to update user',
+              error: 'パスワードの更新に失敗しました。再度お試しください。',
+            },
+            400
+          );
+        }
+
+        return c.json(
+          {
+            message: 'パスワードの変更に成功しました。',
+          },
+          200
+        );
+      } catch (error) {
+        return c.json(
+          serverError,
+          500
+        );
+      }
+    })

@@ -1,3 +1,4 @@
+"use client";
 import { getApiUrl } from "@/utils/setting";
 import GoogleIcon from "@mui/icons-material/Google";
 

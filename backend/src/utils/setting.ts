@@ -21,6 +21,10 @@ export const authError = {
   message : 'unAuthorized',
   error : '認証に失敗しました。再度ログインをお試しください。',
 }
+export const roleError = {
+  message : 'not admin',
+  error : '権限がありません。'
+}
 // バリデーションエラーのレスポンスするフィールドを返却する関数
 export const getValidationErrorResponnse = (ze: ZodError): Record<string, string> => {
   const errors: Record<string, string> = {}; // エラーはフィールドごとにまとめる
@@ -77,6 +81,27 @@ export async function uploadImage(
     // publicUrlを返却
     const { data : { publicUrl } } = supabase.storage.from(backet).getPublicUrl(bucketPath);
     return publicUrl;
+  } catch (error) {
+    throw error;
+  }
+}
+
+// ストレージ画像を削除する関数
+export async function deleteImage(
+  supabase : SupabaseClient<Database>,
+  backet : string,
+  existUrl : string,
+) {
+  try {
+    const bucketPath = existUrl.split('/').slice(-2).join('/');
+    if (!bucketPath) {
+      throw new Error('画像の削除に失敗しました。');
+    }
+
+    const { data , error } = await supabase.storage.from(backet).remove([bucketPath]);
+    if (!data || error) {
+      throw new Error('画像の削除に失敗しました。');
+    }
   } catch (error) {
     throw error;
   }

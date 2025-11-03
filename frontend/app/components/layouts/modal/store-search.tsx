@@ -5,23 +5,33 @@ import { useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Close } from "@mui/icons-material";
 type props = {
+  isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
 };
-export default function StoreSearch({ setIsOpen }: props) {
-  const [isClose, setIsClose] = useState<boolean>(false);
+export default function StoreSearch({ isOpen, setIsOpen }: props) {
+  const [isClosing, setIsClosing] = useState<boolean>(false);
   const closeDistance = 50;
+
   const handleClose = () => {
-    setIsClose(true);
-    // アニメーション終了時にモーダルを閉じる。
-    setTimeout(() => {
-      setIsOpen(false);
-    }, 300);
+    setIsClosing(true);
   };
+
+  const handleAnimationEnd = () => {
+    if (isClosing) {
+      setIsOpen(false);
+      setIsClosing(false);
+    }
+  };
+
+  if (!isOpen && !isClosing) {
+    return null;
+  }
 
   return (
     <div
       className={`w-full h-screen bg-[#3d3d3d] z-[100] fixed top-0 right-0 flex justify-end overflow-y-scroll
-        ${isClose ? "animate-[slideOutRight_0.3s_ease-in-out]" : "animate-[fadeIn_0.3s_ease-in-out]"}`}
+        ${isClosing ? "animate-[slideOutRight_0.3s_ease-in-out_forwards]" : "animate-[fadeIn_0.3s_ease-in-out]"}`}
+      onAnimationEnd={handleAnimationEnd}
     >
       <Swiper
         className="w-full h-full"
@@ -36,7 +46,7 @@ export default function StoreSearch({ setIsOpen }: props) {
         resistanceRatio={0.85}
       >
         <SwiperSlide>
-          <div className="w-[70%] max-w-[320px] h-full bg-[#181818] animate-[slideInRight_0.3s_ease-in-out] ml-auto">
+          <div className="w-[70%] max-w-[320px] h-full bg-[#181818] animate-[slideInRight_0.3s_ease-in-out_forwards] ml-auto">
             <div className="flex flex-col items-start p-4 space-y-8 w-full">
               {/* closeボタン */}
               <div className="flex justify-end w-full mt-4 mr-4">

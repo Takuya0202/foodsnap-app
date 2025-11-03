@@ -19,6 +19,7 @@ import { ZodError } from 'zod';
 import { userDetailResponse } from '../types/userResponse';
 import { serverError , authError } from '../utils/setting';
 import { createServerClient } from '@supabase/ssr';
+import { setCookie } from 'hono/cookie';
 
 export const userApp = new Hono<{ Bindings: Bindings }>()
   .post(
@@ -52,6 +53,7 @@ export const userApp = new Hono<{ Bindings: Bindings }>()
         options: {
           data: {
             name,
+            role : 'user',
           },
           emailRedirectTo: `${c.env.APP_URL}/auth/user/callback`,
         },
@@ -102,7 +104,7 @@ export const userApp = new Hono<{ Bindings: Bindings }>()
         const { email, password } = c.req.valid('json');
         const supabase = getSupabase(c);
         const {
-          data: { user },
+          data: { user , session},
           error,
         } = await supabase.auth.signInWithPassword({
           email,
@@ -117,6 +119,24 @@ export const userApp = new Hono<{ Bindings: Bindings }>()
             400
           );
         }
+
+        // なぜかcookieが設定されないので、自身で保存
+        setCookie(c , 'sb-access-token' , session.access_token , {
+          path : '/',
+          httpOnly: true,
+          secure: c.env.ENVIRONMENT === 'production',
+          sameSite: c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
+          maxAge: 60 * 60 * 24 * 7,
+        })
+        setCookie(c , 'sb-refresh-token' , session.refresh_token , {
+          path : '/',
+          httpOnly: true,
+          secure: c.env.ENVIRONMENT === 'production',
+          sameSite: c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
+          maxAge: 60 * 60 * 24 * 7,
+        })
+
+        
 
         return c.json(
           {
@@ -152,26 +172,35 @@ export const userApp = new Hono<{ Bindings: Bindings }>()
         .from('profiles')
         .select(
           `
-                name,
-                icon,
-                user_id,
-                likes (
-                    store : stores (
-                        id,
-                        name,
-                        address,
-                        photo,
-                        posts (
-                            id,
-                            name,
-                            price,
-                            photo,
-                            description
-                        ),
-                        likes (count),
-                        comments (count)
-                    )
-                )
+            name,
+            icon,
+            user_id,
+            likes (
+              user_id,
+              store : stores (
+                  id,
+                  name,
+                  address,
+                  photo,
+                  latitude,
+                  longitude,
+                  prefectures (
+                    name
+                  ),
+                  genres (
+                    name
+                  ),
+                  posts (
+                      id,
+                      name,
+                      price,
+                      photo,
+                      description
+                  ),
+                  comments (count),
+                  likes (count)
+              )
+            )
             `
         )
         .eq('user_id', user.id)
@@ -195,10 +224,15 @@ export const userApp = new Hono<{ Bindings: Bindings }>()
         likeStores: userDetail.likes.map(like => ({
           id: like.store.id,
           name: like.store.name,
+          prefectureName: like.store.prefectures?.name || null,
           address: like.store.address,
+          likeCount: like.store.likes[0]?.count || 0,
+          commentCount: like.store.comments[0]?.count || 0,
           photo: like.store?.photo,
-          likeCount: like.store.likes[0]?.count,
-          commentCount: like.store.comments[0]?.count,
+          latitude: like.store.latitude,
+          longitude: like.store.longitude,
+          genre: like.store.genres?.name || null,
+          isLiked: true,  // いいね済み店舗なので常にtrue
           posts: like.store.posts.map(post => ({
             id: post.id,
             name: post.name,
@@ -337,124 +371,4 @@ export const userApp = new Hono<{ Bindings: Bindings }>()
     } catch (error) {
       return c.json(serverError, 500);
     }
-  })
-  .post(
-    'reset-password',
-    zValidator('json', resetPasswordSchema, async (result, c: Context) => {
-      try {
-        if (!result.success) {
-          const errors = getValidationErrorResponnse(result.error as ZodError);
-          return c.json(
-            {
-              message: 'validation error',
-              errors: errors,
-            },
-            400
-          );
-        }
-
-        const { email }: ResetPasswordRequest = result.data;
-        const supabase = getSupabase(c);
-
-        const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${c.env.APP_URL}/user/reset-password/callback`,
-        });
-
-        if (error) {
-          return c.json(
-            {
-              message: 'fail to reset password',
-              error: 'パスワードのリセットに失敗しました。再度お試しください。',
-            },
-            400
-          );
-        }
-
-        return c.json(
-          {
-            message: 'success to reset password',
-            email: email,
-          },
-          200
-        );
-      } catch (error) {
-        return c.json(
-          serverError,
-          500
-        );
-      }
-    })
-  )
-  .post(
-    '/reset-passwprd/callback',
-    zValidator('json', createNewPasswordSchema, async (result, c: Context) => {
-      try {
-        if (!result.success) {
-          const errors = getValidationErrorResponnse(result.error as ZodError);
-          return c.json(
-            {
-              message: 'validation error',
-              errors: errors,
-            },
-            400
-          );
-        }
-        // トークンの取得
-        const authHeader = c.req.header('Authorization');
-        const accessToken = authHeader?.replace('Bearer', '');
-
-        if (!accessToken) {
-          return c.json(
-            {
-              message: 'token not found',
-              error: '予期せぬエラーが発生しました。',
-            },
-            400
-          );
-        }
-
-        const { password }: CreateNewPasswordRequest = result.data;
-        const supabase = getSupabase(c);
-
-        const {
-          data: { user },
-          error: userError,
-        } = await supabase.auth.getUser(accessToken);
-        if (userError || !user) {
-          return c.json(
-            {
-              message: 'access token error',
-              error: '予期せぬエラーが発生しました。',
-            },
-            400
-          );
-        }
-
-        const { error: updateUserError } = await supabase.auth.admin.updateUserById(user.id, {
-          password: password,
-        });
-
-        if (updateUserError) {
-          return c.json(
-            {
-              message: 'fail to update user',
-              error: 'パスワードの更新に失敗しました。再度お試しください。',
-            },
-            400
-          );
-        }
-
-        return c.json(
-          {
-            message: 'パスワードの変更に成功しました。',
-          },
-          200
-        );
-      } catch (error) {
-        return c.json(
-          serverError,
-          500
-        );
-      }
-    })
-  );
+  });

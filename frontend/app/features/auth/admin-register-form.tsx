@@ -13,7 +13,6 @@ import SelectBox from "@/app/components/elements/input/selectBox";
 import MarkAddress from "../mapbox/mark-address";
 import TagButton from "@/app/components/elements/buttons/tag-button";
 import SubmitButton from "@/app/components/elements/buttons/submit-button";
-
 type Genre = {
   id: number;
   name: string;
@@ -27,8 +26,11 @@ type Tag = {
   id: number;
   name: string;
 };
+type Props = {
+  onEmailSent: (email: string) => void;
+};
 // 管理者登録フォーム
-export default function AdminRegisterForm() {
+export default function AdminRegisterForm({ onEmailSent }: Props) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [genres, setGenres] = useState<Genre[]>([]);
@@ -44,6 +46,7 @@ export default function AdminRegisterForm() {
     setValue,
     setError,
     watch,
+    reset,
   } = useForm<CreateAdminRequest>({
     mode: "onBlur",
     resolver: zodResolver(createAdminSchema),
@@ -100,16 +103,43 @@ export default function AdminRegisterForm() {
           prefectureId: Number(data.prefectureId),
           genreId: Number(data.genreId),
           tags: data.tags,
-          link: data.link,
-          startAt: data.startAt,
-          endAt: data.endAt,
+          ...(data.link !== undefined && data.link?.trim() !== "" ? { link: data.link } : {}),
+          ...(data.startAt !== undefined && data.startAt?.trim() !== ""
+            ? { startAt: data.startAt }
+            : {}),
+          ...(data.endAt !== undefined && data.endAt?.trim() !== "" ? { endAt: data.endAt } : {}),
         },
       });
       if (res.status === 200) {
+        const data = await res.json();
+        reset();
+        onEmailSent(data.email);
       } else {
         const data = await res.json();
+        if (data.message === "validation error") {
+          const errors = data.error as unknown as Record<string, string>;
+          if (errors.email) setError("email", { message: errors.email });
+          if (errors.password) setError("password", { message: errors.password });
+          if (errors.name) setError("name", { message: errors.name });
+          if (errors.phone) setError("phone", { message: errors.phone });
+          if (errors.prefectureId) setError("prefectureId", { message: errors.prefectureId });
+          if (errors.genreId) setError("genreId", { message: errors.genreId });
+          if (errors.link) setError("link", { message: errors.link });
+          if (errors.startAt) setError("startAt", { message: errors.startAt });
+          if (errors.endAt) setError("endAt", { message: errors.endAt });
+          if (errors.tags) setError("tags", { message: errors.tags });
+          if (errors.address) setError("address", { message: errors.address });
+          if (errors.latitude) setError("latitude", { message: errors.latitude });
+          if (errors.longitude) setError("longitude", { message: errors.longitude });
+        } else {
+          open(data.error, "error");
+        }
       }
-    } catch {}
+    } catch {
+      open("通信に失敗しました。", "error");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (isLoading) {
@@ -118,7 +148,7 @@ export default function AdminRegisterForm() {
   return (
     <div className="w-full py-4">
       <form
-        className="w-full flex flex-col space-y-10 items-center"
+        className="w-full flex flex-col space-y-14 items-center"
         onSubmit={handleSubmit(onsubmit)}
       >
         {/* メールアドレス */}
@@ -144,7 +174,7 @@ export default function AdminRegisterForm() {
             <FieldStatusButton status="req" />
           </div>
           <div className="relative w-[calc(100%-240px)]">
-            <InputText placeholder="Password" {...register("password")} />
+            <InputText placeholder="Password" {...register("password")} type="password" />
             {errors.password && (
               <div className="absolute top-full left-0 mt-1">
                 <FieldError>{errors.password.message}</FieldError>
@@ -208,7 +238,7 @@ export default function AdminRegisterForm() {
             <FieldStatusButton status="req" />
           </div>
           <div className="relative w-[calc(100%-240px)]">
-            <InputText placeholder="東京都千代田区永田町1-7-1" {...register("address")} />
+            <InputText placeholder="市町村名、番地、建物名など" {...register("address")} />
             {errors.address && (
               <div className="absolute top-full left-0 mt-1">
                 <FieldError>{errors.address.message}</FieldError>
@@ -219,9 +249,17 @@ export default function AdminRegisterForm() {
 
         {/* 位置情報 */}
         <div className="w-full flex flex-col space-y-4 ">
-          <div className="flex items-center space-x-2 w-[240px] justify-between">
-            <p className="text-white text-[20px]">位置情報</p>
-            <FieldStatusButton status="req" />
+          <div className="flex items-center space-x-4">
+            <div className="w-[240px] flex items-center space-x-2 justify-between">
+              <p className="text-white text-[20px]">位置情報</p>
+              <FieldStatusButton status="req" />
+            </div>
+            <div className="flex items-center space-x-2">
+              {errors.latitude && <FieldError>{errors.latitude.message}</FieldError>}
+              {!errors.latitude && errors.longitude && (
+                <FieldError>{errors.longitude.message}</FieldError>
+              )}
+            </div>
           </div>
           <div className="w-full">
             <MarkAddress setValue={setValue} height="400px" width="100%" />
@@ -267,7 +305,7 @@ export default function AdminRegisterForm() {
             <FieldStatusButton status="opt" />
           </div>
           <div className="relative w-[calc(100%-240px)]">
-            <InputText placeholder="10:00" {...register("startAt")} />
+            <InputText placeholder="00:00" {...register("startAt")} />
             {errors.startAt && (
               <div className="absolute top-full left-0 mt-1">
                 <FieldError>{errors.startAt.message}</FieldError>
@@ -283,7 +321,7 @@ export default function AdminRegisterForm() {
             <FieldStatusButton status="opt" />
           </div>
           <div className="relative w-[calc(100%-240px)]">
-            <InputText placeholder="22:00" {...register("endAt")} />
+            <InputText placeholder="23:59" {...register("endAt")} />
             {errors.endAt && (
               <div className="absolute top-full left-0 mt-1">
                 <FieldError>{errors.endAt.message}</FieldError>
@@ -294,9 +332,12 @@ export default function AdminRegisterForm() {
 
         {/* タグ */}
         <div className="w-full flex flex-col space-y-4 px-2">
-          <div className="flex items-center space-x-2 w-[240px] justify-between">
-            <p className="text-white text-[20px]">タグ(複数選択可能)</p>
-            <FieldStatusButton status="opt" />
+          <div className="flex items-center space-x-2">
+            <div className="w-[240px] flex items-center space-x-2 justify-between">
+              <p className="text-white text-[20px]">タグ(複数選択可能)</p>
+              <FieldStatusButton status="opt" />
+            </div>
+            {errors.tags && <FieldError>{errors.tags.message}</FieldError>}
           </div>
           <div className="w-full flex items-center flex-wrap gap-2 mt-3">
             <div className="flex items-center space-x-2 w-full flex-wrap gap-2">

@@ -6,7 +6,6 @@ import SubmitButton from "../../components/elements/buttons/submit-button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoginUserRequest, loginUserSchema } from "@/schema/user";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import FieldError from "../../components/elements/errors/field-error";
 import { client } from "@/utils/setting";
 import { useToaster } from "@/app/zustand/toaster";
@@ -14,7 +13,6 @@ import { useToaster } from "@/app/zustand/toaster";
 export default function UserLogin() {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const { open } = useToaster();
-  const router = useRouter();
   const defaultValues = {
     email: "",
     password: "",
@@ -42,7 +40,8 @@ export default function UserLogin() {
       });
       if (res.status === 200) {
         reset();
-        router.push("/stores/top");
+        open("ログインしました。", "success");
+        window.location.href = "/stores/top"; // routerにするとcookieが反映されてない可能性ある
       } else {
         const data = await res.json();
         // バリデーションエラーはRPCの型推論が利かないので、unkonwnで型指定

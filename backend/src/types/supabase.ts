@@ -1,3 +1,28 @@
+// RPC用の型定義（get_random_stores関数の戻り値）
+export type RpcStoreRawResult = {
+  id: string;
+  name: string;
+  address: string;
+  photo: string | null;
+  latitude: number;
+  longitude: number;
+  genre: {
+    name: string;
+  } | null;
+  posts: Array<{
+    id: string;
+    name: string;
+    price: number;
+    photo: string;
+    description: string | null;
+  }> | null;
+  likes: Array<{
+    user_id: string;
+  }> | null;
+  comments : {
+    count : number;
+  }
+};
 export type Json =
   | string
   | number
@@ -83,7 +108,7 @@ export type Database = {
         }
         Insert: {
           content: string
-          created_at?: string
+          created_at: string
           id: string
           store_id: string
           updated_at: string
@@ -401,17 +426,27 @@ export type Database = {
         Args: {
           _address: string
           _end_at: string
-          _genre_id: string
+          _genre_id: number
           _latitude: number
           _link: string
           _longitude: number
           _name: string
           _phone: string
           _photo: string
-          _prefecture_id: string
+          _prefecture_id: number
           _start_at: string
-          _tag_ids: string[]
+          _tag_ids: number[]
           _user_id: string
+        }
+        Returns: Json
+      }
+      get_random_stores: {
+        Args: {
+          result_limit?: number
+          search_range?: number
+          showed_store_ids: string[]
+          user_latitude?: number
+          user_longitude?: number
         }
         Returns: Json
       }
@@ -419,16 +454,16 @@ export type Database = {
         Args: {
           _address: string
           _end_at?: string
-          _genre_id?: string
+          _genre_id?: number
           _latitude: number
           _link?: string
           _longitude: number
           _name: string
           _phone: string
           _photo?: string
-          _prefecture_id: string
+          _prefecture_id: number
           _start_at?: string
-          _tag_ids?: string[]
+          _tag_ids?: number[]
           _user_id: string
         }
         Returns: Json
@@ -456,7 +491,37 @@ export type Database = {
       Role: "user" | "admin"
     }
     CompositeTypes: {
-      [_ in never]: never
+      store_genre_t: {
+        id: number | null
+        name: string | null
+      }
+      store_post_t: {
+        id: string | null
+        name: string | null
+        price: number | null
+        photo: string | null
+        description: string | null
+        created_at: string | null
+      }
+      store_result_t: {
+        id: string | null
+        user_id: string | null
+        name: string | null
+        address: string | null
+        phone: string | null
+        latitude: number | null
+        longitude: number | null
+        photo: string | null
+        start_at: string | null
+        end_at: string | null
+        link: string | null
+        genre: Database["public"]["CompositeTypes"]["store_genre_t"] | null
+        posts: Database["public"]["CompositeTypes"]["store_post_t"][] | null
+        likes: Json | null
+        comments: Json | null
+        created_at: string | null
+        updated_at: string | null
+      }
     }
   }
 }

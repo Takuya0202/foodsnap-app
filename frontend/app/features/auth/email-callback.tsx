@@ -1,3 +1,4 @@
+"use client";
 import { CircularProgress } from "@mui/material";
 import Check from "../../components/elements/icons/check";
 

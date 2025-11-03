@@ -14,10 +14,10 @@ const CommentSchema = z.object({
 });
 
 export const searchStoreQuerySchema = z.object({
-  genreId: z.number().nullable(),
-  keyword: z.string().nullable(),
-  prefectureIds: z.array(z.number()).nullable(),
-  tagIds: z.array(z.number()).nullable(),
+  genreId: z.number().optional(),
+  keyword: z.string().optional(),
+  prefectureIds: z.array(z.number()).optional(),
+  tagIds: z.array(z.number()).optional(),
 });
 
 export const createCommentSchema = CommentSchema;

@@ -9,12 +9,20 @@ type props = {
   setValue: (name: "latitude" | "longitude", value: number) => void;
   height?: string;
   width?: string;
+  oldLat?: number;
+  oldLng?: number;
 };
 
-export default function MarkAddress({ setValue, height = "100vh", width = "100%" }: props) {
+export default function MarkAddress({
+  setValue,
+  height = "100vh",
+  width = "100%",
+  oldLat,
+  oldLng,
+}: props) {
   const [currentPosition, setCurrentPosition] = useState<{ lat: number; lng: number }>({
-    lat: 35.6811673,
-    lng: 139.7670516,
+    lat: oldLat || 35.6811673,
+    lng: oldLng || 139.7670516,
   });
   const marker = useRef<mapboxgl.Marker | null>(null);
   const mapContainer = useRef<HTMLDivElement | null>(null);
@@ -23,7 +31,8 @@ export default function MarkAddress({ setValue, height = "100vh", width = "100%"
 
   // 現在地取得
   useEffect(() => {
-    if (navigator.geolocation) {
+    // 既に緯度経度がある場合はこの処理はスキップ
+    if (navigator.geolocation && !oldLat && !oldLng) {
       navigator.geolocation.getCurrentPosition(
         (pos: GeolocationPosition) => {
           const crd = pos.coords;
@@ -34,7 +43,7 @@ export default function MarkAddress({ setValue, height = "100vh", width = "100%"
         }
       );
     }
-  }, [open]);
+  }, [open, oldLat, oldLng]);
 
   // Map初期化
   useEffect(() => {
@@ -53,6 +62,16 @@ export default function MarkAddress({ setValue, height = "100vh", width = "100%"
     // 日本語に変換
     const language = new MapboxLanguage({ defaultLanguage: "ja" });
     map.addControl(language);
+
+    // 初期値をmarkerにセット
+    if (oldLat && oldLng) {
+      const createdMarker = new mapboxgl.Marker({
+        color: "black",
+      })
+        .setLngLat([oldLng, oldLat])
+        .addTo(map);
+      marker.current = createdMarker;
+    }
 
     map.on("click", (e: mapboxgl.MapMouseEvent) => {
       const { lng, lat } = e.lngLat;
@@ -79,7 +98,7 @@ export default function MarkAddress({ setValue, height = "100vh", width = "100%"
     return () => {
       map.remove();
     };
-  }, [currentPosition, setValue]);
+  }, [currentPosition]); // 初回のみレンダリング
 
   return <div ref={mapContainer} style={{ width, height }} />;
 }

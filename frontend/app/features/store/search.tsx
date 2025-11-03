@@ -2,12 +2,12 @@
 import { client } from "@/utils/setting";
 import { KeyboardArrowRight } from "@mui/icons-material";
 import { useEffect, useState } from "react";
-import { useFilter } from "@/app/zustand/store";
+import { useFilter } from "@/app/zustand/filter";
 import GenreButton from "@/app/components/elements/buttons/genre-button";
 import { useForm } from "react-hook-form";
 import { SearchStoreQueryRequest, searchStoreQuerySchema } from "@/schema/store";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import CheckBox from "@/app/components/elements/input/checkBox";
 import TagButton from "@/app/components/elements/buttons/tag-button";
 import SubmitButton from "@/app/components/elements/buttons/submit-button";
@@ -22,23 +22,29 @@ export default function Search({ setIsOpen }: props) {
   const { genres, prefectures, tags, setGenres, setPrefectures, setTags } = useFilter();
   const [isloading, setIsloading] = useState<boolean>(false);
   const router = useRouter();
+  // クエリ取得
+  const searchParams = useSearchParams();
+  const genreId = searchParams.get("genreId");
+  const prefectureIds = searchParams.get("prefectureIds");
+  const tagIds = searchParams.get("tagIds");
 
-  const defaultValues: SearchStoreQueryRequest = {
-    genreId: null,
-    keyword: null,
-    prefectureIds: null,
-    tagIds: null,
-  };
-  const {
-    handleSubmit,
-    formState: { errors },
-    watch,
-    setValue,
-  } = useForm<SearchStoreQueryRequest>({
-    defaultValues,
+  const { handleSubmit, watch, setValue } = useForm<SearchStoreQueryRequest>({
     resolver: zodResolver(searchStoreQuerySchema),
     mode: "onChange",
   });
+
+  // クエリからセットされている情報をセット
+  useEffect(() => {
+    if (genreId) {
+      setValue("genreId", Number(genreId));
+    }
+    if (prefectureIds) {
+      setValue("prefectureIds", prefectureIds.split(",").map(Number));
+    }
+    if (tagIds) {
+      setValue("tagIds", tagIds.split(",").map(Number));
+    }
+  }, [genreId, prefectureIds, tagIds, setValue]);
 
   // 情報を取得
   useEffect(() => {
@@ -71,7 +77,7 @@ export default function Search({ setIsOpen }: props) {
     console.log(selectedGenreId, genreId);
     if (selectedGenreId === genreId) {
       // すでに選択されていたら削除
-      setValue("genreId", null);
+      setValue("genreId", undefined);
     } else {
       setValue("genreId", genreId);
     }
@@ -103,9 +109,21 @@ export default function Search({ setIsOpen }: props) {
   const onsubmit = (data: SearchStoreQueryRequest) => {
     // 選択されたクエリを渡す。
     setIsOpen(false);
-    router.push(
-      `/stores/index?genreId=${data.genreId}&prefectureIds=${data.prefectureIds}&tagIds=${data.tagIds}`
-    );
+    // クエリパラメータを構築
+    const params = new URLSearchParams();
+
+    if (data.genreId) {
+      params.append("genreId", String(data.genreId));
+    }
+    if (data.prefectureIds && data.prefectureIds.length > 0) {
+      params.append("prefectureIds", data.prefectureIds.join(","));
+    }
+    if (data.tagIds && data.tagIds.length > 0) {
+      params.append("tagIds", data.tagIds.join(","));
+    }
+
+    const queryString = params.toString();
+    router.push(`/stores/index${queryString ? `?${queryString}` : ""}`);
   };
 
   // エリアグループ
@@ -113,7 +131,7 @@ export default function Search({ setIsOpen }: props) {
     { value: "北海道" },
     { value: "東北" },
     { value: "関東" },
-    { value: "中部" },
+    { value: "東海" },
     { value: "近畿" },
     { value: "中国" },
     { value: "四国" },

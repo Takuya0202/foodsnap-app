@@ -17,20 +17,25 @@ type props = {
 
 export default function UserConfig({ setIsOpen }: props) {
   const { isAuthenticated, name } = useUser();
-  const [isClose, setIsClose] = useState<boolean>(false);
+  const [isClosing, setIsClosing] = useState<boolean>(false);
   const closeDistance = 50; // 閉じる距離
 
   const handleClose = () => {
-    setIsClose(true);
-    // アニメーション終了時にモーダルを閉じる。
-    setTimeout(() => {
-      setIsOpen(false);
-    }, 300);
+    setIsClosing(true);
   };
+
+  const handleAnimationEnd = () => {
+    if (isClosing) {
+      setIsClosing(false);
+      setIsOpen(false);
+    }
+  };
+
   return (
     <div
       className={`w-full h-screen bg-[#3d3d3d] z-[60] fixed top-0 right-0 flex justify-end
-    ${isClose ? "animate-[slideOutRight_0.3s_ease-in-out]" : "animate-[fadeIn_0.3s_ease-in-out]"}`}
+    ${isClosing ? "animate-[slideOutRight_0.3s_ease-in-out_forwards]" : "animate-[fadeIn_0.3s_ease-in-out]"}`}
+      onAnimationEnd={handleAnimationEnd}
     >
       <Swiper
         className="w-full h-full"
@@ -45,7 +50,7 @@ export default function UserConfig({ setIsOpen }: props) {
         resistanceRatio={0.85}
       >
         <SwiperSlide>
-          <div className="w-[70%] max-w-[320px] h-full bg-[#181818] animate-[slideInRight_0.3s_ease-in-out] ml-auto">
+          <div className="w-[70%] max-w-[320px] h-full bg-[#181818] animate-[slideInRight_0.3s_ease-in-out_forwards] ml-auto">
             <div className="flex flex-col items-start p-4 space-y-8">
               {/* closeボタン */}
               <div className="flex justify-end w-full mt-4 mr-4">
@@ -61,9 +66,9 @@ export default function UserConfig({ setIsOpen }: props) {
               </div>
               {isAuthenticated ? (
                 <>
-                  <div className="flex items-center space-x-10">
+                  <div className="flex items-center space-x-8">
                     <UserIcon />
-                    <p className="text-white text-lg">{name}</p>
+                    <p className="text-white text-lg flex-1">{name}</p>
                   </div>
 
                   <div>
@@ -88,12 +93,12 @@ export default function UserConfig({ setIsOpen }: props) {
               )}
               <div>
                 <LinkButton
-                  href="/auth/admin/login"
+                  href="/admin/dashboard"
                   icon={<Store sx={{ color: "#ffffff", width: "24px", height: "24px" }} />}
                   richMode={true}
                   className="text-white"
                 >
-                  店舗登録はこちら
+                  店舗管理者画面へ
                 </LinkButton>
               </div>
             </div>

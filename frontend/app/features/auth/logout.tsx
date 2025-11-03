@@ -6,19 +6,22 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Logout } from "@mui/icons-material";
 
-export default function UserLogout() {
+type props = {
+  path?: "user" | "admin";
+};
+
+export default function UserLogout({ path = "user" }: props) {
   const router = useRouter();
   const { open } = useToaster();
   const { clearUser } = useUser();
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-
   const handleLogout = async () => {
     setIsSubmitting(true);
     const res = await client.api.auth.logout.$post();
     if (res.status === 200) {
       clearUser(); // Zustandをクリア
       open("ログアウトしました。", "success");
-      router.push("/auth/user/login");
+      router.push(`/auth/${path}/login`);
     } else {
       open("ログアウトに失敗しました。", "error");
     }
