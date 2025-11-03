@@ -20,6 +20,7 @@ export type CreateCommentRequest = z.infer<typeof createCommentSchema>;
 
 // indexのクエリスキーマ
 export const searchStoreQuerySchema = z.object({
+  offset : z.coerce.number().default(0),
   genreId : z.coerce.number().optional(),
   keyword : z.string().optional(),
   // クエリは1,4,5のようになるから配列に変換する

@@ -110,7 +110,8 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
       // クエリの取得
       const supabase = getSupabase(c);
       const { data : { user } } = await supabase.auth.getUser();
-      const { genreId, keyword, prefectureIds, tagIds}: SearchStoreQueryRequest = c.req.valid('query');
+      const { genreId, keyword, prefectureIds, tagIds , offset }: SearchStoreQueryRequest = c.req.valid('query');
+      
       // 取得するクエリ store_tagsは内部結合で取得
       let query = supabase
         .from('stores')
@@ -144,7 +145,8 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
               name
             )
           )
-        `
+        `,
+        { count: 'exact' }  // ← 全体の件数を取得
         )
         .not('posts', 'is', null);
 
@@ -169,11 +171,11 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
         query = query.or(`name.ilike.%${keyword}%,address.ilike.%${keyword}%`);
       }
 
-      const { data, error } = await query
+      const { data, error, count } = await query
         .order('created_at', { ascending: false })
         .limit(4, { referencedTable: 'posts' })
         .order('created_at', { ascending: false, referencedTable: 'posts' })
-        .limit(20);
+        .range(offset * 5 , (offset + 1) * 5 - 1);
 
       if (error) {
         return c.json(
@@ -205,8 +207,12 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
           description: post?.description || null,
         })),
       }));
-      
-      return c.json(res, 200);
+
+      return c.json({
+        content : res,
+        total : count || 0, 
+        offset : offset,
+      } , 200);
     } catch (error) {
       return c.json(
         serverError,
