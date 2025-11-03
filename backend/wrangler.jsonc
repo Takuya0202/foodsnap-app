@@ -12,8 +12,8 @@
     "production" : {
       "vars": {
         "ENVIRONMENT" : "production",
-        "APP_URL" : "",
-        "API_URL" : "",
+        "APP_URL" : "https://foodsnap-three.vercel.app",
+        "API_URL" : "https://foodsnap-backend.shimozono-t-24kdgn.workers.dev",
       }
     },
   },

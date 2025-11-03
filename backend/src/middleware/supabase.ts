@@ -52,11 +52,20 @@ export const supabaseMiddleware = (): MiddlewareHandler => {
           cookiesToSet.forEach(({ name, value, options }) => {
             if (options) {
               setCookie(c, name, value, {
+                path: '/',
                 ...options,
-                sameSite: typeof options.sameSite === 'boolean' ? undefined : options.sameSite,
+                sameSite: typeof options.sameSite === 'string' 
+                  ? options.sameSite 
+                  : (c.env.ENVIRONMENT === 'production' ? 'none' : 'lax'),
+                secure: options.secure ?? (c.env.ENVIRONMENT === 'production'),
               });
             } else {
-              setCookie(c, name, value);
+              setCookie(c, name, value, {
+                path: '/',
+                httpOnly: true,
+                secure: c.env.ENVIRONMENT === 'production',
+                sameSite: c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
+              });
             }
           });
         },
