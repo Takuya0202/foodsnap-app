@@ -1,5 +1,5 @@
 {
-  "name": "foodsnap-backend",
+  "name": "backend",
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",

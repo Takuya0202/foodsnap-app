@@ -1,5 +1,5 @@
 import { hc } from "hono/client";
-import { AppType } from "@backend/src/index";
+import type { AppType } from "backend/src/index";
 import { getApiUrl } from "./setting";
 import { cookies } from "next/headers";
 
