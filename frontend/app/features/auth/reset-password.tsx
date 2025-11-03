@@ -70,7 +70,7 @@ export default function ResetPassword() {
         <button onClick={() => router.back()} className="text-[#3d91ff] cursor-pointer">
           キャンセル
         </button>
-        <SubmitButton width="240" height="32" text="送信" isSubmitting={isSubmitting} />
+        <SubmitButton width="160" height="32" text="送信" isSubmitting={isSubmitting} />
       </div>
     </form>
   );

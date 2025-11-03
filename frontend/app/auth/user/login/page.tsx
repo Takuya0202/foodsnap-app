@@ -3,6 +3,8 @@ import GoogleLogin from "../../../features/auth/google-login";
 import Logo from "../../../components/elements/icons/Logo";
 import Separator from "../../../components/elements/others/separator";
 import UserLogin from "../../../features/auth/user-login";
+import PrivacyPolicy from "@/app/components/elements/others/privacyPolicy";
+import ServiceTerm from "@/app/components/elements/others/serviceTerm";
 
 export default function Login() {
   return (
@@ -17,9 +19,14 @@ export default function Login() {
         <GoogleLogin />
         <Separator />
         <UserLogin />
-        <div className="flex flex-col items-center space-y-6 my-2">
+        <div className="flex flex-col items-center space-y-6 my-2 text-sm">
+          <LinkButton href="/auth/reset-password">パスワードを忘れた方はこちら</LinkButton>
           <LinkButton href="/auth/user/register">アカウントをお持ちでない方</LinkButton>
           <LinkButton href="/stores/top">ログインせずに始める</LinkButton>
+        </div>
+        <div className="w-[90%] flex justify-between items-center px-4 mt-3">
+          <PrivacyPolicy />
+          <ServiceTerm />
         </div>
       </div>
     </div>

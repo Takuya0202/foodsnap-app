@@ -79,12 +79,7 @@ export default function CreateNewPassword({ code }: props) {
         />
         {errors.password && <FieldError>{errors.password.message}</FieldError>}
       </div>
-      <SubmitButton
-        width="240"
-        height="32"
-        text="新しいパスワードの作成"
-        isSubmitting={isSubmitting}
-      />
+      <SubmitButton width="160" height="32" text="変更" isSubmitting={isSubmitting} />
     </form>
   );
 }

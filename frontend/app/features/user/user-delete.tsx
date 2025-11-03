@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { DeleteForever } from "@mui/icons-material";
 import { useToaster } from "@/app/zustand/toaster";
 import { client } from "@/utils/setting";
@@ -43,46 +44,49 @@ export default function UserDelete() {
         <span className="text-[#ff0000] text-base">アカウント削除</span>
       </button>
 
-      {/* 確認モーダル */}
-      {isOpen && (
-        <div className="flex justify-center items-center bg-[rgba(0,0,0,0.6)] w-full h-full fixed top-0 left-0 z-[60]">
-          <div
-            className="flex flex-col bg-[#181818] w-[86%] mx-auto rounded-[6px] p-4
+      {/* 確認モーダル - Portal経由でbodyに直接レンダリング */}
+      {isOpen &&
+        typeof window !== "undefined" &&
+        createPortal(
+          <div className="flex justify-center items-center bg-[rgba(0,0,0,0.6)] fixed inset-0 z-[70]">
+            <div
+              className="flex flex-col bg-[#181818] w-[86%] mx-auto rounded-[6px] p-4
             shadow-[6px_4px_4px_rgba(0,0,0,0.25)]"
-          >
-            <div>
-              <h1 className="text-[#ff0000] text-lg font-bold">警告</h1>
-            </div>
+            >
+              <div>
+                <h1 className="text-[#ff0000] text-lg font-bold">警告</h1>
+              </div>
 
-            <div className="my-4">
-              <p className="text-[#b7b7b7] text-sm">
-                アカウントを削除すると、ユーザー情報が完全に削除され、復元することができません。
-                <br />
-                本当に削除しますか？
-              </p>
-            </div>
+              <div className="my-4">
+                <p className="text-[#b7b7b7] text-sm">
+                  アカウントを削除すると、ユーザー情報が完全に削除され、復元することができません。
+                  <br />
+                  本当に削除しますか？
+                </p>
+              </div>
 
-            <div className="flex justify-between gap-2 items-center">
-              <button
-                className="flex items-center gap-2 p-1.5 rounded-[#6px] hover:outline disabled:opacity-50"
-                onClick={handleDelete}
-                disabled={isSubmitting}
-              >
-                <span className="text-[#ff0000]">
-                  {isSubmitting ? "削除中..." : "アカウント削除"}
-                </span>
-              </button>
-              <button
-                className="text-[#3d91ff] text-sm hover:text-white transition-colors disabled:opacity-50"
-                onClick={() => setIsOpen(false)}
-                disabled={isSubmitting}
-              >
-                キャンセル
-              </button>
+              <div className="flex justify-between gap-2 items-center">
+                <button
+                  className="flex items-center gap-2 p-1.5 rounded-[#6px] hover:outline disabled:opacity-50"
+                  onClick={handleDelete}
+                  disabled={isSubmitting}
+                >
+                  <span className="text-[#ff0000]">
+                    {isSubmitting ? "削除中..." : "アカウント削除"}
+                  </span>
+                </button>
+                <button
+                  className="text-[#3d91ff] text-sm hover:text-white transition-colors disabled:opacity-50"
+                  onClick={() => setIsOpen(false)}
+                  disabled={isSubmitting}
+                >
+                  キャンセル
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </>
   );
 }

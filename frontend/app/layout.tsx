@@ -31,6 +31,7 @@ export const metadata: Metadata = {
     "近くの飲食店",
   ],
   creator: "takuya0202",
+  icons: "/logo.svg",
 };
 
 export default function RootLayout({
