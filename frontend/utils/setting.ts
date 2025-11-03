@@ -1,5 +1,5 @@
 import { hc } from "hono/client";
-// import { AppType } from "../../backend/src";
+import { AppType } from "@backend/src/index";
 
 // APIのURLを取得する関数
 export function getApiUrl() {
@@ -10,7 +10,7 @@ export function getApiUrl() {
   }
 }
 // honoクライアントの作成
-export const client = hc<any>(getApiUrl(), {
+export const client = hc<AppType>(getApiUrl(), {
   fetch: (input: RequestInfo | URL, init?: RequestInit) => {
     return fetch(input, {
       ...init,
