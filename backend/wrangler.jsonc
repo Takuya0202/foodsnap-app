@@ -12,11 +12,15 @@
     "production" : {
       "vars": {
         "ENVIRONMENT" : "production",
-        "APP_URL" : "https://foodsnap-three.vercel.app",
-        "API_URL" : "https://foodsnap-backend.shimozono-t-24kdgn.workers.dev",
+        "APP_URL" : "https://www.foodsnap.org",
+        "API_URL" : "https://api.foodsnap.org",
       }
     },
   },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
   // "compatibility_flags": [
   //   "nodejs_compat"
   // ],

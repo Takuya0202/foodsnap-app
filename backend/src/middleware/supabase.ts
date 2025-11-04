@@ -34,12 +34,9 @@ export const supabaseMiddleware = (): MiddlewareHandler => {
       throw new Error('SUPABASE_PUBLISHABLE_KEY missing!');
     }
 
+    const isProduction = c.env.ENVIRONMENT === 'production';
+
     const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
-      cookieOptions: {
-        sameSite: c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
-        secure: c.env.ENVIRONMENT === 'production',
-        httpOnly: true,
-      },
       cookies: {
         getAll() {
           const cookies = parseCookieHeader(c.req.header('Cookie') ?? '');
@@ -50,23 +47,14 @@ export const supabaseMiddleware = (): MiddlewareHandler => {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) => {
-            if (options) {
-              setCookie(c, name, value, {
-                path: '/',
-                ...options,
-                sameSite: typeof options.sameSite === 'string' 
-                  ? options.sameSite 
-                  : (c.env.ENVIRONMENT === 'production' ? 'none' : 'lax'),
-                secure: options.secure ?? (c.env.ENVIRONMENT === 'production'),
-              });
-            } else {
-              setCookie(c, name, value, {
-                path: '/',
-                httpOnly: true,
-                secure: c.env.ENVIRONMENT === 'production',
-                sameSite: c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
-              });
-            }
+            setCookie(c, name, value, {
+              ...options,
+              path : '/',
+              httpOnly : true,
+              domain: isProduction ? '.foodsnap.org' : undefined,
+              secure: isProduction,
+              sameSite: isProduction ? 'none' : 'lax',
+            });
           });
         },
       },

@@ -64,6 +64,7 @@ export const storeApp = new Hono<{ Bindings: Bindings }>()
         secure: c.env.ENVIRONMENT === 'production',
         sameSite: c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
         maxAge: 60 * 5, // 5分
+        domain : '.foodsnap.org',
       });
 
       const res: storeResponse = data.map(store => ({
