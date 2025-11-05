@@ -1,5 +1,5 @@
 import { hc } from "hono/client";
-import { AppType } from "../../backend/src";
+import type { AppType } from "backend/src/index";
 
 // APIのURLを取得する関数
 export function getApiUrl() {

@@ -160,7 +160,7 @@ export default function TopPage() {
               {/* 現在表示してるスライドは高さをもうける。全てにつけるとチラ見セができないため。 */}
               <div
                 style={{
-                  height: idx === currentStoreIndex ? "80px" : "0px",
+                  height: idx === currentStoreIndex ? "16px" : "0px",
                   transition: "height 0.3s ease-in-out",
                 }}
                 className="w-full"

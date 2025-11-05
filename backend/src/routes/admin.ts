@@ -194,6 +194,7 @@ export const adminApp = new Hono<{ Bindings: Bindings }>()
         secure : c.env.ENVIRONMENT === 'production',
         sameSite : c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
         maxAge : 60 * 60 * 24 * 7, // 7日
+        domain : '.foodsnap.org',
       })
       setCookie(c,'sb-refresh-token',session.refresh_token,{
         path : '/',
@@ -201,6 +202,7 @@ export const adminApp = new Hono<{ Bindings: Bindings }>()
         secure : c.env.ENVIRONMENT === 'production',
         sameSite : c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
         maxAge : 60 * 60 * 24 * 7, // 7日
+        domain : '.foodsnap.org',
       })
   
       return c.json({

@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const res = await client.api.user.detail.$get();
         if (res.status === 200) {
           const data = await res.json();
-          setUser(data.id, data.name, data.icon || "", data.likeStores);
+          setUser(data.id, data.name, data.icon || "");
         } else {
           setAuthFailed();
         }

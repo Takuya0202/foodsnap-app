@@ -43,7 +43,7 @@ export default function StoreModal() {
   return (
     <div className="fixed inset-0 z-50 bg-[#3d3d3d] w-full h-full flex flex-col">
       {/* 閉じるボタン */}
-      <div className="w-[90%] mx-auto justify-start mt-12 flex-shrink-0">
+      <div className="w-[90%] mx-auto justify-start mt-4 flex-shrink-0">
         <button onClick={closeModal}>
           <ChevronLeft sx={{ color: "white", width: 50, height: 50 }} />
         </button>
@@ -75,7 +75,7 @@ export default function StoreModal() {
                 {/* 現在表示してるスライドは高さをもうける。全てにつけるとチラ見セができないため。 */}
                 <div
                   style={{
-                    height: idx === currentStoreIndex ? "80px" : "0px",
+                    height: idx === currentStoreIndex ? "20px" : "0px",
                     transition: "height 0.3s ease-in-out",
                   }}
                   className="w-full"

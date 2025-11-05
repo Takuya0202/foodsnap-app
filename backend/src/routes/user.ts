@@ -1,14 +1,9 @@
 import { zValidator } from '@hono/zod-validator';
 import { Context, Hono } from 'hono';
 import {
-  CreateNewPasswordRequest,
-  createNewPasswordSchema,
   CreateUserRequest,
   createUserSchema,
-  LoginUserRequest,
   loginUserSchema,
-  ResetPasswordRequest,
-  resetPasswordSchema,
   UpdateUserRequest,
   updateUserSchema,
 } from '../schema/user';
@@ -127,6 +122,7 @@ export const userApp = new Hono<{ Bindings: Bindings }>()
           secure: c.env.ENVIRONMENT === 'production',
           sameSite: c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
           maxAge: 60 * 60 * 24 * 7,
+          domain : '.foodsnap.org',
         })
         setCookie(c , 'sb-refresh-token' , session.refresh_token , {
           path : '/',
@@ -134,6 +130,7 @@ export const userApp = new Hono<{ Bindings: Bindings }>()
           secure: c.env.ENVIRONMENT === 'production',
           sameSite: c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
           maxAge: 60 * 60 * 24 * 7,
+          domain : '.foodsnap.org',
         })
 
         

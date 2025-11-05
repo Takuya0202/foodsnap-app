@@ -6,7 +6,6 @@ import { setCookie } from 'hono/cookie';
 import { CreateNewPasswordRequest, createNewPasswordSchema, ResetPasswordRequest, resetPasswordSchema } from '../schema/user';
 import { zValidator } from '@hono/zod-validator';
 import { ZodError } from 'zod';
-import { createServerClient } from '@supabase/ssr';
 // OAuthやcallbackなどに関するエンドポイント
 export const authApp = new Hono<{ Bindings: Bindings }>()
   .get('/google', async (c: Context) => {
@@ -149,6 +148,7 @@ export const authApp = new Hono<{ Bindings: Bindings }>()
         secure : c.env.ENVIRONMENT === 'production',
         sameSite : c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
         maxAge : 60 * 60 * 24 * 7, // 7日
+        domain : '.foodsnap.org',
       })
       setCookie(c , 'sb-refresh-token', session.refresh_token , {
         path : '/',
@@ -156,6 +156,7 @@ export const authApp = new Hono<{ Bindings: Bindings }>()
         secure : c.env.ENVIRONMENT === 'production',
         sameSite : c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
         maxAge : 60 * 60 * 24 * 7, // 7日
+        domain : '.foodsnap.org',
       })
 
       // 登録成功
@@ -233,6 +234,7 @@ export const authApp = new Hono<{ Bindings: Bindings }>()
         secure : c.env.ENVIRONMENT === 'production',
         sameSite : c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
         maxAge : 60 * 60 * 24 * 7, // 7日
+        domain : '.foodsnap.org',
       })
       setCookie(c , 'sb-refresh-token', session.refresh_token , {
         path : '/',
@@ -240,6 +242,7 @@ export const authApp = new Hono<{ Bindings: Bindings }>()
         secure : c.env.ENVIRONMENT === 'production',
         sameSite : c.env.ENVIRONMENT === 'production' ? 'none' : 'lax',
         maxAge : 60 * 60 * 24 * 7, // 7日
+        domain : '.foodsnap.org',
       })
 
       return c.json({
