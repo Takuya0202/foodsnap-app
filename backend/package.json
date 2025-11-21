@@ -16,7 +16,6 @@
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.57.4",
     "cuid": "^3.0.0",
-    "drizzle-orm": "^0.44.5",
     "hono": "^4.9.7",
     "postgres": "^3.4.7",
     "prisma": "^6.16.2",
@@ -24,7 +23,6 @@
     "zod": "^4.1.8"
   },
   "devDependencies": {
-    "drizzle-kit": "^0.31.4",
     "prettier": "^3.6.2",
     "wrangler": "^4.4.0"
   }
