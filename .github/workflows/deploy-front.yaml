@@ -11,7 +11,6 @@ on:
       - main
     paths:
       - 'frontend/**'
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -20,9 +19,11 @@ jobs:
 
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
+        env:
+          VERCEL_ARGS: ${{ github.ref == 'refs/heads/main' && '--prod' || '' }}
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           # mainへPRしたときはpreview環境へデプロイ。pushしたときはproduction環境へデプロイ。
-          vercel-args: ${{ github.ref == 'refs/heads/main' && '--prod' || '' }}
+          vercel-args: ${{ env.VERCEL_ARGS }}
