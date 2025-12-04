@@ -25,4 +25,5 @@ jobs:
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           # mainへPRしたときはpreview環境へデプロイ。pushしたときはproduction環境へデプロイ。
-          vercel-args: --prod
+          #キャッシュ無くしてみる。
+          vercel-args: --prod --force
