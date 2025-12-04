@@ -12,10 +12,10 @@ export default function SpUserFooter() {
 
   if (isOpen) return <UserConfig setIsOpen={setIsOpen} />;
   return (
-    <footer className="flex px-9 py-2 bg-[#181818] justify-between items-center w-full">
+    <footer className="flex px-9 py-1 bg-[#181818] justify-between items-center w-full">
       {/* topページボタン */}
       <button
-        className="rounded-full p-2 hover:bg-[#d7d7d7] "
+        className="rounded-full p-1 hover:bg-[#d7d7d7] "
         onClick={() => router.push("/stores/top")}
         style={{
           backgroundColor: path === "/stores/top" ? "rgba(215, 215, 215, 0.7)" : "transparent",
@@ -26,7 +26,7 @@ export default function SpUserFooter() {
 
       {/* 一覧ページボタン */}
       <button
-        className="rounded-full p-2 hover:bg-[#d7d7d7]"
+        className="rounded-full p-1 hover:bg-[#d7d7d7]"
         style={{
           backgroundColor: path === "/stores/index" ? "rgba(215, 215, 215, 0.7)" : "transparent",
         }}
@@ -37,7 +37,7 @@ export default function SpUserFooter() {
 
       {/* profileボタン */}
       <button
-        className="rounded-full p-2 hover:bg-[#d7d7d7]"
+        className="rounded-full p-1 hover:bg-[#d7d7d7]"
         style={{
           backgroundColor: path === "/user/profile" ? "rgba(215, 215, 215, 0.7)" : "transparent",
         }}
@@ -47,7 +47,7 @@ export default function SpUserFooter() {
       </button>
 
       {/* 設定ボタン */}
-      <button className="rounded-full p-2 hover:bg-[#d7d7d7]" onClick={() => setIsOpen(true)}>
+      <button className="rounded-full p-1 hover:bg-[#d7d7d7]" onClick={() => setIsOpen(true)}>
         <Settings sx={{ color: "#b7b7b7", width: "32px", height: "32px" }} />
       </button>
     </footer>
