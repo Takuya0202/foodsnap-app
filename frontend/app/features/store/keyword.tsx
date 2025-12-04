@@ -24,7 +24,7 @@ export default function Keyword() {
       <input
         type="text"
         className="w-full h-[32px] bg-[#3d3d3d] py-2 pl-8 focus:outline-none
-        placeholder:text-white placeholder:text-[12px] text-white text-[12px]"
+        placeholder:text-white placeholder:text-[16px] text-white text-[16px]"
         placeholder="キーワードを入力"
         value={keyword}
         onChange={(e) => setKeyword(e.target.value)}
