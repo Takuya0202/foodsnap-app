@@ -20,10 +20,11 @@ jobs:
 
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
+        env:
+          # mainなら本番+強制再ビルド、PRならプレビュー。キャッシュ使わないようにする。
+          VERCEL_ARGS: ${{ github.ref == 'refs/heads/main' && '--prod --force' || '' }}
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          # mainへPRしたときはpreview環境へデプロイ。pushしたときはproduction環境へデプロイ。
-          #キャッシュ無くしてみる。
-          vercel-args: --prod --force
+          vercel-args: ${{ env.VERCEL_ARGS }}
