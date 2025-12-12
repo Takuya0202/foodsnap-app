@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 export async function middleware(req: NextRequest) {
-  let res = NextResponse.next({
+  const res = NextResponse.next({
     request: {
       headers: req.headers,
     },
   });
 
   // 環境判定（プロダクションかどうか）
-  const isProduction = process.env.NODE_ENV === 'production';
+  const isProduction = process.env.NODE_ENV === "production";
 
   // supabaseクライアントの作成
   const supabase = createServerClient(
@@ -17,9 +17,9 @@ export async function middleware(req: NextRequest) {
     process.env.SUPABASE_PUBLISHABLE_KEY!,
     {
       cookieOptions: {
-        sameSite: isProduction ? 'none' : 'lax',
+        sameSite: isProduction ? "none" : "lax",
         secure: isProduction,
-        path: '/',
+        path: "/",
       },
       cookies: {
         getAll() {
@@ -28,12 +28,15 @@ export async function middleware(req: NextRequest) {
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) => {
             res.cookies.set(name, value, {
-              path: '/',
+              path: "/",
               httpOnly: options?.httpOnly ?? true,
               secure: options?.secure ?? isProduction,
-              sameSite: typeof options?.sameSite === 'string' 
-                ? options.sameSite 
-                : (isProduction ? 'none' : 'lax'),
+              sameSite:
+                typeof options?.sameSite === "string"
+                  ? options.sameSite
+                  : isProduction
+                    ? "none"
+                    : "lax",
               maxAge: options?.maxAge,
             });
           });

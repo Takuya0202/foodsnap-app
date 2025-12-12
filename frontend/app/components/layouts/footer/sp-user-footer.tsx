@@ -15,40 +15,40 @@ export default function SpUserFooter() {
     <footer className="flex px-9 py-1 bg-[#181818] justify-between items-center w-full">
       {/* topページボタン */}
       <button
-        className="rounded-full p-1 hover:bg-[#d7d7d7] "
+        className="rounded-full p-1"
         onClick={() => router.push("/stores/top")}
         style={{
           backgroundColor: path === "/stores/top" ? "rgba(215, 215, 215, 0.7)" : "transparent",
         }}
       >
-        <Home sx={{ color: "#b7b7b7", width: "32px", height: "32px" }} />
+        <Home sx={{ color: "#b7b7b7", width: "28px", height: "28px" }} />
       </button>
 
       {/* 一覧ページボタン */}
       <button
-        className="rounded-full p-1 hover:bg-[#d7d7d7]"
+        className="rounded-full p-1"
         style={{
           backgroundColor: path === "/stores/index" ? "rgba(215, 215, 215, 0.7)" : "transparent",
         }}
         onClick={() => router.push("/stores/index")}
       >
-        <Apps sx={{ color: "#b7b7b7", width: "32px", height: "32px" }} />
+        <Apps sx={{ color: "#b7b7b7", width: "28px", height: "28px" }} />
       </button>
 
       {/* profileボタン */}
       <button
-        className="rounded-full p-1 hover:bg-[#d7d7d7]"
+        className="rounded-full p-1"
         style={{
           backgroundColor: path === "/user/profile" ? "rgba(215, 215, 215, 0.7)" : "transparent",
         }}
         onClick={() => router.push("/user/profile")}
       >
-        <Person sx={{ color: "#b7b7b7", width: "32px", height: "32px" }} />
+        <Person sx={{ color: "#b7b7b7", width: "28px", height: "28px" }} />
       </button>
 
       {/* 設定ボタン */}
-      <button className="rounded-full p-1 hover:bg-[#d7d7d7]" onClick={() => setIsOpen(true)}>
-        <Settings sx={{ color: "#b7b7b7", width: "32px", height: "32px" }} />
+      <button className="rounded-full p-1" onClick={() => setIsOpen(true)}>
+        <Settings sx={{ color: "#b7b7b7", width: "28px", height: "28px" }} />
       </button>
     </footer>
   );
