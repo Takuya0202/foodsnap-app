@@ -1,6 +1,5 @@
 "use client";
 
-import LinkButton from "@/app/components/elements/buttons/link-button";
 import SubmitButton from "@/app/components/elements/buttons/submit-button";
 import FieldError from "@/app/components/elements/errors/field-error";
 import InputText from "@/app/components/elements/input/input-text";

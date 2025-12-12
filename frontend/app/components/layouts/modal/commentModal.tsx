@@ -33,7 +33,7 @@ export default function CommentModal({ storeId, commentCount }: Props) {
   }
 
   return (
-    <div className="absolute bottom-0 left-0 w-full h-[65%] z-[200]">
+    <div className="absolute bottom-0 left-0 w-full h-[70%] z-[200]">
       <div
         className={`w-full h-full bg-[#181818] rounded-tl-3xl rounded-tr-3xl flex flex-col
         ${isClosing ? "animate-[slideOutBottom_0.3s_ease-in-out]" : "animate-[slideInBottom_0.3s_ease-in-out]"}`}
