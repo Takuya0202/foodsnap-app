@@ -34,15 +34,17 @@ type props = {
 
 export function SwipePostSkeleton() {
   return (
-    <div className="w-full flex flex-col">
-      <div className="w-full h-[300px] bg-skLoading rounded-md mb-2" />
+    <div className="w-full flex flex-col relative">
+      <div className="relative w-[90%] h-[200px] bg-skLoading rounded-md mb-2 mx-auto" />
 
       <div className="flex items-center justify-between pl-4 w-full mt-4">
         {/* 店舗、投稿の情報*/}
         <div className="w-[80%] flex flex-col space-y-4">
           <div className="flex items-center justify-between">
-            <div className="w-32 h-7 bg-skLoading rounded" />
-            <div className="w-20 h-7 bg-skLoading rounded" />
+            <div className="flex items-center w-full justify-between">
+              <div className="w-32 h-7 bg-skLoading rounded" />
+              <div className="w-20 h-7 bg-skLoading rounded" />
+            </div>
           </div>
 
           <div>
@@ -61,7 +63,7 @@ export function SwipePostSkeleton() {
         </div>
 
         {/* いいね、コメント、共有 */}
-        <div className="w-[20%] flex flex-col space-y-2 items-center">
+        <div className="w-[20%] flex flex-col space-y-4 items-center">
           <div className="flex flex-col items-center space-y-1">
             <Favorite sx={{ color: "#b7b7b7", width: 36, height: 36 }} />
             <div className="w-6 h-4 bg-skLoading rounded" />
@@ -108,7 +110,7 @@ export function SwipePostContent({
     <div className="w-full flex flex-col relative">
       {/* 投稿画像。x軸でスワイプ */}
       <Swiper
-        className="relative w-[90%] h-[200px] mb-2"
+        className="relative w-full h-[220px] mb-2"
         slidesPerView={1.1}
         centeredSlides={true}
         spaceBetween={10}

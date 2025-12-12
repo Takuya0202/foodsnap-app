@@ -47,7 +47,7 @@ export default function CreateComment({ storeId }: props) {
 
   return (
     <form
-      className="w-full bg-[#1e1e1e] py-7 px-4 flex items-center justify-between space-x-5"
+      className="w-full bg-[#1e1e1e] py-3 px-4 flex items-center justify-between space-x-5"
       onSubmit={(e) => {
         e.preventDefault();
         handleSubmit({ content });
@@ -55,7 +55,7 @@ export default function CreateComment({ storeId }: props) {
     >
       <input
         type="text"
-        className="pl-6 py-2 bg-[#3d3d3d]  placeholder:text-white text-white w-full"
+        className="pl-6 py-2 bg-[#3d3d3d]  placeholder:text-white text-white w-full rounded-md"
         placeholder="コメント(400文字以内)"
         value={content}
         onChange={(e) => setContent(e.target.value)}

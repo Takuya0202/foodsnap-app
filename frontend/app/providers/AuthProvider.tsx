@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         } else {
           setAuthFailed();
         }
-      } catch (error) {
+      } catch {
         setAuthFailed();
       } finally {
         setIsInitialized(true);
